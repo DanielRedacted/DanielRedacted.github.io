@@ -81,9 +81,33 @@
             /* margin: 0 auto; */
             text-align: center;
         }
+        
+        .printable {
+            display: none;
+        }
+        @media print {
+            body {
+                position: relative;
+                margin: 0;
+                box-shadow: none;
+            }
+            div {
+                page-break-inside: avoid;
+            }
+            .printable {
+                display: block;
+            }
+            #pageQR {
+                float:right;
+                height:1in;
+                width: 1in;
+            }
+        }
     </style>
 </head>
 <body>
+    <img id="pageQR" class="printable" src="Violations-QR.png"/>
+
     <h1>Big-Tech User-Trust Violations</h1>
     <table>
         <tr>

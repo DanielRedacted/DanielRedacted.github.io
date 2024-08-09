@@ -48,12 +48,10 @@
         h3 {
             margin-bottom:0;
         }
+        
         .printable {
             display: none;
         }
-        /* .footer {
-            display: none;
-        } */
         @media print {
             body {
                 position: relative;
@@ -66,10 +64,17 @@
             .printable {
                 display: block;
             }
+            #pageQR {
+                float:right;
+                height:1in;
+                width: 1in;
+            }
         }
     </style>
 </head>
 <body>
+    <img id="pageQR" class="printable" src="WEF-QR.png"/>
+
     <div style="height:min-content; width: 100%; display:flex; flex-direction: row;">
         <h1 style="flex:1; text-align: left;">World Economic Forum (WEF)<br>The Global Risk Report 2024<br>19th Edition<br>(Summary & Analysis)</h1>
         <a style="height:100%; overflow:hidden; object-fit: contain; float:right; margin: 21.44px 0;" href="https://www3.weforum.org/docs/WEF_The_Global_Risks_Report_2024.pdf"><img src="WEF-GRR-2024.jpg"/></a>
