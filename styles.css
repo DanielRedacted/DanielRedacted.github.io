@@ -74,11 +74,11 @@ td:nth-child(2) {
 p {
     margin: 0;
 }
-img {
+/* img {
     float: right;
     margin-left: 10px;
     object-fit: contain;
-}
+} */
 br {
     height: 5px;
     margin:0;
@@ -142,10 +142,60 @@ a svg {
     aspect-ratio: 1/1;
     margin: 11px;
     /* width: 18pt; */
+    overflow:visible;
 }
 a svg .shaddow {
     fill: black;
 }
-a svg:hover .shaddow{
+a svg:hover .shaddow, 
+a.selected svg .shaddow{
     fill:inherit;
 }
+
+
+
+#right-socials {
+    display:none;
+    flex-direction: column;
+    position:absolute;
+    top:0;
+    right:0;
+    height:100vh;
+    width: 44px;
+    overflow: visible;
+
+    justify-content:space-around;
+
+    background-color:white;
+}
+#right-socials {
+    
+}
+#network {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-items: center;
+    text-align: center;
+
+    width: 50%;
+    height: auto;
+    margin: auto auto;
+    padding: 0 auto;
+
+    overflow:visible;
+}
+#network svg {
+    height: 44px;
+    width: auto;
+    margin:0 auto;
+    padding:0;
+}
+#network img {
+    height: 44px;
+    width: auto;
+    margin:0 auto;
+    padding:0;
+    object-fit: contain;
+}
+
