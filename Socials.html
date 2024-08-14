@@ -37,8 +37,9 @@
             body {
                 display:flex;
                 flex-direction: column;
-                height:calc(100% - 48px);
+                height: 100%;
                 
+                margin-top:0;
             }
 
             #page {
@@ -47,7 +48,12 @@
                 flex-direction: column;
                 width: calc(100% - 44px);
                 justify-content: space-around;
+                padding: none;
             }
+        }
+
+        #link {
+            padding: auto 15pt;
         }
     </style>
 </head>
@@ -204,7 +210,7 @@
     <div id="page">
         <div id="network"><h3>Website</h3></div>
         <img id="qr" src="qr/DanielRedacted.github.io.png">
-        <a id="link" class="redacted" href="https://DanielRedacted.github.io">https://DanielRedacted.github.io</a>
+        <a id="link" class="redacted" href="https://DanielRedacted.github.io"> https://DanielRedacted.github.io </a>
     </div>
 
     <script src="script.js"></script>
@@ -219,11 +225,6 @@
             var link;
             var brand;
             switch(network) {
-                // case "Website":
-                //     brand = `<h3>Website</h3>`;
-                //     qr = "qr/DanielRedacted.github.io.png";
-                //     link = "https://DanielRedacted.github.io";
-                //     break;
                 case "X":
                     brand = `<svg id="X" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1227" fill="none">                    <g clip-path="url(#clip0_1_2)">                        <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" fill="black"/>                    </g>                    <defs>                        <clipPath id="clip0_1_2">                            <rect width="1200" height="1227" fill="white"/>                        </clipPath>                    </defs>                </svg>`;
                     qr = "qr/x.png";
@@ -240,8 +241,12 @@
                     link = "https://www.linkedin.com/in/DanielRedacted";
                     break;
                 case "GitHub":
-                    brand = `<svg style="aspect-ratio:1/1;" fill="black" enable-background="new 0 0 32 32" version="1.0" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="shaddow" clip-rule="evenodd" d="M16.003,0C7.17,0,0.008,7.162,0.008,15.997  c0,7.067,4.582,13.063,10.94,15.179c0.8,0.146,1.052-0.328,1.052-0.752c0-0.38,0.008-1.442,0-2.777  c-4.449,0.967-5.371-2.107-5.371-2.107c-0.727-1.848-1.775-2.34-1.775-2.34c-1.452-0.992,0.109-0.973,0.109-0.973  c1.605,0.113,2.451,1.649,2.451,1.649c1.427,2.443,3.743,1.737,4.654,1.329c0.146-1.034,0.56-1.739,1.017-2.139  c-3.552-0.404-7.286-1.776-7.286-7.906c0-1.747,0.623-3.174,1.646-4.292C7.28,10.464,6.73,8.837,7.602,6.634  c0,0,1.343-0.43,4.398,1.641c1.276-0.355,2.645-0.532,4.005-0.538c1.359,0.006,2.727,0.183,4.005,0.538  c3.055-2.07,4.396-1.641,4.396-1.641c0.872,2.203,0.323,3.83,0.159,4.234c1.023,1.118,1.644,2.545,1.644,4.292  c0,6.146-3.74,7.498-7.304,7.893C19.479,23.548,20,24.508,20,26c0,2,0,3.902,0,4.428c0,0.428,0.258,0.901,1.07,0.746  C27.422,29.055,32,23.062,32,15.997C32,7.162,24.838,0,16.003,0z" fill-rule="evenodd"/></svg>
-                    <h2>GitHub</h2>`;
+                    brand = `
+                        <div style="display:flex; flex-direction:row; align-items: center;">
+                            <svg style="aspect-ratio:1/1;" fill="black" enable-background="new 0 0 32 32" version="1.0" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="shaddow" clip-rule="evenodd" d="M16.003,0C7.17,0,0.008,7.162,0.008,15.997  c0,7.067,4.582,13.063,10.94,15.179c0.8,0.146,1.052-0.328,1.052-0.752c0-0.38,0.008-1.442,0-2.777  c-4.449,0.967-5.371-2.107-5.371-2.107c-0.727-1.848-1.775-2.34-1.775-2.34c-1.452-0.992,0.109-0.973,0.109-0.973  c1.605,0.113,2.451,1.649,2.451,1.649c1.427,2.443,3.743,1.737,4.654,1.329c0.146-1.034,0.56-1.739,1.017-2.139  c-3.552-0.404-7.286-1.776-7.286-7.906c0-1.747,0.623-3.174,1.646-4.292C7.28,10.464,6.73,8.837,7.602,6.634  c0,0,1.343-0.43,4.398,1.641c1.276-0.355,2.645-0.532,4.005-0.538c1.359,0.006,2.727,0.183,4.005,0.538  c3.055-2.07,4.396-1.641,4.396-1.641c0.872,2.203,0.323,3.83,0.159,4.234c1.023,1.118,1.644,2.545,1.644,4.292  c0,6.146-3.74,7.498-7.304,7.893C19.479,23.548,20,24.508,20,26c0,2,0,3.902,0,4.428c0,0.428,0.258,0.901,1.07,0.746  C27.422,29.055,32,23.062,32,15.997C32,7.162,24.838,0,16.003,0z" fill-rule="evenodd"/></svg>
+                            <h2>GitHub</h2>
+                        </div>
+                    `;
                     qr = "qr/GitHub.png";
                     link = "https://github.com/DanielRedacted";
                     break;

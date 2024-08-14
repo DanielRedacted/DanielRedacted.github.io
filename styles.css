@@ -132,9 +132,17 @@ h1 {
     float:right;
 }
 a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
     height: 44px;
     aspect-ratio: 1/1;
     margin: auto;
+
+    padding: auto;
+
+    white-space: nowrap;
     text-decoration: none;
 }
 a svg {
@@ -172,13 +180,13 @@ a.selected svg .shaddow{
     
 }
 #network {
-    display: flex;
+    /* display: flex;
     flex-direction: row;
     align-items: center;
-    justify-items: center;
+    justify-items: center; */
     text-align: center;
 
-    width: 50%;
+    width: auto;
     height: auto;
     margin: auto auto;
     padding: 0 auto;
