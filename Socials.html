@@ -12,24 +12,15 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
-            display:flex;
-            align-content: center;
-            justify-content: center;
-            text-align: center;
-
-            overflow: hidden;
         }
 
         #page {
             flex:1;
-            background-color: white;
 
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-evenly;
-            
-            margin:auto;
         }
 
         #link {
@@ -77,6 +68,7 @@
                 width: 100%;
                 max-width: 6in;
                 aspect-ratio: 1.618/1;
+                max-height: 100%;
                 padding: 16px;
                 overflow: hidden;
 
@@ -90,6 +82,7 @@
 
             #qr {
                 max-width: 50%;
+                height: auto;
                 aspect-ratio: 1/1;
                 object-fit: contain;
                 order: 1;

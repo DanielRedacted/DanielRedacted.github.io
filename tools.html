@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daniel ████</title>
+    <title>Daniel's Toolbox</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -17,7 +17,17 @@
 
             padding: 0.5in;
             margin: auto;
+
+            display: grid;
+            grid: auto auto auto auto;
         }
+        #page > a {
+            background-color: white;
+            border: 1px solid black;
+            box-shadow: 0px 0px 5px 5px black;
+            white-space: wrap;
+        }
+
         span {
             display:flex;
             flex-direction: row;
@@ -30,7 +40,8 @@
             margin: auto;
             height: 24pt;
         }
-        #menu a:hover {
+        #menu a:hover,
+        #menu a.selected {
             background-color:black; 
             color:white; 
             /* padding: 0 3pt; */
@@ -47,7 +58,7 @@
         <span id="menu" style="flex:1;">
             <a href="">About</a>
             <a href="">Awareness</a>
-            <a href="">Toolbox</a>
+            <a class="selected" href="">Toolbox</a>
         </span>
         <span style="flex:1;"></span>
         <div id="top-socials" class="socials">
@@ -187,27 +198,25 @@
 
 
     <div id="page">
-
-        <fieldset style="padding-top:0;">
-            <legend><h2>redact</h2></legend>
-            <p>/rĭ-dăkt′/</p>
-            <h4>transitive verb</h4>
-            <ol>
-                <li>To draw up or frame (a proclamation, for example).</li>
-                <li>To make ready for publication; edit or revise.</li>
-                <li>To delete or remove (private or sensitive information) from a document in preparation for publication.</li>
-            </ol>
-            <p>example: █ ████ ███!</p>
-            <br><br>
-            <p>note: Governments, Companies, Medical Institutions, and Journalists use <b class="redacted">redaction</b> to protect sensitive and confidential information, personal data, and identities. You should too.</p><br>
-            <p>Think before you post.</p>
-        </fieldset>
-
-        <!-- <fieldset>
-            <legend><h2>Project OASIS</h2></legend>
-            <a href="Tech-Trust-Violations.html" target="_blank"><h3 style="margin-bottom: 30px;">Big-Tech User-Trust Violations Timeline</h3></a>
-            <a href="WEF-GRR-2024.html" target="_blank"><h3>WEF Global Risk Report 2024 (Summary & Analysis)</h3></a>
-        </fieldset> -->
+        <a href="https://trafficcamphotobooth.com" target="_blank">
+            <h3>Traffic Cam Photobooth</h3>
+            <p>Take pictures of yourself</p>
+        </a>
+        <a href="https://Hubermanlab.com" target="_blank">
+            Huberman Lab
+        </a>
+        <a href="https://tails.net" target="_blank">
+            Tails
+            USB Operating System
+        </a>
+        <a href="https://Ubuntu.org" target="_blank">
+            Ubuntu
+            Free Linux Operating System
+        </a>
+        <a href="https://torProject.org" target="_blank">
+            The Onion Router [TOR]
+            Browse Anonymously
+        </a>
     </div>
 
     <script src="script.js"></script>
