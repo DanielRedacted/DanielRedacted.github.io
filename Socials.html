@@ -26,6 +26,7 @@
         #link {
             padding: auto 15pt;
         }
+        #name, 
         .button {
             cursor: pointer;
         }
@@ -107,8 +108,8 @@
 <body>
     <div id="header">
         <div id="name">
-            <p style="font-size:18pt;"><b>Daniel</b> <b class="redacted" onclick="copyToClipboard('████')"> Redacted</b></p>
-            <p style="font-size:12pt;">@DanielRedacted</p>
+            <p style="font-size:18pt;"><b onclick="copyToClipboard('@DanielRedacted')">Daniel</b> <b class="redacted" onclick="copyToClipboard('████')"> Redacted</b></p>
+            <p style="font-size:12pt;" onclick="copyToClipboard('@DanielRedacted')">@DanielRedacted</p>
         </div>
         <span style="flex:1;"></span>
         <div id="top-socials" class="socials">
