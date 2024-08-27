@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daniel ████</title>
+    <title>Daniel's Toolbox</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -17,7 +17,23 @@
 
             padding: 0.5in;
             margin: auto;
+
+            display: grid;
+            grid-template-columns: 25% 25% 25% 25%;
         }
+        #page > div {
+            margin: 8px;
+            padding: 16px;
+            background-color: white;
+            border: 1px solid black;
+            box-shadow: 0px 0px 1px 1px black;
+            white-space: wrap;
+            cursor: pointer;
+            border-radius: 8px;
+            aspect-ratio: 1/1;
+            overflow: hidden;
+        }
+
         span {
             display:flex;
             flex-direction: row;
@@ -30,7 +46,8 @@
             margin: auto;
             height: 24pt;
         }
-        #menu a:hover {
+        #menu a:hover,
+        #menu a.selected {
             background-color:black; 
             color:white; 
             /* padding: 0 3pt; */
@@ -47,8 +64,8 @@
         <span id="menu" style="flex:1;">
             <a href="">About</a>
             <a href="">Data</a>
-            <a href="">Toolbox</a>
             <a href="">Resources</a>
+            <a class="selected" href="">Toolbox</a>
         </span>
         <span style="flex:1;"></span>
         <div id="top-socials" class="socials">
@@ -74,11 +91,11 @@
                 </svg>
             </a>
             
-            <!-- <a title="LinkedIn" href="https://www.linkedin.com/in/DanielRedacted" target="_blank">
+            <a title="LinkedIn" href="https://www.linkedin.com/in/DanielRedacted" target="_blank">
                 <svg id="LinkedIn" fill="#0A66C2" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;" version="1.1" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:serif="http://www.serif.com/" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <path class="shaddow" d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z"/>
                 </svg>
-            </a> -->
+            </a>
                 
             <a title="GitHub" href="https://github.com/DanielRedacted" target="_blank">
                 <svg id="GitHub" fill="#6E40C9" enable-background="new 0 0 32 32" version="1.0" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -98,14 +115,6 @@
                      <g transform="scale(0.1)">
                       <path class="shaddow" d="m 700,358.313 v 523.375 l 460,-261.7 z m 1023.22,688.057 c -20.24,76.22 -79.88,136.24 -155.6,156.61 C 1430.37,1240 880,1240 880,1240 c 0,0 -550.367,0 -687.621,-37.02 C 116.656,1182.61 57.0156,1122.59 36.7773,1046.37 0,908.227 0,620 0,620 0,620 0,331.777 36.7773,193.629 57.0156,117.41 116.656,57.3906 192.379,37.0117 329.633,0 880,0 880,0 c 0,0 550.37,0 687.62,37.0117 75.72,20.3789 135.36,80.3983 155.6,156.6173 C 1760,331.777 1760,620 1760,620 c 0,0 0,288.227 -36.78,426.37" style="fill-opacity:1;fill-rule:nonzero;stroke:none"/>
                      </g>
-                    </g>
-                </svg>
-            </a>
-
-            <a title="Vimeo" href="https://vimeo.com/DanielRedacted" target="_blank">
-                <svg id="Vimeo" style="overflow:hidden" fill="#1AB7EA" version="1.1" viewBox="20 20 90 90" x="0px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" y="0px">
-                    <g>
-                      <path class="shaddow" d="M101,39.9c-0.4,8.4-6.3,20-17.7,34.7c-11.8,15.3-21.8,23-29.9,23c-5.1,0-9.3-4.7-12.8-14c-2.3-8.6-4.7-17.1-7-25.7c-2.6-9.3-5.4-14-8.4-14c-0.6,0-2.9,1.4-6.8,4.1l-4.1-5.3c4.3-3.8,8.5-7.5,12.7-11.3c5.7-4.9,10-7.5,12.9-7.8c6.7-0.6,10.9,4,12.5,13.8c1.7,10.7,2.9,17.3,3.5,19.9c1.9,8.8,4.1,13.3,6.4,13.3c1.8,0,4.5-2.9,8.2-8.6c3.6-5.7,5.6-10.1,5.8-13.1c0.5-4.9-1.4-7.4-5.8-7.4c-2.1,0-4.2,0.5-6.4,1.4c4.3-14,12.4-20.7,24.4-20.3C97.3,22.8,101.5,28.6,101,39.9z"></path>
                     </g>
                 </svg>
             </a>
@@ -148,6 +157,12 @@
                 <path class="shaddow" d="m40.2557,42.4999v-20.1821c0-.1633-.9724-.1077-1.8866-.1077H9.4022c-.9142,0-1.6553-.0555-1.6553.1077v19.8878c.2814-.1622,15.3415-8.2118,16.1691-8.5978.5156.2972,13.6461,7.3385,16.3406,8.8914l-.0008.0007Z"/>
             </svg>
         </a>
+        
+        <a title="LinkedIn" href="https://www.linkedin.com/in/DanielRedacted" target="_blank">
+            <svg id="LinkedIn" fill="#0A66C2" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;" version="1.1" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:serif="http://www.serif.com/" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <path class="shaddow" d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z"/>
+            </svg>
+        </a>
             
         <a title="GitHub" href="https://github.com/DanielRedacted" target="_blank">
             <svg id="GitHub" fill="#6E40C9" enable-background="new 0 0 32 32" version="1.0" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -167,14 +182,6 @@
                  <g transform="scale(0.1)">
                   <path class="shaddow" d="m 700,358.313 v 523.375 l 460,-261.7 z m 1023.22,688.057 c -20.24,76.22 -79.88,136.24 -155.6,156.61 C 1430.37,1240 880,1240 880,1240 c 0,0 -550.367,0 -687.621,-37.02 C 116.656,1182.61 57.0156,1122.59 36.7773,1046.37 0,908.227 0,620 0,620 0,620 0,331.777 36.7773,193.629 57.0156,117.41 116.656,57.3906 192.379,37.0117 329.633,0 880,0 880,0 c 0,0 550.37,0 687.62,37.0117 75.72,20.3789 135.36,80.3983 155.6,156.6173 C 1760,331.777 1760,620 1760,620 c 0,0 0,288.227 -36.78,426.37" style="fill-opacity:1;fill-rule:nonzero;stroke:none"/>
                  </g>
-                </g>
-            </svg>
-        </a>
-
-        <a title="Vimeo" href="https://vimeo.com/DanielRedacted" target="_blank">
-            <svg id="Vimeo" style="overflow:hidden" fill="#1AB7EA" version="1.1" viewBox="20 20 90 90" x="0px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" y="0px">
-                <g>
-                  <path class="shaddow" d="M101,39.9c-0.4,8.4-6.3,20-17.7,34.7c-11.8,15.3-21.8,23-29.9,23c-5.1,0-9.3-4.7-12.8-14c-2.3-8.6-4.7-17.1-7-25.7c-2.6-9.3-5.4-14-8.4-14c-0.6,0-2.9,1.4-6.8,4.1l-4.1-5.3c4.3-3.8,8.5-7.5,12.7-11.3c5.7-4.9,10-7.5,12.9-7.8c6.7-0.6,10.9,4,12.5,13.8c1.7,10.7,2.9,17.3,3.5,19.9c1.9,8.8,4.1,13.3,6.4,13.3c1.8,0,4.5-2.9,8.2-8.6c3.6-5.7,5.6-10.1,5.8-13.1c0.5-4.9-1.4-7.4-5.8-7.4c-2.1,0-4.2,0.5-6.4,1.4c4.3-14,12.4-20.7,24.4-20.3C97.3,22.8,101.5,28.6,101,39.9z"></path>
                 </g>
             </svg>
         </a>
@@ -198,16 +205,106 @@
 
 
     <div id="page">
-
-        <h1>Comming Soon!</h1>
-        <br>
-        <p>To help You take advantage of the Internet without letting the Internet take advantage of You!</p>
-
-        <!-- <fieldset>
-            <legend><h2>Project OASIS</h2></legend>
-            <a href="Tech-Trust-Violations.html" target="_blank"><h3 style="margin-bottom: 30px;">Big-Tech User-Trust Violations Timeline</h3></a>
-            <a href="WEF-GRR-2024.html" target="_blank"><h3>WEF Global Risk Report 2024 (Summary & Analysis)</h3></a>
-        </fieldset> -->
+        <div onclick="window.open('https://trafficcamphotobooth.com')">
+            <h3>Traffic Cam Photobooth</h3>
+            <p>https://trafficcamphotobooth.com</p>
+            <p>Take pictures of yourself</p>
+        </div>
+        <div onclick="window.open('https://Hubermanlab.com')">
+            <h3>Huberman Lab</h3>
+            <p>https://Hubermanlab.com</p>
+            <p>Health Protocols</p>
+        </div>
+        <div onclick="window.open('https://www.bitaddress.org/')">
+            <h3>Bitaddress.org</h3>
+            <p>https://www.bitaddress.org/</p>
+            <p>Bitcoin Paper Wallet Generator</p>
+        </div>
+        <div onclick="window.open('')">
+            <h3></h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('https://tails.net')">
+            <h3>Tails</h3>
+            <p>https://tails.net</p>
+            <p>USB Operating System</p>
+        </div>
+        <div onclick="window.open('https://Ubuntu.org')">
+            <h3>Ubuntu</h3>
+            <p>https://Ubuntu.org</p>
+            <p>Free Linux Operating System</p>
+        </div>
+        <div onclick="window.open('https://torProject.org')">
+            <h3>The Onion Router <br> [TOR]</h3>
+            <p>https://torProject.org/p>
+            <p>Browse Anonymously</p>
+        </div>
+        <div onclick="window.open('https://duckduckgo.com')">
+            <h3>DuckDuckGo</h3>
+            <p>https://duckduckgo.com</p>
+            <p>Private Search</p>
+        </div>
+        <div onclick="window.open('https://www.ifixit.com')">
+            <h3>iFixIt</h3>
+            <p>https://www.ifixit.com</p>
+            <p>Repair Manulas</p>
+        </div>
+        <div onclick="window.open('')">
+            <h3></h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3></h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3></h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>Signal</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>Threema</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>Session</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3></h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>CCPA</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>GPDR</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>Switzerland</h3>
+            <p></p>
+            <p></p>
+        </div>
+        <div onclick="window.open('')">
+            <h3>Texas</h3>
+            <p></p>
+            <p></p>
+        </div>
     </div>
 
     <script src="script.js"></script>
