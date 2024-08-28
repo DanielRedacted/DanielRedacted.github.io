@@ -69,3 +69,26 @@ document.addEventListener('DOMContentLoaded', function() {
     var event = new Event('resize');
     window.dispatchEvent(event);
 });
+
+
+
+
+
+
+
+function activateLink(element) {
+    document.querySelectorAll('a').forEach(function(a) {
+        a.classList.remove('selected');
+    });
+    element.classList.add('selected');
+}
+
+
+function copyToClipboard(text) {
+    // Use the Clipboard API to copy the text
+    navigator.clipboard.writeText(text).then(function() {
+        alert(`"`+ text + `"` + " copied to clipboard!");
+    }).catch(function(error) {
+        alert("Failed to copy text: " + error);
+    });
+}
