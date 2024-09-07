@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
 
 
     <title>Contact</title>
@@ -150,30 +150,34 @@ p {
 
 
         .app-row {
-            flex:1;
+            /* flex:1; */
             background-color: transparent;
             width:100%;
+            height: fit-content;
             max-width: 8.5in;
 
             font-family: monospace;
             font-size: 8pt;
 
-            margin: auto;
-            padding: calc((100vw - 240px)/10);
-            display: flex;
-            flex-direction: row;
+            margin: 0;
+            padding:0 calc((100vw - 240px)/10);
+            /* display: flex;
+            flex-direction: row; */
             justify-content: space-between;
+
+            display: grid;
+            grid-template-columns: 25% 25% 25% 25%;
         }
         .app-row > div {
-            flex:1;
+            /* flex:1; */
             display:flex;
             flex-direction: column;
             justify-content: center;
             align-content: center;
             background-color: transparent;
-            width:25%;
+            width:calc((100vw - ((100vw - 240px)/5))/4);
+            aspect-ratio: 1/1;
             overflow:visible;
-            /* aspect-ratio: 1/1; */
         }
         .app-row a.app {
             display:flex;
@@ -335,6 +339,7 @@ p {
     }
         </script>
 
+        <span style="flex:1;"></span>
 
         <div class="app-row">
 
@@ -663,6 +668,8 @@ p {
 
         </div>
 
+        <span style="flex:1;"></span>
+
         <div  class="app-row" style="width:100%; height:fit-content; display:flex; align-content: center; justify-content: center;">
             <a onclick="toggleShare()">
                 <svg width="44px" height="44px" viewBox="0 0 24 24" fill="rgba(127,127,127, 0.5)" xmlns="http://www.w3.org/2000/svg">
@@ -679,6 +686,8 @@ p {
                 </svg>
             </a>
         </div>
+
+        <span style="flex:1;"></span>
 
     </div>
 
