@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
 
     <title>Contact</title>
@@ -30,6 +31,7 @@ html {
     -ms-overflow-style: none;   /* Internet Explorer, Edge  */
     scrollbar-width: none;      /* Firefox                  */
     overflow-x: hidden;
+    overscroll-behavior: contain;
 }
 ::-webkit-scrollbar {
     display: none;              /* Chrome, Safari, Opera    */
@@ -176,7 +178,7 @@ p {
             align-content: center;
             background-color: transparent;
             width:calc((100vw - ((100vw - 240px)/5))/4);
-            aspect-ratio: 1/1;
+            aspect-ratio: 1/1.25;
             overflow:visible;
         }
         .app-row a.app {
