@@ -187,6 +187,17 @@ Autonomy Specialist
     </div> -->
 
     <script>
+        // Function to fetch the SVG file content
+        async function fetchSVG(svgPath) {
+            try {
+                const response = await fetch(svgPath);
+                return await response.text(); // Return the SVG content as text
+            } catch (error) {
+                console.error('Error fetching SVG:', error);
+                return '';
+            }
+        }
+
         // Function to fetch contact data from contacts.json and render it on the webpage
         async function fetchAndRenderContacts() {
             try {
@@ -194,8 +205,8 @@ Autonomy Specialist
                 const contactData = await response.json();                  // Parse the JSON data  
                 const contactList = document.querySelector('body');         // Get the HTML element to display contact info
 
-                // Iterate over the contacts and display
-                contactData.contacts.forEach(contact => {
+                // Iterate over the contacts and display using a for...of loop to allow async/await in the loop
+                for (const contact of contactData.contacts) {
                     if (contact.display && contact.value) {
                         const item = document.createElement('div');
                         item.classList.add("row");
@@ -205,6 +216,16 @@ Autonomy Specialist
 
                         // Create an img element for the icon
                         const icon = document.createElement('img');
+                        icon.classList.add("icon");
+                        icon.src = contact.icon;
+                        icon.alt = `${contact.contactType} icon`;
+                        button.appendChild(icon);
+
+
+                        // Fetch the SVG icon and insert it inline
+                        const svgContent = await fetchSVG(contact.icon);
+                        const icon = document.createElement('div');
+                        icon.innerHTML = fetchSVG(); // Insert the SVG content
                         icon.classList.add("icon");
                         icon.src = contact.icon;
                         icon.alt = `${contact.contactType} icon`;
@@ -221,7 +242,7 @@ Autonomy Specialist
                         item.appendChild(button);
                         contactList.appendChild(item);
                     }
-                });
+                };
             } catch (error) {
                 console.error('Error fetching contact data:', error);
             }
