@@ -214,18 +214,10 @@ Autonomy Specialist
                         const button = document.createElement('a');
                         button.href = contact.link;
 
-                        // Create an img element for the icon
-                        const icon = document.createElement('img');
-                        icon.classList.add("icon");
-                        icon.src = contact.icon;
-                        icon.alt = `${contact.contactType} icon`;
-                        button.appendChild(icon);
-
-
                         // Fetch the SVG icon and insert it inline
                         const svgContent = await fetchSVG(contact.icon);
                         const icon = document.createElement('div');
-                        icon.innerHTML = fetchSVG(); // Insert the SVG content
+                        icon.innerHTML = svgContent; // Insert the SVG content
                         icon.classList.add("icon");
                         icon.src = contact.icon;
                         icon.alt = `${contact.contactType} icon`;
