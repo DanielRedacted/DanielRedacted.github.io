@@ -173,8 +173,43 @@ Autonomy Specialist
         // Function to fetch contact data from contacts.json and render it on the webpage
         async function fetchAndRenderContacts() {
             try {
-                const response = await fetch('card assets/contacts.json');  // Fetch the JSON file
-                const contactData = await response.json();                  // Parse the JSON data
+                const response = await fetch('cardAssets/contacts.json');  // Fetch the JSON file
+                // const contactData = await response.json();                  // Parse the JSON data
+                const contactData = {
+                    "contacts": [
+                        {
+                            "contactType": "Email",
+                            "display": false,
+                            "value": "Him@DanielRedacted.com",
+                            "link": "mailto:Him@DanielRedacted.com"
+                        },
+                        {
+                            "contactType": "Phone",
+                            "display": false,
+                            "value": "+1-000-000-0000",
+                            "link": "tel:+10000000000"
+                        },
+                        {
+                            "contactType": "LinkedIn",
+                            "display": false,
+                            "value": "LinkedIn Profile",
+                            "link": "https://www.linkedin.com/in/username"
+                        },
+                        {
+                            "contactType": "X",
+                            "display": false,
+                            "value": "@DanielRedacted",
+                            "link": "https://x.com/DanielRedacted"
+                        },
+                        {
+                            "contactType": "Instagram",
+                            "display": false,
+                            "value": "@DanielRedacted",
+                            "link": "https://www.instagram.com/DanielRedacted"
+                        }
+                        ]
+                    }
+  
                 const contactList = document.querySelector('body');         // Get the HTML element to display contact info
 
                 // Iterate over the contacts and display
