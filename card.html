@@ -196,17 +196,20 @@ Autonomy Specialist
 
                 // Iterate over the contacts and display
                 contactData.contacts.forEach(contact => {
-                    if (contact.display) {
+                    if (contact.display && contact.value) {
                         const item = document.createElement('div');
                         item.classList.add("row");
                         
                         const button = document.createElement('a');
                         button.href = contact.link;
 
-                        const icon = document.createElement('div')
+                        // Create an img element for the icon
+                        const icon = document.createElement('img');
                         icon.classList.add("icon");
+                        icon.src = contact.icon;
+                        icon.alt = `${contact.contactType} icon`;
                         button.appendChild(icon);
-
+        
                         const name = document.createElement('h1')
                         name.textContent = contact.contactType;
                         button.appendChild(name);
