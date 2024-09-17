@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+
+    <title>BizCard</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <style>
+        * {
+    box-sizing: border-box;
+}
+html {
+    height: 100vh;
+    width: 100vw;
+    margin:0;
+    padding:0;
+
+    background-color: black;
+    color:black;
+    
+    -ms-overflow-style: none;   /* Internet Explorer, Edge  */
+    scrollbar-width: none;      /* Firefox                  */
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+::-webkit-scrollbar {
+    display: none;              /* Chrome, Safari, Opera    */
+}
+body {
+    /* background-color: black; */
+    color:white;
+    width: 100%;
+    height:100vh;
+    margin:0;
+    padding:4px;
+
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12pt;
+
+    /* display:flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: center; */
+
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+    #card {
+        border-radius:8px; margin:0; background-color:#222; width:100%; aspect-ratio: 3.5/2
+    }
+    #card #banner {
+        position:relative; width:100%; height:50%; border:1px solid gray; border-radius:8px; background-color: #444;
+    }
+    #card #banner #picture {
+        position:absolute; 
+        left:20px; 
+        bottom:-8px; 
+        height:90%; 
+        aspect-ratio:1/1; 
+        border-radius:50%; 
+        background-color: white;
+    }
+    #card h1, #card h2, #card pre {
+        margin:0;
+        margin-left:8px;
+        padding:none;
+    }
+    #card #name {
+        margin:10px;
+        font-size: 14pt;
+        font-weight: bold;
+    }
+    #card #header {
+        margin-bottom:4px;
+        font-size: 12pt;
+        font-weight: normal;
+    }
+    #card #bio {
+        color: lightgray;
+        font-size: 10pt;
+        border-left: 2px solid gray;
+        margin-left:12px;
+        padding-left: 4px;
+    }
+    #card #interests {
+        width:100%;
+        height:20px;
+        display:flex;
+        flex-direction: row;
+        padding:8px;
+    }
+    #card #interests .interest {
+        background-image: linear-gradient(#444, #444, black);
+        border-radius: 10px;
+        height:20px;
+        width:fit-content;
+        margin: 4px;
+        padding:4px 8px;
+        font-size: 8pt;
+        font-weight: bold;
+        color: lightgray;
+    }
+
+    .row {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        padding:8px;
+    }
+    .row > a {
+        position: relative;
+        flex:1;
+        margin-left:22px;
+        padding-left: 33px;
+        height:44px;
+        background-color: #222;
+        color:white;
+        border-radius: 8px;
+    }
+    .row > a h1 {
+        margin:0;
+        font-size: 12pt;
+    }
+    .row > a p {
+        margin:0;
+        font-size: 10pt;
+        color:lightgray;
+    }
+    .row .icon {
+        position:absolute; height:100%; aspect-ratio:1/1; top:0; left:-22px; border-radius:50%; background-color:#444
+    }
+    </style>
+</head>
+<body>
+    <div id="card">
+        <div id="banner">
+            <div id="picture"></div>
+        </div>
+        <h1 id="name">Daniel ████</h1>
+        <h2 id="header">Let's connect</h2>
+<pre id="bio">Engineer
+Entrepreneur
+Autonomy Specialist
+</pre>
+        <div id="interests">
+            <div class="interest">Engineer</div>
+            <div class="interest">Entrepreneur</div>
+            <div class="interest">Autonomy</div>
+        </div>
+    </div>
+    <div class="row">
+        <button style="box-shadow: 0 2px 0 0 gray; color:white; font-weight:bold; background-color: #444; border:none; border-radius:8px; margin:8px; height:44px; flex:1;">Save Contact</button>
+    </div>
+    <div class="row">
+        <a>
+            <div class="icon"></div>
+            <h1>Phone</h1>
+            <p>(000)000-0000</p>
+        </a>
+    </div>
+    <div class="row"></div>
+    <script>
+        // Function to fetch contact data from contacts.json and render it on the webpage
+        async function fetchAndRenderContacts() {
+            try {
+                const response = await fetch('card assets/contacts.json');  // Fetch the JSON file
+                const contactData = await response.json();                  // Parse the JSON data
+                const contactList = document.querySelector('body');         // Get the HTML element to display contact info
+
+                // Iterate over the contacts and display
+                contactData.contacts.forEach(contact => {
+                    if (contact.display) {
+                        const item = document.createElement('div');
+                        item.classList.add("row");
+                        
+                        const button = document.createElement('a');
+                        button.href = contact.link;
+
+                        const icon = document.createElement('div')
+                        icon.classList.add("icon");
+                        button.appendChild(icon);
+
+                        const name = document.createElement('h1')
+                        name.textContent = contact.contactType;
+                        button.appendChild(name);
+
+                        const details = document.createElement('p')
+                        details.textContent = contact.value;
+                        button.appendChild(details);
+                        
+                        item.appendChild(button);
+                        contactList.appendChild(item);
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching contact data:', error);
+            }
+        }
+
+        fetchAndRenderContacts();   // Call the function to fetch and render the contacts when the page loads
+
+    </script>
+</body>
+</html>
