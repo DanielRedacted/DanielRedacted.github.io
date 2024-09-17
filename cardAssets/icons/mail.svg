@@ -4,10 +4,10 @@
 	<desc>Created with Sketch.</desc>
 	<g sketch:type="MSPage">
 		<g id="Mail" transform="translate(1.000000, 1.000000)" sketch:type="MSLayerGroup">
-			<path id="Shape" sketch:type="MSShapeGroup" fill="none" stroke="#58595B" stroke-width="2" d="M0,36c0,1.104,0.896,2,2,2h58c1.104,0,2-0.896,2-2V2c0-1.104-0.896-2-2-2H2C0.896,0,0,0.896,0,2V36L0,36z"/>
-			<path id="Shape_4_" sketch:type="MSShapeGroup" fill="none" stroke="#58595B" stroke-width="2" d="M62,2c0-1.104-31,22.032-31,22.032S0,1.144,0,2"/>
-			<path id="Shape_2_" sketch:type="MSShapeGroup" fill="none" stroke="#58595B" stroke-width="2" d="M61,37L37,20"/>
-			<path id="Shape_3_" sketch:type="MSShapeGroup" fill="none" stroke="#58595B" stroke-width="2" d="M1,37l24-17"/>
+			<path sketch:type="MSShapeGroup" stroke-width="2" d="M0,36c0,1.104,0.896,2,2,2h58c1.104,0,2-0.896,2-2V2c0-1.104-0.896-2-2-2H2C0.896,0,0,0.896,0,2V36L0,36z"/>
+			<path sketch:type="MSShapeGroup" stroke-width="2" d="M62,2c0-1.104-31,22.032-31,22.032S0,1.144,0,2"/>
+			<path sketch:type="MSShapeGroup" stroke-width="2" d="M61,37L37,20"/>
+			<path sketch:type="MSShapeGroup" stroke-width="2" d="M1,37l24-17"/>
 		</g>
 	</g>
 </svg>
