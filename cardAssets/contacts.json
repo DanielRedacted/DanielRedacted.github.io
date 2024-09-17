@@ -1,10 +1,16 @@
 {
     "contacts": [
       {
+        "contactType": "Website",
+        "display": true,
+        "value": "DanielRedacted.net",
+        "link": "https://DanielRedacted.net"
+      },
+      {
         "contactType": "Email",
         "display": true,
-        "value": "Him@DanielRedacted.com",
-        "link": "mailto:Him@DanielRedacted.com"
+        "value": "Him@DanielRedacted.net",
+        "link": "mailto:Him@DanielRedacted.net"
       },
       {
         "contactType": "Phone",
