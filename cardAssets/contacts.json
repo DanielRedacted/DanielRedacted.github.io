@@ -2,31 +2,31 @@
     "contacts": [
       {
         "contactType": "Email",
-        "display": false,
+        "display": true,
         "value": "Him@DanielRedacted.com",
         "link": "mailto:Him@DanielRedacted.com"
       },
       {
         "contactType": "Phone",
-        "display": false,
+        "display": true,
         "value": "+1-000-000-0000",
         "link": "tel:+10000000000"
       },
       {
         "contactType": "LinkedIn",
-        "display": false,
+        "display": true,
         "value": "LinkedIn Profile",
         "link": "https://www.linkedin.com/in/username"
       },
       {
         "contactType": "X",
-        "display": false,
+        "display": true,
         "value": "@DanielRedacted",
         "link": "https://x.com/DanielRedacted"
       },
       {
         "contactType": "Instagram",
-        "display": false,
+        "display": true,
         "value": "@DanielRedacted",
         "link": "https://www.instagram.com/DanielRedacted"
       }
