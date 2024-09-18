@@ -135,7 +135,7 @@ body {
     }
     .row > a {
         display: flex;
-        /* flex-direction: column; */
+        flex-direction: column;
         align-content: space-evenly;
         justify-content: space-evenly;
         position: relative;
@@ -298,6 +298,24 @@ Autonomy Specialist
         }
 
         fetchAndRenderContacts();   // Call the function to fetch and render the contacts when the page loads
+
+
+        // Function to request fullscreen
+        function requestFullscreen() {
+        const elem = document.documentElement; // This selects the <html> element (the entire document)
+
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+            elem.msRequestFullscreen();
+        }
+        }
+
+        requestFullscreen();
 
     </script>
 </body>

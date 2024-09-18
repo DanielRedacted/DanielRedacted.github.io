@@ -1,4 +1,11 @@
-{
+{   
+    "details": [{
+      "name": "",
+      "header": "",
+      "bio": "",
+      "interests": ""
+    }],
+
     "contacts": [
       {
         "contactType": "Website",
@@ -48,6 +55,10 @@
         "icon": "",
         "shape": "square"
       }
+    ],
+
+    "settings": [
+
     ]
   }
   
