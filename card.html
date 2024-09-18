@@ -159,7 +159,7 @@ body {
         height:100%; 
         aspect-ratio:1/1; 
         top:0; left:-22px; 
-        border-radius:50%; 
+        /* border-radius:50%;  */
         background-color:#444;
         padding:auto;
         overflow:hidden;
@@ -252,6 +252,11 @@ Autonomy Specialist
                             icon.innerHTML = svgContent; // Insert the SVG content
                             icon.src = contact.icon;
                             icon.alt = `${contact.contactType} icon`;
+                        }
+                        if (contact.shape == "circle") {
+                            icon.style.borderRadius = "50%;"
+                        } else {
+                            icon.style.borderRadius = "8px;"
                         }
                         button.appendChild(icon);
 

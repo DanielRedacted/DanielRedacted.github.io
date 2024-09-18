@@ -5,42 +5,48 @@
         "display": true,
         "value": "DanielRedacted.net",
         "link": "https://DanielRedacted.net",
-        "icon": "cardAssets/icons/website.svg"
+        "icon": "cardAssets/icons/website.svg",
+        "shape": "circle"
       },
       {
         "contactType": "Email",
         "display": true,
         "value": "Him@DanielRedacted.net",
         "link": "mailto:Him@DanielRedacted.net",
-        "icon": "cardAssets/icons/mail.svg"
+        "icon": "cardAssets/icons/mail.svg",
+        "shape": "circle"
       },
       {
         "contactType": "Phone",
         "display": true,
         "value": "+1-000-000-0000",
         "link": "tel:+10000000000",
-        "icon": "cardAssets/icons/phone.svg"
+        "icon": "cardAssets/icons/phone.svg",
+        "shape": "circle"
       },
       {
         "contactType": "LinkedIn",
         "display": true,
         "value": "",
         "link": "https://www.linkedin.com/in/username",
-        "icon": ""
+        "icon": "",
+        "shape": "square"
       },
       {
         "contactType": "X",
         "display": true,
         "value": "@DanielRedacted",
         "link": "https://x.com/DanielRedacted",
-        "icon": ""
+        "icon": "",
+        "shape": "square"
       },
       {
         "contactType": "Instagram",
         "display": true,
         "value": "@DanielRedacted",
         "link": "https://www.instagram.com/DanielRedacted",
-        "icon": ""
+        "icon": "",
+        "shape": "square"
       }
     ]
   }
