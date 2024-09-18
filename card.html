@@ -134,6 +134,10 @@ body {
         padding:8px;
     }
     .row > a {
+        display: flex;
+        /* flex-direction: column; */
+        align-content: space-evenly;
+        justify-content: space-evenly;
         position: relative;
         flex:1;
         margin-left:22px;
@@ -205,7 +209,16 @@ Autonomy Specialist
         </div>
     </div>
     <div class="row">
-        <button style="box-shadow: 0 2px 0 0 gray; color:white; font-weight:bold; background-color: #444; border:none; border-radius:8px; margin:8px; height:44px; flex:1;">Save Contact</button>
+        <a style="box-shadow: 0 2px 0 0 gray; color:white; font-weight:bold; background-color: #444; border:none; border-radius:8px; margin:8px; padding:0; height:44px; flex:1;">
+            <p style="margin:auto;">Save Contact</p>
+            <div class="arrow">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <path d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                </svg>
+            </div>
+        </a>
     </div>
     <!-- <div class="row">
         <a>
@@ -263,7 +276,7 @@ Autonomy Specialist
                         arrow.classList.add("arrow");
                         const svgContent = await fetchSVG("cardAssets/icons/right-arrow.svg");
                         arrow.innerHTML = svgContent; // Insert the SVG content
-                        arrow.src = contact.icon;
+                        // arrow.src = contact.icon;
                         arrow.alt = `${contact.contactType} icon`;
                         button.appendChild(arrow);
 
