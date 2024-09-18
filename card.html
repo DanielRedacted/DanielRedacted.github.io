@@ -255,9 +255,12 @@ Autonomy Specialist
                         }
                         button.appendChild(icon);
 
-                        const arrow = document.createElement('img');
+                        const arrow = document.createElement('div');
                         arrow.classList.add("arrow");
-                        arrow.src = "cardAssets/icons/right-arrow.svg";
+                        const svgContent = await fetchSVG("cardAssets/icons/right-arrow.svg");
+                        arrow.innerHTML = svgContent; // Insert the SVG content
+                        arrow.src = contact.icon;
+                        arrow.alt = `${contact.contactType} icon`;
                         button.appendChild(arrow);
 
                         const name = document.createElement('h1')
