@@ -253,10 +253,10 @@ Autonomy Specialist
                             icon.src = contact.icon;
                             icon.alt = `${contact.contactType} icon`;
                         }
-                        if (contact.shape == "circle") {
-                            icon.style.borderRadius = "50%;"
+                        if (contact.shape === "circle") {
+                            icon.style.borderRadius = "50%";  // Remove the semicolon from the string
                         } else {
-                            icon.style.borderRadius = "8px;"
+                            icon.style.borderRadius = "8px";  // Remove the semicolon from the string
                         }
                         button.appendChild(icon);
 
