@@ -164,7 +164,19 @@ body {
         padding:auto;
         overflow:hidden;
     }
-    .row .icon svg {
+    .row .arrow {
+        position:absolute;
+        display:flex;
+        height:100%; 
+        aspect-ratio:1/1; 
+        top:0; right:0; 
+        background-color:transparent;
+        padding:auto;
+        overflow:hidden;
+    }
+    .row .icon svg,
+    .row .arrow svg
+     {
         width: 50%;
         height: auto;
         fill:white;
@@ -233,15 +245,20 @@ Autonomy Specialist
                         button.href = contact.link;
 
                         const icon = document.createElement('div');
+                        icon.classList.add("icon");
                         if (contact.icon) {
                             // Fetch the SVG icon and insert it inline
                             const svgContent = await fetchSVG(contact.icon);
                             icon.innerHTML = svgContent; // Insert the SVG content
-                            icon.classList.add("icon");
                             icon.src = contact.icon;
                             icon.alt = `${contact.contactType} icon`;
                         }
                         button.appendChild(icon);
+
+                        const arrow = document.createElement('img');
+                        arrow.classList.add("arrow");
+                        arrow.src = "cardAssets/icons/right-arrow.svg";
+                        button.appendChild(arrow);
 
                         const name = document.createElement('h1')
                         name.textContent = contact.contactType;
