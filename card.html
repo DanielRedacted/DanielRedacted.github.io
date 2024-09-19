@@ -215,9 +215,6 @@
         <h2 id="headline">Let's connect</h2>
         <pre id="bio"></pre>
         <div id="interests">
-            <div class="interest">Engineer</div>
-            <div class="interest">Entrepreneur</div>
-            <div class="interest">Autonomy</div>
         </div>
     </div>
     <div class="row">
@@ -261,9 +258,19 @@
                 for (const details of contactData.details) {
                     fullName.innerHTML = details.name;
                     document.title = details.name;
+
                     universalUsername.innerHTML = details.universalUsername;
                     headline.innerHTML = details.headline;
                     bio.innerHTML = details.bio;
+
+                    interests = details.interests;
+                    const interestsArray = interests.split(", ");
+                    for (let interest of interestsArray) {
+                        const div = document.createElement('div');
+                        div.classList.add("interest");
+                        div.innerHTML = interest;
+                        interests.appendChild(div);
+                    }
                 }
 
                 // Iterate over the contacts and display using a for...of loop to allow async/await in the loop
