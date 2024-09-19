@@ -263,13 +263,13 @@
                     headline.innerHTML = details.headline;
                     bio.innerHTML = details.bio;
 
-                    interests = details.interests;
-                    const interestsArray = interests.split(", ");
+                    interestList = details.interests;
+                    const interestsArray = interestList.split(", ");
                     for (let interest of interestsArray) {
-                        const div = document.createElement('div');
-                        div.classList.add("interest");
-                        div.innerHTML = interest;
-                        interests.appendChild(div);
+                        const interestDiv = document.createElement('div');
+                        interestDiv.classList.add("interest");
+                        interestDiv.innerHTML = interest;
+                        interests.appendChild(interestDiv);
                     }
                 }
 
