@@ -57,7 +57,7 @@
         "shape": "square"
       },
       {
-        "contactType": "Substacked",
+        "contactType": "Substack",
         "display": true,
         "value": "@Username",
         "link": "https://Username.substack.com",

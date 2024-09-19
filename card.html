@@ -282,7 +282,8 @@
                         icon.classList.add("icon");
                         if (contact.icon) {
                             // Fetch the SVG icon and insert it inline
-                            const svgContent = await fetchSVG(contact.icon);
+                            const svgURL = "cardAssets/icons/" + contact.contactType + ".svg";
+                            const svgContent = await fetchSVG(svgURL);
                             icon.innerHTML = svgContent; // Insert the SVG content
                             icon.src = contact.icon;
                             icon.alt = `${contact.contactType} icon`;
