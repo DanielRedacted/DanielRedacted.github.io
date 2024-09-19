@@ -232,13 +232,6 @@
             </div>
         </a>
     </div>
-    <!-- <div class="row">
-        <a>
-            <div class="icon"></div>
-            <h1>Phone</h1>
-            <p>(000)000-0000</p>
-        </a>
-    </div> -->
 
     <script>
         const fullName = document.getElementById("name");
@@ -291,11 +284,11 @@
                         icon.innerHTML = svgContent; // Insert the SVG content
                         icon.src = contact.icon;
                         icon.alt = `${contact.contactType} icon`;
-                            
-                        if (contact.shape === "circle") {
-                            icon.style.borderRadius = "50%";  // Remove the semicolon from the string
+                        
+                        if (["Phone", "Email", "Website"].includes(contact.contactType)) {
+                            icon.style.borderRadius = "50%";    // circle icon
                         } else {
-                            icon.style.borderRadius = "8px";  // Remove the semicolon from the string
+                            icon.style.borderRadius = "8px";    // square (app) icon
                         }
                         button.appendChild(icon);
 

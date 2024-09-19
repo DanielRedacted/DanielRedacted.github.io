@@ -1,115 +1,101 @@
 {   
-    "details": [{
-      "name": "Firstname Lastname",
-      "universalUsername": "@Username",
-      "headline": "Headline",
-      "bio": "Your bio.",
-      "interests": ""
-    }],
+  "details": [{
+    "name": "Firstname Lastname",
+    "universalUsername": "@Username",
+    "headline": "Headline",
+    "bio": "Your bio.",
+    "interests": ""
+  }],
 
-    "contacts": [
-      {
-        "contactType": "Phone",
-        "display": true,
-        "value": "000-000-0000",
-        "link": "tel:+10000000000",
-        "shape": "circle"
-      },
-      {
-        "contactType": "Email",
-        "display": true,
-        "value": "User@example.com",
-        "link": "mailto:User@example.com",
-        "shape": "circle"
-      },
-      {
-        "contactType": "Website",
-        "display": true,
-        "value": "https://example.com",
-        "link": "https://example.com",
-        "shape": "circle"
-      },
-      {
-        "contactType": "LinkedIn",
-        "display": true,
-        "value": "",
-        "link": "https://www.linkedin.com/in/username",
-        "shape": "square"
-      },
-      {
-        "contactType": "X",
-        "display": true,
-        "value": "@Username",
-        "link": "https://x.com/Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "GitHub",
-        "display": true,
-        "value": "@Username",
-        "link": "https://github.com/Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "Substack",
-        "display": true,
-        "value": "@Username",
-        "link": "https://Username.substack.com",
-        "shape": "square"
-      },
-      {
-        "contactType": "Reddit",
-        "display": true,
-        "value": "@Username",
-        "link": "https://www.reddit.com/u/Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "YouTube",
-        "display": true,
-        "value": "@Username",
-        "link": "https://www.youtube.com/@Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "Rumble",
-        "display": true,
-        "value": "@Username",
-        "link": "https://rumble.com/c/...",
-        "shape": "square"
-      },
-      {
-        "contactType": "TruthSocial",
-        "display": true,
-        "value": "@Username",
-        "link": "https://truthsocial.com/@Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "Vimeo",
-        "display": true,
-        "value": "@Username",
-        "link": "https://vimeo.com/Username",
-        "shape": "square"
-      },
-      {
-        "contactType": "Facebook",
-        "display": true,
-        "value": "@Username",
-        "link": "",
-        "shape": "square"
-      },
-      {
-        "contactType": "Instagram",
-        "display": true,
-        "value": "@Username",
-        "link": "https://www.instagram.com/Username",
-        "shape": "square"
-      }
-    ],
+  "contacts": [
+    {
+      "contactType": "Phone",
+      "display": true,
+      "value": "000-000-0000",
+      "link": "tel:+10000000000"
+    },
+    {
+      "contactType": "Email",
+      "display": true,
+      "value": "User@example.com",
+      "link": "mailto:User@example.com"
+    },
+    {
+      "contactType": "Website",
+      "display": true,
+      "value": "https://example.com",
+      "link": "https://example.com"
+    },
+    {
+      "contactType": "LinkedIn",
+      "display": true,
+      "value": "@Username",
+      "link": "https://www.linkedin.com/in/username"
+    },
+    {
+      "contactType": "X",
+      "display": true,
+      "value": "@Username",
+      "link": "https://x.com/Username"
+    },
+    {
+      "contactType": "GitHub",
+      "display": true,
+      "value": "@Username",
+      "link": "https://github.com/Username"
+    },
+    {
+      "contactType": "Substack",
+      "display": true,
+      "value": "@Username",
+      "link": "https://Username.substack.com"
+    },
+    {
+      "contactType": "Reddit",
+      "display": true,
+      "value": "@Username",
+      "link": "https://www.reddit.com/u/Username"
+    },
+    {
+      "contactType": "YouTube",
+      "display": true,
+      "value": "@Username",
+      "link": "https://www.youtube.com/@Username"
+    },
+    {
+      "contactType": "Rumble",
+      "display": true,
+      "value": "@Username",
+      "link": "https://rumble.com/c/..."
+    },
+    {
+      "contactType": "TruthSocial",
+      "display": true,
+      "value": "@Username",
+      "link": "https://truthsocial.com/@Username"
+    },
+    {
+      "contactType": "Vimeo",
+      "display": true,
+      "value": "@Username",
+      "link": "https://vimeo.com/Username"
+    },
+    {
+      "contactType": "Facebook",
+      "display": true,
+      "value": "@Username",
+      "link": ""
+    },
+    {
+      "contactType": "Instagram",
+      "display": true,
+      "value": "@Username",
+      "link": "https://www.instagram.com/Username"
+    }
+  ],
 
-    "settings": [
+  "settings": [
 
-    ]
-  }
+  ]
+}
   
