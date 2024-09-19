@@ -13,7 +13,6 @@
         "display": true,
         "value": "000-000-0000",
         "link": "tel:+10000000000",
-        "icon": "cardAssets/icons/phone.svg",
         "shape": "circle"
       },
       {
@@ -21,7 +20,6 @@
         "display": true,
         "value": "User@example.com",
         "link": "mailto:User@example.com",
-        "icon": "cardAssets/icons/mail.svg",
         "shape": "circle"
       },
       {
@@ -29,7 +27,6 @@
         "display": true,
         "value": "https://example.com",
         "link": "https://example.com",
-        "icon": "cardAssets/icons/website.svg",
         "shape": "circle"
       },
       {
@@ -37,7 +34,6 @@
         "display": true,
         "value": "",
         "link": "https://www.linkedin.com/in/username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -45,7 +41,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://x.com/Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -53,7 +48,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://github.com/Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -61,7 +55,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://Username.substack.com",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -69,7 +62,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://www.reddit.com/u/Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -77,7 +69,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://www.youtube.com/@Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -85,7 +76,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://rumble.com/c/...",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -93,7 +83,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://truthsocial.com/@Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -101,7 +90,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://vimeo.com/Username",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -109,7 +97,6 @@
         "display": true,
         "value": "@Username",
         "link": "",
-        "icon": "",
         "shape": "square"
       },
       {
@@ -117,7 +104,6 @@
         "display": true,
         "value": "@Username",
         "link": "https://www.instagram.com/Username",
-        "icon": "",
         "shape": "square"
       }
     ],
