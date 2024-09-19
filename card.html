@@ -280,14 +280,14 @@
 
                         const icon = document.createElement('div');
                         icon.classList.add("icon");
-                        if (contact.icon) {
-                            // Fetch the SVG icon and insert it inline
-                            const svgURL = "cardAssets/icons/" + contact.contactType + ".svg";
-                            const svgContent = await fetchSVG(svgURL);
-                            icon.innerHTML = svgContent; // Insert the SVG content
-                            icon.src = contact.icon;
-                            icon.alt = `${contact.contactType} icon`;
-                        }
+                        
+                        // Fetch the SVG icon and insert it inline
+                        const svgURL = "cardAssets/icons/" + contact.contactType + ".svg";
+                        const svgContent = await fetchSVG(svgURL);
+                        icon.innerHTML = svgContent; // Insert the SVG content
+                        icon.src = contact.icon;
+                        icon.alt = `${contact.contactType} icon`;
+                            
                         if (contact.shape === "circle") {
                             icon.style.borderRadius = "50%";  // Remove the semicolon from the string
                         } else {
@@ -297,8 +297,8 @@
 
                         const arrow = document.createElement('div');
                         arrow.classList.add("arrow");
-                        const svgContent = await fetchSVG("cardAssets/icons/right-arrow.svg");
-                        arrow.innerHTML = svgContent; // Insert the SVG content
+                        const svgArrow = await fetchSVG("cardAssets/icons/right-arrow.svg");
+                        arrow.innerHTML = svgArrow; // Insert the SVG content
                         // arrow.src = contact.icon;
                         arrow.alt = `${contact.contactType} icon`;
                         button.appendChild(arrow);
