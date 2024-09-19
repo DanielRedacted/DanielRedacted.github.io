@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
     <meta name="apple-mobile-web-app-capable" content="yes">
 
-
     <title>BizCard</title>
+
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
@@ -18,43 +17,43 @@
     <style>
         * {
     box-sizing: border-box;
-}
-html {
-    height: 100vh;
-    width: 100vw;
-    margin:0;
-    padding:0;
+    }
+    html {
+        height: 100vh;
+        width: 100vw;
+        margin:0;
+        padding:0;
 
-    background-color: black;
-    color:black;
-    
-    -ms-overflow-style: none;   /* Internet Explorer, Edge  */
-    scrollbar-width: none;      /* Firefox                  */
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-}
-::-webkit-scrollbar {
-    display: none;              /* Chrome, Safari, Opera    */
-}
-body {
-    /* background-color: black; */
-    color:white;
-    width: 100%;
-    height:100vh;
-    margin:0;
-    padding:4px;
+        background-color: black;
+        color:black;
+        
+        -ms-overflow-style: none;   /* Internet Explorer, Edge  */
+        scrollbar-width: none;      /* Firefox                  */
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+    }
+    ::-webkit-scrollbar {
+        display: none;              /* Chrome, Safari, Opera    */
+    }
+    body {
+        /* background-color: black; */
+        color:white;
+        width: 100%;
+        height:100vh;
+        margin:0;
+        padding:4px;
 
-    font-family: Helvetica, Arial, sans-serif;
-    font-size: 12pt;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 12pt;
 
-    /* display:flex;
-    flex-direction: column;
-    align-content: center;
-    justify-content: center; */
+        /* display:flex;
+        flex-direction: column;
+        align-content: center;
+        justify-content: center; */
 
-    overflow-x: hidden;
-    overflow-y: scroll;
-}
+        overflow-x: hidden;
+        overflow-y: scroll;
+    }
 
     @media (orientation: landscape) {
         body {
@@ -97,7 +96,7 @@ body {
         font-size: 14pt;
         font-weight: bold;
     }
-    #card #header {
+    #card #headline {
         margin-bottom:4px;
         font-size: 12pt;
         font-weight: normal;
@@ -199,10 +198,8 @@ body {
             <img id="picture" src="cardAssets/profile.jpg"/>
         </div>
         <h1 id="name">Daniel ████</h1>
-        <h2 id="header">Let's connect</h2>
-<pre id="bio">Engineer
-Autonomy Specialist
-</pre>
+        <h2 id="headline">Let's connect</h2>
+<pre id="bio"></pre>
         <div id="interests">
             <div class="interest">Engineer</div>
             <div class="interest">Entrepreneur</div>
@@ -230,6 +227,10 @@ Autonomy Specialist
     </div> -->
 
     <script>
+        const fullName = document.getElementById("name");
+        const headline = document.getElementById("headline");
+        const bio = document.getElementById("bio");
+
         // Function to fetch the SVG file content
         async function fetchSVG(svgPath) {
             try {
@@ -247,6 +248,13 @@ Autonomy Specialist
                 const response = await fetch('cardAssets/contacts.json');  // Fetch the JSON file
                 const contactData = await response.json();                  // Parse the JSON data  
                 const contactList = document.querySelector('body');         // Get the HTML element to display contact info
+
+                for (const profile of contactData.profile) {
+                    fullName.innerHTML = profile.name;
+                    document.title = profile.name;
+                    headline.innerHTML = profile.headline;
+                    bio.innerHTML = bio.headline;
+                }
 
                 // Iterate over the contacts and display using a for...of loop to allow async/await in the loop
                 for (const contact of contactData.contacts) {
@@ -303,17 +311,17 @@ Autonomy Specialist
 
         // Function to request fullscreen
         function requestFullscreen() {
-        const elem = document.documentElement; // This selects the <html> element (the entire document)
+            const elem = document.documentElement; // This selects the <html> element (the entire document)
 
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.mozRequestFullScreen) { // Firefox
-            elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, and Opera
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) { // IE/Edge
-            elem.msRequestFullscreen();
-        }
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { // Firefox
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE/Edge
+                elem.msRequestFullscreen();
+            }
         }
 
         requestFullscreen();
