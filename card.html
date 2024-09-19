@@ -197,6 +197,9 @@
         stroke: white;
         margin:auto
     }
+    .row .icon svg .shaddow {
+        fill:white;
+    }
     .row .icon svg.mail {
         stroke:#444;
     }
@@ -210,7 +213,7 @@
         <h1 id="name">Daniel ████</h1>
         <p id="universalUsername"></p>
         <h2 id="headline">Let's connect</h2>
-<pre id="bio"></pre>
+        <pre id="bio"></pre>
         <div id="interests">
             <div class="interest">Engineer</div>
             <div class="interest">Entrepreneur</div>
@@ -242,6 +245,7 @@
         const universalUsername = document.getElementById("universalUsername");
         const headline = document.getElementById("headline");
         const bio = document.getElementById("bio");
+        const interests = document.getElementById("interests");
 
         // Function to fetch the SVG file content
         async function fetchSVG(svgPath) {
