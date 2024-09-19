@@ -8,27 +8,27 @@
 
     "contacts": [
       {
-        "contactType": "Website",
+        "contactType": "Phone",
         "display": true,
-        "value": "DanielRedacted.net",
-        "link": "https://DanielRedacted.net",
-        "icon": "cardAssets/icons/website.svg",
+        "value": "000-000-0000",
+        "link": "tel:+10000000000",
+        "icon": "cardAssets/icons/phone.svg",
         "shape": "circle"
       },
       {
         "contactType": "Email",
         "display": true,
-        "value": "Him@DanielRedacted.net",
-        "link": "mailto:Him@DanielRedacted.net",
+        "value": "User@example.com",
+        "link": "mailto:User@example.com",
         "icon": "cardAssets/icons/mail.svg",
         "shape": "circle"
       },
       {
-        "contactType": "Phone",
+        "contactType": "Website",
         "display": true,
-        "value": "+1-000-000-0000",
-        "link": "tel:+10000000000",
-        "icon": "cardAssets/icons/phone.svg",
+        "value": "https://example.com",
+        "link": "https://example.com",
+        "icon": "cardAssets/icons/website.svg",
         "shape": "circle"
       },
       {
@@ -42,16 +42,80 @@
       {
         "contactType": "X",
         "display": true,
-        "value": "@DanielRedacted",
-        "link": "https://x.com/DanielRedacted",
+        "value": "@Username",
+        "link": "https://x.com/Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "GitHub",
+        "display": true,
+        "value": "@Username",
+        "link": "https://github.com/Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "Substacked",
+        "display": true,
+        "value": "@Username",
+        "link": "https://Username.substack.com",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "Reddit",
+        "display": true,
+        "value": "@Username",
+        "link": "https://www.reddit.com/u/Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "YouTube",
+        "display": true,
+        "value": "@Username",
+        "link": "https://www.youtube.com/@Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "Rumble",
+        "display": true,
+        "value": "@Username",
+        "link": "https://rumble.com/c/...",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "TruthSocial",
+        "display": true,
+        "value": "@Username",
+        "link": "https://truthsocial.com/@Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "Vimeo",
+        "display": true,
+        "value": "@Username",
+        "link": "https://vimeo.com/Username",
+        "icon": "",
+        "shape": "square"
+      },
+      {
+        "contactType": "Facebook",
+        "display": true,
+        "value": "@Username",
+        "link": "",
         "icon": "",
         "shape": "square"
       },
       {
         "contactType": "Instagram",
         "display": true,
-        "value": "@DanielRedacted",
-        "link": "https://www.instagram.com/DanielRedacted",
+        "value": "@Username",
+        "link": "https://www.instagram.com/Username",
         "icon": "",
         "shape": "square"
       }
