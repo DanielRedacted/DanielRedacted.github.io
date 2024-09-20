@@ -242,7 +242,7 @@
         <div id="interests"></div>
     </div>
     <div class="row">
-        <a href="cardAssets/contact.vcf" download="cardAssets/contact.vcf" style="box-shadow: 0 2px 0 0 gray; color:white; font-weight:bold; background-color: #444; border:none; border-radius:8px; margin:8px; padding:0; height:44px; flex:1;">
+        <a id="saveContactButton" style="box-shadow: 0 2px 0 0 gray; color:white; font-weight:bold; background-color: #444; border:none; border-radius:8px; margin:8px; padding:0; height:44px; flex:1;">
             <p style="margin:auto;">Save Contact</p>
             <div class="arrow">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -260,6 +260,7 @@
         const headline = document.getElementById("headline");
         const bio = document.getElementById("bio");
         const interests = document.getElementById("interests");
+        const saveContactButton = document.getElementById("saveContactButton");
 
         // Function to fetch the SVG file content
         async function fetchSVG(svgPath) {
@@ -270,6 +271,38 @@
                 console.error('Error fetching SVG:', error);
                 return '';
             }
+        }
+
+        function generateVCard(jsonData) {
+            let vCard = "BEGIN:VCARD\nVERSION:3.0\n";
+
+            // Add details
+            const details = jsonData.details[0];
+            if (details.name) vCard += `FN:${details.name}\n`;
+            if (details.universalUsername) vCard += `NICKNAME:${details.universalUsername}\n`;
+            if (details.headline) vCard += `TITLE:${details.headline}\n`;
+            if (details.bio) vCard += `NOTE:${details.bio}\n`;
+            if (details.location) vCard += `ADR:;;${details.location}\n`;
+            if (details.interests) vCard += `CATEGORIES:${details.interests.split(", ").join(",")}\n`;
+
+            // Add contacts
+            jsonData.contacts.forEach(contact => {
+                if (contact.display && contact.link) {
+                    if (contact.contactType === "Phone") {
+                        vCard += `TEL;TYPE=cell:${contact.value}\n`;
+                    } else if (contact.contactType === "Email") {
+                        vCard += `EMAIL;TYPE=internet:${contact.value}\n`;
+                    } else if (contact.contactType === "Website") {
+                        vCard += `URL:${contact.link}\n`;
+                    } else {
+                        vCard += `X-SOCIALPROFILE;TYPE=${contact.contactType}:${contact.link}\n`;
+                    }
+                }
+            });
+
+            vCard += "END:VCARD";
+
+            return vCard;
         }
 
         // Function to fetch contact data from contacts.json and render it on the webpage
@@ -343,12 +376,27 @@
                         contactList.appendChild(item);
                     }
                 };
+
+
+                const vCardData = generateVCard(contactData);
+
+                // Create a Blob from the vCard data
+                const blob = new Blob([vCardData], { type: 'text/vcard' });
+
+                saveContactButton.href = URL.createObjectURL(blob);
+                saveContactButton.download = 'contact.vcf';  // Set the file name
+
             } catch (error) {
                 console.error('Error fetching contact data:', error);
             }
         }
 
         fetchAndRenderContacts();   // Call the function to fetch and render the contacts when the page loads
+
+
+
+
+
 
 
         // Function to request fullscreen
