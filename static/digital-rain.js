@@ -1,5 +1,6 @@
 // digital-rain.js 
 
+// This is old code I wrote, i want to move it to an AP0110 copyright
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -29,20 +30,20 @@
 function startDigitalRain(options = {}) {
     // Get options or use defaults
     const canvas = options.canvasID || 'digital-rain';  // Renamed canvasId to canvas
-    const dropColor = options.dropColor || '#b0fcde'    // Color of leading char
+    const dropColor = options.dropColor || '#b0fcde';   // Color of leading char
     const trailColor = options.trailColor || '#03A062'; // Renamed fontColor to color
-    const backgroundColor = options.backgroundColor || 'rgb(0, 0, 0)';   // Canvas color (must be rgb format)
-    const trailLength = options.backgroundColor || '7'; // (0-10)
+    const backgroundColor = options.backgroundColor || 'rgb(255, 255, 255)'; // Canvas color (must be rgb format)
+    const trailLength = options.trailLength || 7;       // (0-10)
     const fontSize = options.fontSize || 14;            // Char size in px
     const speedCoeff = options.speedCoeff || 25;        // Speed of the falling drops
     const duration = options.duration || 0;             // Duration of animation in seconds (0 === infinite)
+    const divID = options.divID || null;                // ID of the div to be resized
 
     const seed = 1999;
 
     // Get the canvas and its rendering context
     const canvasElement = document.getElementById(canvas);
     const ctx = canvasElement.getContext('2d');  
-
 
     // Ensure the input is within the valid range (0-10)
     if (trailLength < 0 || trailLength > 10) {
@@ -60,9 +61,30 @@ function startDigitalRain(options = {}) {
     canvasElement.style.fontFamily = "monospace";
 
 
-    // Set canvas dimensions to match the window size
-    canvasElement.width = window.innerWidth;
-    canvasElement.height = window.innerHeight;
+    // Get the parent container of the canvasElement
+    const container = canvasElement.parentElement;
+
+    // Define a function to resize the canvasElement to match the container's size
+    const resizeCanvas = () => {
+    // Get the current rendered size of the container (in pixels)
+    const rect = container.getBoundingClientRect();
+
+    // Set the canvasElement internal pixel dimensions to match the container
+    canvasElement.width = rect.width;
+    canvasElement.height = rect.height;
+    };
+
+    // Create a ResizeObserver to watch for changes in the container's size
+    const observer = new ResizeObserver(() => {
+    // When the container resizes, adjust the canvasElement size accordingly
+    resizeCanvas();
+    });
+
+    // Start observing the container for size changes
+    observer.observe(container);
+    
+    // Initial resize
+    resizeCanvas();
 
     // Calculate the number of rows & columns
     const rows = canvasElement.height / fontSize;
@@ -183,6 +205,42 @@ function startDigitalRain(options = {}) {
         drawRain();   // Draw the current frame
         setTimeout(() => requestAnimationFrame(animateRain), speedCoeff); // Schedule the next frame
     }
+
+    // Function to align the div to the grid
+    function alignDivToGrid() {
+        if (!divID) return; // If no divID is provided, do nothing
+
+        // Get the div element
+        const div = document.getElementById(divID);
+        if (!div) return; // If the div does not exist, do nothing
+        
+        // Define the character size and grid spacing
+        const charSize = fontSize; // Use the fontSize defined in options
+        const gridSpacing = charSize; // Assuming grid spacing is equal to character size
+
+        // Get the current position and size of the div
+        const rect = div.getBoundingClientRect();
+        const { top, left, width, height } = rect;
+
+        // Calculate the new position and size to align with the grid
+        const newTop = Math.round(top / gridSpacing) * gridSpacing;
+        const newLeft = Math.round(left / gridSpacing) * gridSpacing;
+        const newWidth = Math.round(width / gridSpacing) * gridSpacing;
+        const newHeight = Math.round(height / gridSpacing) * gridSpacing;
+
+        // Apply the new position and size to the div
+        div.style.position = 'absolute';
+        div.style.top = `${newTop}px`;
+        div.style.left = `${newLeft}px`;
+        div.style.width = `${newWidth}px`;
+        div.style.height = `${newHeight}px`;
+    }
+
+    // Align the div initially
+    alignDivToGrid();
+
+    // Optionally, add an event listener to align the div on window resize
+    window.addEventListener('resize', alignDivToGrid);
 
     // Start the animation
     animateRain();
