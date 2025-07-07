@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Grid App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div id="main-grid" class="tile-grid active">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <div class="search-container">
+                    <div class="search-icon">🔍</div>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search Resources" />
+                </div>
+                <div class="settings-menu-container">
+                    <button class="settings-btn" id="settings-btn" aria-label="Settings" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <div class="settings-dropdown" id="settings-dropdown" tabindex="-1">
+                        <label class="audio-toggle-label">
+                            <input type="checkbox" id="audio-toggle" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>
+                            <span>Read</span>
+                        </label>
+                        <label class="language-select-label" for="language-select" style="display:block; margin-top: 12px;">
+                            <span style="margin-right:8px;">Language</span>
+                            <select id="language-select" name="language-select" style="padding:4px 8px; border-radius:4px; border:1px solid #ccc;">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="grid-1" data-search="legal immigration citizenship naturalization visa green card deportation defense attorney lawyer">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>                        </div>
+                        <h2>Legal Services</h2>
+                        <p>Immigration law & citizenship</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="grid-2" data-search="healthcare medical insurance medi-cal covered california doctor hospital clinic">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v4"/><path d="M14 14h-4"/><path d="M14 18h-4"/><path d="M14 8h-4"/><path d="M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2"/><path d="M18 22V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v18"/></svg>                        </div>
+                        <h2>Healthcare</h2>
+                        <p>Medical services & insurance</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="grid-3" data-search="education school college university financial aid scholarship english classes esl">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.382a1 1 0 0 1 .553-.894L6 10"/><path d="M18 5v17"/><path d="m4 6 7.106-3.553a2 2 0 0 1 1.788 0L20 6"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>                        </div>
+                        <h2>Education</h2>
+                        <p>Schools & learning resources</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="grid-4" data-search="employment job work career training workforce development resume interview">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-briefcase-icon lucide-briefcase"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>                        </div>
+                        <h2>Employment</h2>
+                        <p>Jobs & career development</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="grid-5" data-search="housing rent apartment home shelter affordable housing section 8">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 10.4a2.12 2.12 0 1 0 3.02 2.98L12 7l6.4 6.4a2.12 2.12 0 1 0 2.979-3.021L13.7 2.7a2.4 2.4 0 0 0-3.404.004Z"/><path d="M20 14v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M14 22v-6a2 2 0 0 0-4 0v6"/></svg>                        </div>
+                        <h2>Housing</h2>
+                        <p>Housing assistance & shelter</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="grid-6" data-search="social services food stamps cal fresh cash aid tanf welfare benefits">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg>                        </div>
+                        <h2>Social Services</h2>
+                        <p>Benefits & assistance programs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legal Services Grid -->
+        <div id="grid-1" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Legal Services</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="citizenship-subgrid" data-search="citizenship naturalization n400 application process test interview">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Citizenship</h2>
+                        <p>Naturalization & N-400 process</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="visa-subgrid" data-search="visa green card permanent resident adjustment status family petition">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>                        </div>
+                        <h2>Visa & Green Card</h2>
+                        <p>Permanent residency & visas</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="defense-subgrid" data-search="deportation removal defense immigration court hearing bond">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>                        </div>
+                        <h2>Deportation Defense</h2>
+                        <p>Removal proceedings & court</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="daca-subgrid" data-search="daca dreamers deferred action childhood arrivals renewal">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>DACA</h2>
+                        <p>Dreamers & deferred action</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Healthcare Grid -->
+        <div id="grid-2" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Healthcare</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="medi-cal-subgrid" data-search="medi cal medical insurance coverage enrollment application">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Medi-Cal</h2>
+                        <p>California medical insurance</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="covered-ca-subgrid" data-search="covered california health insurance marketplace affordable care act obamacare">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Covered California</h2>
+                        <p>Health insurance marketplace</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="clinics-subgrid" data-search="community health clinic free low cost medical dental vision care">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Community Clinics</h2>
+                        <p>Free & low-cost healthcare</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="mental-health-subgrid" data-search="mental health counseling therapy trauma support crisis hotline">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Mental Health</h2>
+                        <p>Counseling & support services</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Education Grid -->
+        <div id="grid-3" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Education</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="k12-subgrid" data-search="k12 school elementary middle high public private charter">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l8-4 8 4"/><path d="M4 6v6a8 8 0 0 0 16 0V6"/><path d="M9 18v2h6v-2"/></svg>
+                        </div>
+                        <h2>K-12 Schools</h2>
+                        <p>Elementary, middle, and high schools</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="college-subgrid" data-search="college university higher education community college university degree">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10.5V6l-10-4-10 4v4.5"/><path d="M6 12v5c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-5"/><path d="M2 6l10 4 10-4"/></svg>
+                        </div>
+                        <h2>Colleges & Universities</h2>
+                        <p>Higher education & degrees</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="esl-subgrid" data-search="english esl language class adult education literacy">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6"/><path d="M6 12V6a6 6 0 0 1 12 0v6"/><rect x="2" y="12" width="20" height="8" rx="2"/></svg>
+                        </div>
+                        <h2>English Classes (ESL)</h2>
+                        <p>Adult education & language learning</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="scholarship-subgrid" data-search="scholarship financial aid grant tuition assistance fafsa">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/></svg>
+                        </div>
+                        <h2>Scholarships & Financial Aid</h2>
+                        <p>Grants, scholarships, and tuition help</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Grid -->
+        <div id="grid-4" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Employment</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="job-search-subgrid" data-search="job search employment opportunities work permit ead card resume interview">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Job Search</h2>
+                        <p>Employment opportunities</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="training-subgrid" data-search="job training workforce development skills certification vocational education">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Job Training</h2>
+                        <p>Skills development & certification</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="rights-subgrid" data-search="worker rights labor laws minimum wage overtime discrimination workplace safety">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Worker Rights</h2>
+                        <p>Labor laws & protections</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="entrepreneur-subgrid" data-search="small business entrepreneurship startup loans microloans business license">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Small Business</h2>
+                        <p>Entrepreneurship & startups</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Housing Grid -->
+        <div id="grid-5" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Housing</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="rental-subgrid" data-search="rental housing apartment affordable housing section 8 voucher tenant rights">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Rental Housing</h2>
+                        <p>Affordable housing & vouchers</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="homeless-subgrid" data-search="homeless shelter emergency housing transitional housing homeless services">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/></svg>
+                        </div>
+                        <h2>Emergency Shelter</h2>
+                        <p>Homeless & crisis housing</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="utilities-subgrid" data-search="utility assistance electricity gas water bill payment assistance energy assistance">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>                        </div>
+                        <h2>Utility Assistance</h2>
+                        <p>Bill payment & energy help</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="homebuyer-subgrid" data-search="homebuyer assistance first time homebuyer mortgage loan down payment assistance">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 10.4a2.12 2.12 0 1 0 3.02 2.98L12 7l6.4 6.4a2.12 2.12 0 1 0 2.979-3.021L13.7 2.7a2.4 2.4 0 0 0-3.404.004Z"/><path d="M20 14v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M14 22v-6a2 2 0 0 0-4 0v6"/></svg>                        </div>
+                        <h2>Homebuyer Help</h2>
+                        <p>First-time homebuyer programs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Services Grid -->
+        <div id="grid-6" class="tile-grid">
+            <div class="grid-header">
+                <button class="home-button" data-home="main-grid" aria-label="Home" tabindex="0">
+                    <h1 class="grid-title">
+                        <span style="color:#FD004B">2</span><span style="color:#FFAF5F">1</span><span style="color:#FD004B">1</span>
+                    </h1>
+                </button>
+                <h1 class="grid-title">Social Services</h1>
+                <div class="close-button" data-back="main-grid">
+                    <span>×</span>
+                </div>
+            </div>
+            <div class="tiles-container">
+                <div class="tile" data-grid="food-subgrid" data-search="food stamps cal fresh snap benefits food assistance nutrition programs">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>                        </div>
+                        <h2>Food Assistance</h2>
+                        <p>CalFresh & nutrition programs</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="cash-subgrid" data-search="cash aid tanf calworks temporary assistance needy families">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>                        </div>
+                        <h2>Cash Aid</h2>
+                        <p>CalWORKs & TANF benefits</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="childcare-subgrid" data-search="childcare child care subsidy calworks child care assistance preschool">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M15 12h.01"/><path d="M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/><path d="M9 12h.01"/></svg>                        </div>
+                        <h2>Childcare</h2>
+                        <p>Child care assistance & preschool</p>
+                    </div>
+                </div>
+                <div class="tile" data-grid="disability-subgrid" data-search="disability benefits ssdi ssi social security disability insurance supplemental security income">
+                    <div class="tile-content">
+                        <div class="tile-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>                        </div>
+                        <h2>Disability Benefits</h2>
+                        <p>SSDI & SSI assistance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
