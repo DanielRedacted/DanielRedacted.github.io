@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Daniel ████',
+  description =
+    'Helping You take advantage of the internet and prevent the internet from taking advantage of you.',
+} = Astro.props;
+
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL('/images/avatar.jpg', Astro.site)} />
+    <link rel="canonical" href={new URL(path, Astro.site)} />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  </head>
+  <body>
+    <header>
+      <div class="bar mx-auto w-full max-w-3xl px-6">
+        <a href="/" class="sigil" aria-label="Daniel Redacted, home">
+          <span class="wordmark">Daniel</span>
+        </a>
+      </div>
+    </header>
+
+    <slot />
+  </body>
+</html>

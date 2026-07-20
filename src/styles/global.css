@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   danielredacted.net: the FIELD typographic system (light-only).
+   Ported from ./design-system: B612 type, aerospace-orange accent, dot-grid
+   backdrop, translucent blur cards, and the redacted censor-bar wordmark.
+   Redaction stays the persona's signature move. Military-domain components
+   (status pills, field-report card, corner brackets) are deliberately left out.
+   ============================================================================ */
+
+@font-face{font-family:"B612";src:url("/fonts/B612-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"B612";src:url("/fonts/B612-Bold.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"B612 Mono";src:url("/fonts/B612Mono-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"B612 Mono";src:url("/fonts/B612Mono-Bold.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap}
+
+:root{
+  /* primitive palette : field neutrals + brand accents */
+  --paper:#F6F7F8;  --stone:#BBC0BD;  --ash:#9FA39A;   --dust:#A5A098;
+  --field-grey:#616259; --gunmetal:#4A4C46; --slate-char:#3B3E3D;
+  --ink:#21221F;    --night:#151614;
+  --khaki:#9E876B;  --coyote:#8D7359; --sand:#CBB49A; --loam:#443B32;
+  --orange:#FF4F00; --orange-bright:#FF6A26; --orange-deep:#D94300;
+  --nasa-blue:#0B3D91; --nasa-red:#FC3D21; --ap-cyan:#00B0FF; --obsidian:#7C3AED;
+
+  /* typography */
+  --font-display:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
+  --font-body:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
+  --font-mono:"B612 Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --step--1:.8125rem; --step-0:.9375rem; --step-1:1.1rem; --step-2:1.45rem;
+  --step-3:1.95rem;   --step-4:2.6rem;   --step-5:clamp(2.6rem,6vw,4rem);
+  --leading:1.55; --leading-tight:1.12;
+  --track-label:.18em; --track-tight:-.01em;
+
+  /* spacing / form */
+  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem; --sp-5:1.5rem;
+  --sp-6:2rem;   --sp-7:3rem;  --sp-8:4rem;
+  --radius:3px; --radius-lg:5px; --border-w:1px;
+  --shadow:0 1px 3px rgba(0,0,0,.08); --shadow-none:none;
+
+  /* semantic tokens (light) */
+  --bg:#fafafa; --bg-wash:#fafafa;
+  --surface:#FFFFFF; --surface-2:#F5F5F5; --surface-sunk:#EBEBEB;
+  --border:#E5E7EB; --border-strong:#D1D5DB;
+  --text:#1D1D1B; --text-dim:#4A4A4A; --text-mute:#6E6E6E; --text-inverse:#FFFFFF;
+  --accent:var(--orange); --accent-ink:#B23A00;   /* accent-ink = darkened orange, AA text */
+  --accent-hover:var(--orange-bright); --accent-press:var(--orange-deep);
+  --on-accent:#1B0E00; --accent-ghost:rgba(255,79,0,.12);
+  --env:var(--field-grey); --env-ghost:rgba(97,98,89,.12);
+  --focus:var(--ap-cyan); --ring:0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+  color-scheme:light;
+}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important}}
+
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--font-body);font-size:var(--step-0);line-height:var(--leading);
+  -webkit-font-smoothing:antialiased}
+
+/* dot-grid backdrop, ported from AP0110.org (dark dots, 16px grid) */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle, rgba(0,0,0,.09) 1px, transparent 1px);
+  background-size:16px 16px}
+header,main,footer{position:relative;z-index:1}   /* content sits above the backdrop */
+
+a{color:var(--accent-ink)}
+h1,h2,h3{font-family:var(--font-display);line-height:var(--leading-tight);
+  text-wrap:balance;margin:0}
+strong,b{color:var(--text)}
+.mono{font-family:var(--font-mono)}
+.label{font-family:var(--font-mono);font-size:var(--step--1);
+  letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-mute)}
+
+/* ---- redaction ----------------------------------------------------------
+   The persona's signature: `.redacted` obscures an identifier (transparent
+   ink block). `.wordmark` is the readable censor-bar variant used for the
+   name in the header and hero. `.redacted.hover:hover`/`.visible` reveal. */
+.redacted{background:var(--ink);color:transparent;padding:0 .5ch;border-radius:0}
+.redacted.visible,.redacted.hover:hover{color:var(--paper)}
+.wordmark{background:var(--ink);color:var(--paper);font-family:var(--font-display);
+  font-weight:700;letter-spacing:.02em;padding:.04em .4em;border-radius:0}
+
+/* ---- header + wordmark --------------------------------------------------- */
+header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:var(--border-w) solid var(--border)}
+.bar{display:flex;align-items:center;height:60px}
+.sigil{display:inline-flex;align-items:center;text-decoration:none}
+
+/* ---- section rhythm + heads ---------------------------------------------- */
+section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;
+  gap:1rem;margin-bottom:var(--sp-5)}
+.sec-head h2{font-size:var(--step-2);text-transform:uppercase;letter-spacing:.04em}
+.sec-head .idx{font-family:var(--font-mono);color:var(--text-mute);font-size:var(--step--1);
+  text-align:right}
+.sec-head .idx b{color:var(--accent-ink);font-weight:700}   /* accent index number */
+
+/* ---- hero ---------------------------------------------------------------- */
+.hero{border-top:0;padding:var(--sp-8) 0 var(--sp-7)}
+.hero .eyebrow{margin:0 0 var(--sp-4);color:var(--accent-ink);letter-spacing:.2em}
+/* the handle is the hero lead (the name lives in the sticky topnav wordmark) */
+.handle{margin:0;color:var(--text);font-family:var(--font-mono);font-weight:700;
+  font-size:var(--step-3);letter-spacing:var(--track-tight)}
+.hero-body{display:flex;align-items:center;gap:var(--sp-5);margin-top:var(--sp-5);flex-wrap:wrap}
+.avatar{width:96px;height:96px;flex:none;object-fit:cover;
+  border:var(--border-w) solid var(--border-strong);border-radius:50%}
+.tagline{margin:0;max-width:52ch;color:var(--text-dim);font-size:var(--step-1)}
+.hero .btn-row{margin-top:var(--sp-6)}
+.socials{display:flex;flex-wrap:wrap;gap:.25rem}
+.hero .socials{margin-top:var(--sp-4)}
+.socials a{display:inline-flex;padding:.4rem;color:var(--text-mute);transition:color .15s}
+.socials a:hover{color:var(--accent-ink)}
+.socials svg{width:22px;height:22px}
+.socials.big a{padding:.55rem}
+.socials.big svg{width:26px;height:26px}
+
+/* ---- buttons: mono, fixed height, outline that fills on hover ------------ */
+.btn-row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
+.btn{font-family:var(--font-mono);font-weight:700;font-size:var(--step-0);
+  height:40px;padding:0 1.2ch;display:inline-flex;align-items:center;justify-content:center;
+  border:2px solid transparent;border-radius:var(--radius);cursor:pointer;
+  transition:.2s ease;letter-spacing:.04em;text-decoration:none}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-primary:active{background:var(--accent-press);border-color:var(--accent-press)}
+.btn-ghost{background:transparent;border-color:var(--accent);color:var(--accent-ink)}
+.btn-ghost:hover{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* ---- cards: translucent so the dot-grid ghosts through ------------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-5)}
+.panel{background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(4px);
+  border:var(--border-w) solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-5)}
+.card{display:block;text-decoration:none;color:inherit;transition:border-color .15s}
+.card:hover{border-color:var(--border-strong)}
+.card h3{font-size:var(--step-1);text-transform:uppercase;letter-spacing:.02em}
+.card .url{margin-left:.6ch;font-family:var(--font-mono);font-size:var(--step--1);
+  font-weight:400;text-transform:none;color:var(--text-mute)}
+.card p{margin:.6rem 0 0;color:var(--text-dim)}
+
+/* ---- contact ------------------------------------------------------------- */
+.copy{margin-left:.5rem;font-family:var(--font-mono);font-size:var(--step--1);
+  color:var(--text-dim);background:transparent;cursor:pointer;
+  border:var(--border-w) solid var(--border-strong);border-radius:var(--radius);padding:.1rem .55rem}
+.copy:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* ---- footer -------------------------------------------------------------- */
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;
+  padding:var(--sp-7) 0 var(--sp-8);border-top:var(--border-w) solid var(--border);
+  font-family:var(--font-mono);font-size:.72rem;color:var(--text-mute);
+  letter-spacing:.06em;text-transform:uppercase}

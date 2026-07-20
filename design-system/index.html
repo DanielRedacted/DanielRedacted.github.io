@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIELD — Military Design System</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important}}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-body);font-size:var(--step-0);line-height:var(--leading);
+    -webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 clamp(1rem,4vw,2.4rem)}
+
+  /* dot-grid backdrop — ported from AP0110.org (dark dots, 16px grid) */
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle, rgba(0,0,0,.09) 1px, transparent 1px);
+    background-size:16px 16px}
+  .wrap{position:relative;z-index:1}
+
+  a{color:var(--accent-ink)}
+  h1,h2,h3{font-family:var(--font-display);line-height:var(--leading-tight);
+    text-wrap:balance;margin:0}
+  .mono{font-family:var(--font-mono)}
+  .label{font-family:var(--font-mono);font-size:var(--step--1);
+    letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-mute)}
+
+  /* ---- top command bar ---- */
+  header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(8px);border-bottom:var(--border-w) solid var(--border)}
+  /* fixed 60px bar (AP0110.org header height). `.bar` shares its element with
+     `.wrap`, so keep the horizontal inset on `.wrap` — never add shorthand
+     `padding` here or it would zero that inset and shove the bar to the edge. */
+  .bar{display:flex;align-items:center;gap:var(--sp-3) var(--sp-4);
+    height:60px;flex-wrap:wrap}
+  /* redacted wordmark — Field white on an Ink censor bar */
+  .sigil{display:inline-flex;align-items:center;font-family:var(--font-display)}
+  .sigil .redacted{background:var(--ink);color:var(--paper);font-weight:700;letter-spacing:.02em;
+    padding:.04rem .55rem;border-radius:0}
+
+  /* ---- hero ---- */
+  .hero{padding:var(--sp-8) 0 var(--sp-7)}
+  .hero .eyebrow{color:var(--accent-ink);margin-bottom:var(--sp-4);letter-spacing:.2em}
+  .hero h1{font-size:var(--step-5);letter-spacing:var(--track-tight);text-transform:uppercase}
+  .hero h1 em{font-style:normal;color:var(--env);display:block}
+  .hero p{max-width:60ch;color:var(--text-dim);font-size:var(--step-1);margin:var(--sp-5) 0 0}
+  /* stat row — hairline-divided columns (AP0110.org signature), not spaced gaps */
+  .hero .stats{display:flex;flex-wrap:wrap;margin-top:var(--sp-6)}
+  .hero .stat{padding:0 var(--sp-5)}
+  .hero .stat:first-child{padding-left:0}
+  .hero .stat + .stat{border-left:var(--border-w) solid var(--border)}
+  .hero .stat .n{font-family:var(--font-display);font-weight:700;font-size:var(--step-3);
+    font-variant-numeric:tabular-nums}
+  .hero .stat .l{margin-top:.15rem}
+
+  section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;
+    gap:1rem;margin-bottom:var(--sp-5)}
+  .sec-head h2{font-size:var(--step-2);text-transform:uppercase;letter-spacing:.04em}
+  .sec-head .idx{font-family:var(--font-mono);color:var(--text-mute);font-size:var(--step--1)}
+  .sec-head .idx b{color:var(--accent-ink);font-weight:700}   /* accent index number */
+
+  /* ---- swatches ---- */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:1px;
+    background:var(--border);border:var(--border-w) solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .sw{background:var(--surface);padding:0}
+  .sw .chip{height:66px}
+  .sw .meta{padding:.5rem .6rem}
+  .sw .nm{font-size:var(--step--1);font-weight:700}
+  .sw .hex{font-family:var(--font-mono);font-size:.72rem;color:var(--text-dim);
+    text-transform:uppercase}
+
+  /* ---- type scale ---- */
+  .type-row{display:flex;align-items:baseline;gap:var(--sp-4);padding:var(--sp-3) 0;
+    border-bottom:var(--border-w) solid var(--border)}
+  .type-row .tag{flex:none;width:78px;color:var(--text-mute);font-family:var(--font-mono);
+    font-size:.72rem}
+  .type-row .demo{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---- component grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--sp-5)}
+  /* translucent card so the dot-grid ghosts through — depth from blur + hairline,
+     not a drop shadow (the AP0110.org treatment) */
+  .panel{background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(4px);
+    border:var(--border-w) solid var(--border);border-radius:var(--radius-lg);
+    padding:var(--sp-5);box-shadow:var(--shadow)}
+  .panel > .label{display:block;margin-bottom:var(--sp-4)}
+
+  /* buttons — AP0110.org .ap-button geometry (mono, fixed height, outline that
+     fills on hover), in orange instead of cyan */
+  .btn{font-family:var(--font-mono);font-weight:700;font-size:var(--step-0);
+    height:40px;padding:0 1.2ch;display:inline-flex;align-items:center;justify-content:center;
+    border:2px solid transparent;border-radius:var(--radius);
+    cursor:pointer;transition:.2s ease;letter-spacing:.04em}
+  .btn:focus-visible{outline:none;box-shadow:var(--ring)}
+  .btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+  .btn-primary:active{background:var(--accent-press);border-color:var(--accent-press)}
+  .btn-ghost{background:transparent;border-color:var(--accent);color:var(--accent-ink)}
+  .btn-ghost:hover{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .btn-row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);
+    font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:.28rem .55rem;border-radius:2px;font-weight:700}
+  .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .pill-go{background:var(--go-ghost);color:var(--go)}
+  .pill-caution{background:var(--caution-ghost);color:var(--caution)}
+  .pill-critical{background:var(--critical-ghost);color:var(--critical)}
+  .pill-info{background:var(--info-ghost);color:var(--info)}
+  .pill-row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
+
+  label.field{display:block}
+  label.field .label{display:block;margin-bottom:.35rem}
+  input[type=text]{width:100%;font-family:var(--font-mono);font-size:var(--step-0);
+    background:var(--surface-sunk);color:var(--text);border:var(--border-w) solid var(--border-strong);
+    border-radius:var(--radius);padding:.5rem .65rem}
+  input[type=text]:focus{outline:none;box-shadow:var(--ring);border-color:var(--focus)}
+
+  table{width:100%;border-collapse:collapse;font-size:var(--step--1)}
+  th,td{text-align:left;padding:.5rem .6rem;border-bottom:var(--border-w) solid var(--border)}
+  th{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-mute);font-weight:400}
+  td.num{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:0}
+
+  /* field report card — the signature composite component. Corner-bracket frame
+     (an AP0110.org hand-made motif) marks it as the composite showpiece. */
+  .report{background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(4px);
+    border:var(--border-w) solid var(--border);border-left:3px solid var(--env);
+    border-radius:var(--radius-lg);overflow:hidden;position:relative}
+  .report .corner{position:absolute;width:12px;height:12px;pointer-events:none;z-index:2}
+  .report .corner.tl{top:7px;left:7px;border-top:2px solid var(--text-mute);border-left:2px solid var(--text-mute)}
+  .report .corner.tr{top:7px;right:7px;border-top:2px solid var(--text-mute);border-right:2px solid var(--text-mute)}
+  .report .corner.bl{bottom:7px;left:7px;border-bottom:2px solid var(--text-mute);border-left:2px solid var(--text-mute)}
+  .report .corner.br{bottom:7px;right:7px;border-bottom:2px solid var(--text-mute);border-right:2px solid var(--text-mute)}
+  .report .rh{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+    padding:var(--sp-4) var(--sp-5);border-bottom:var(--border-w) solid var(--border);
+    background:var(--surface-2)}
+  .report .rh .co{font-family:var(--font-mono);font-size:.72rem;color:var(--text-mute);letter-spacing:.1em}
+  .report .rb{padding:var(--sp-5)}
+  .report .rb h3{font-size:var(--step-1);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.02em}
+  .report .rb p{margin:0;color:var(--text-dim)}
+  .report .rf{display:flex;gap:var(--sp-5);padding:var(--sp-4) var(--sp-5);
+    border-top:var(--border-w) solid var(--border);flex-wrap:wrap}
+  .report .rf .kv .k{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--text-mute)}
+  .report .rf .kv .v{font-family:var(--font-mono);font-weight:700;font-variant-numeric:tabular-nums}
+
+  footer{padding:var(--sp-7) 0 var(--sp-8);border-top:var(--border-w) solid var(--border);
+    color:var(--text-mute);font-family:var(--font-mono);font-size:.72rem;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="sigil"><span class="redacted">Daniel</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <p class="eyebrow label">Design System · Aerospace field kit</p>
+    <h1>Field<em>Military UI Kit</em></h1>
+    <p>A tactical system in <b>B612</b> — the typeface Airbus commissioned for cockpit
+    legibility. Field neutrals anchor it;
+    <span style="color:var(--accent-ink);font-weight:700">International Aerospace Orange</span>
+    leads, with <b>NASA blue and red</b> and <b>AP0110 cyan</b> for depth. Every color is a
+    deliberate design decision — flat, high-contrast, cockpit-legible.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">14</div><div class="l label">palette colors</div></div>
+      <div class="stat"><div class="n">7</div><div class="l label">type steps</div></div>
+      <div class="stat"><div class="n">AA+</div><div class="l label">contrast floor</div></div>
+      <div class="stat"><div class="n">B612</div><div class="l label">cockpit type</div></div>
+    </div>
+  </div>
+
+  <section id="palette">
+    <div class="sec-head"><h2>Palette</h2><span class="idx"><b>01</b> · every color is a decision</span></div>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <section id="type">
+    <div class="sec-head"><h2>Typography — B612</h2><span class="idx"><b>02</b> · cockpit-legible</span></div>
+    <div class="type-row"><span class="tag">Display</span><span class="demo" style="font-family:var(--font-display);font-weight:700;font-size:var(--step-4);text-transform:uppercase">Reconnaissance</span></div>
+    <div class="type-row"><span class="tag">H2</span><span class="demo" style="font-family:var(--font-display);font-weight:700;font-size:var(--step-2)">Operational readiness at 1800 hours</span></div>
+    <div class="type-row"><span class="tag">Body</span><span class="demo" style="font-size:var(--step-0)">Legibility under vibration and low light drove every letterform decision.</span></div>
+    <div class="type-row"><span class="tag">Mono</span><span class="demo mono" style="font-size:var(--step-0)">GRID 34.812N / 118.045W · ELEV 402M · 07:42:10Z</span></div>
+    <div class="type-row"><span class="tag">Label</span><span class="demo label">Sector · Status · Coordinate</span></div>
+  </section>
+
+  <section id="status">
+    <div class="sec-head"><h2>Operational Status</h2><span class="idx"><b>03</b> · distinct from accent</span></div>
+    <div class="pill-row" style="margin-bottom:var(--sp-4)">
+      <span class="pill pill-go">Go</span>
+      <span class="pill pill-caution">Caution</span>
+      <span class="pill pill-critical">Critical</span>
+      <span class="pill pill-info">Advisory</span>
+    </div>
+    <p class="label">Semantic status is green-go / gold-caution / red-critical / blue-advisory — separate from the orange CTA accent, so alarm never reads as a button.</p>
+  </section>
+
+  <section id="components">
+    <div class="sec-head"><h2>Components</h2><span class="idx"><b>04</b> · consume tokens only</span></div>
+    <div class="grid">
+      <div class="panel">
+        <span class="label">Actions</span>
+        <div class="btn-row">
+          <button class="btn btn-primary">Deploy</button>
+          <button class="btn btn-ghost">Stand by</button>
+        </div>
+      </div>
+      <div class="panel">
+        <span class="label">Input</span>
+        <label class="field"><span class="label">Grid reference</span>
+          <input type="text" value="34.812N 118.045W" spellcheck="false"></label>
+      </div>
+    </div>
+  </section>
+
+  <section id="report">
+    <div class="sec-head"><h2>Field Report</h2><span class="idx"><b>05</b> · composite</span></div>
+    <div class="report">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="rh"><span class="co">RPT-0714 · SECTOR EVENING</span><span class="pill pill-caution">Caution</span></div>
+      <div class="rb"><h3>Low light, high haze</h3>
+        <p>Low-light operations over near-black ground with navy and clay highlights.
+        Recommend high-contrast HUD; reserve the orange accent for primary actions only.</p></div>
+      <div class="rf">
+        <div class="kv"><div class="k">Elev</div><div class="v">402M</div></div>
+        <div class="kv"><div class="k">Dominant</div><div class="v">#1B1919</div></div>
+        <div class="kv"><div class="k">Accent</div><div class="v" style="color:var(--accent)">#FF4F00</div></div>
+        <div class="kv"><div class="k">Contrast</div><div class="v">13.5:1</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>FIELD · MILITARY DESIGN SYSTEM</span>
+    <span>B612 (SIL OFL) · TOKENS.CSS · AEROSPACE ORANGE ACCENT</span>
+  </footer>
+</div>
+
+<script>
+  // Single theme (Light) / single env (Field): no switching — palette renders once.
+  const TOKENS=[
+    ["Field white","--paper"],["Stone","--stone"],["Ash","--ash"],["Field grey","--field-grey"],
+    ["Slate char","--slate-char"],["Ink","--ink"],
+    ["Khaki","--khaki"],["Coyote","--coyote"],["Sand","--sand"],
+    ["Aerospace orange","--orange"],["NASA blue","--nasa-blue"],["NASA red","--nasa-red"],
+    ["AP cyan","--ap-cyan"],["Obsidian violet","--obsidian"],
+  ];
+  const host=document.getElementById('swatches');
+  const cs=getComputedStyle(document.documentElement);
+  TOKENS.forEach(([nm,v])=>{
+    const hex=cs.getPropertyValue(v).trim();
+    const el=document.createElement('div');el.className='sw';
+    el.innerHTML=`<div class="chip" style="background:${hex}"></div>
+      <div class="meta"><div class="nm">${nm}</div><div class="hex">${hex}</div></div>`;
+    host.appendChild(el);
+  });
+</script>
+</body>
+</html>

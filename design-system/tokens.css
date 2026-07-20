@@ -1,0 +1,86 @@
+/* ============================================================================
+   FIELD — a military / aerospace design system
+
+   One theme: LIGHT (field manual), neutral field palette. Every color is a
+   deliberate design decision — flat and cockpit-legible.
+   Accent:  International Aerospace Orange (#FF4F00).
+   Brand:   AP0110 Cyan (#00B0FF), NASA Blue (#0B3D91), NASA Red (#FC3D21).
+
+   Type: B612 / B612 Mono — commissioned by Airbus for cockpit-display
+   legibility (SIL OFL). Self-hosted in ./fonts. Not a stencil pastiche.
+   ============================================================================ */
+
+@font-face{font-family:"B612";src:url("fonts/B612-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"B612";src:url("fonts/B612-Bold.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"B612 Mono";src:url("fonts/B612Mono-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"B612 Mono";src:url("fonts/B612Mono-Bold.ttf") format("truetype");
+  font-weight:700;font-style:normal;font-display:swap}
+
+:root{
+  /* --- primitive palette : field neutrals + brand accents ------------------ */
+  --paper:#F6F7F8;  --stone:#BBC0BD;  --ash:#9FA39A;   --dust:#A5A098;
+  --field-grey:#616259; --gunmetal:#4A4C46; --slate-char:#3B3E3D;
+  --ink:#21221F;    --night:#151614;
+
+  --khaki:#9E876B;  --coyote:#8D7359; --sand:#CBB49A; --loam:#443B32;
+
+  --orange:#FF4F00; --orange-bright:#FF6A26; --orange-deep:#D94300;
+     /* ^ International Aerospace Orange — the primary accent */
+  --nasa-blue:#0B3D91; --nasa-red:#FC3D21; --ap-cyan:#00B0FF; --obsidian:#7C3AED;
+     /* ^ NASA insignia blue / red, AP0110 Cyan (brand), Obsidian violet */
+
+  /* --- typography ---------------------------------------------------------- */
+  --font-display:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
+  --font-body:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
+  --font-mono:"B612 Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  --step--1:.8125rem; --step-0:.9375rem; --step-1:1.1rem; --step-2:1.45rem;
+  --step-3:1.95rem;   --step-4:2.6rem;   --step-5:clamp(2.6rem,6vw,4rem);
+  --leading:1.55; --leading-tight:1.12;
+  --track-label:.18em; --track-tight:-.01em;
+
+  /* --- spacing / form ------------------------------------------------------ */
+  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem; --sp-5:1.5rem;
+  --sp-6:2rem;   --sp-7:3rem;  --sp-8:4rem;
+  --radius:3px;          /* military UI is crisp, not pill-soft */
+  --radius-lg:5px;
+  --border-w:1px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);   /* hairline elevation, not a drop-glow */
+  --shadow-none:none;
+
+  /* ==========================================================================
+     SEMANTIC TOKENS — LIGHT. Neutral stack aligned to AP0110.org (true grays on
+     off-white paper), not the old grey-green cast. Components consume these,
+     never the primitives above. */
+  --bg:#fafafa; --bg-wash:#fafafa;
+  --surface:#FFFFFF; --surface-2:#F5F5F5; --surface-sunk:#EBEBEB;
+  --border:#E5E7EB; --border-strong:#D1D5DB;
+
+  --text:#1D1D1B; --text-dim:#4A4A4A; --text-mute:#6E6E6E; --text-inverse:#FFFFFF;
+     /* mute nudged from .org's #767676 to clear AA (4.9:1) on the #fafafa ground */
+
+  --accent:var(--orange);          /* fills: buttons, sigil, chips */
+  --accent-ink:#B23A00;            /* darkened orange for text on light — holds AA */
+  --accent-hover:var(--orange-bright);
+  --accent-press:var(--orange-deep);
+  --on-accent:#1B0E00;             /* dark on bright orange keeps the AA+ floor */
+  --accent-ghost:rgba(255,79,0,.12);
+
+  --env:var(--field-grey);         /* neutral field signature color */
+  --env-ghost:rgba(97,98,89,.12);
+
+  --focus:var(--ap-cyan);
+  --ring:0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+
+  /* operational status — distinct from the orange accent, so alarm never reads
+     as a button. Critical is a saturated signal red; red=danger stays convention. */
+  --go:#7C9A5B;      --go-fg:#12210a;   --go-ghost:rgba(124,154,91,.16);
+  --caution:#C2A962; --caution-fg:#241d08; --caution-ghost:rgba(194,169,98,.16);
+  --critical:#D9342B;--critical-fg:#fff; --critical-ghost:rgba(217,52,43,.18);
+  --info:#7090B7;    --info-fg:#0a1626;  --info-ghost:rgba(112,144,183,.16);
+
+  color-scheme:light;
+}
