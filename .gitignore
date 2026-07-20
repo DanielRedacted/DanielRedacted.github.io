@@ -3,3 +3,5 @@ dist/
 .astro/
 .DS_Store
 /trip/
+# dev preview artifacts — never publish
+__preview*
