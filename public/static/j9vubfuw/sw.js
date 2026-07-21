@@ -6,7 +6,7 @@
 // so an online open always fetches the latest app; the cache is only a fallback for dead zones.
 //
 // Bump VERSION to force-drop every cached tile / Leaflet / font (old caches are deleted on activate).
-const VERSION='v1';   // fresh cache namespace for the /static/ URL
+const VERSION='v2';   // bump forces stale caches to clear + a one-time reload to the fixed build
 const CACHE='trip-'+VERSION, MAX=3000, TRIM=200, NET_TIMEOUT=4000;
 
 self.addEventListener('install', ()=>self.skipWaiting());
