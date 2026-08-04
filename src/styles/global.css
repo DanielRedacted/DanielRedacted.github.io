@@ -16,6 +16,13 @@
   font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"B612 Mono";src:url("/fonts/B612Mono-Bold.ttf") format("truetype");
   font-weight:700;font-style:normal;font-display:swap}
+/* Roboto Medium: matches chesssocial.org's own site-title font, used only for their wordmark */
+@font-face{font-family:"Roboto";src:url("/fonts/Roboto-Medium.ttf") format("truetype");
+  font-weight:500;font-style:normal;font-display:swap}
+/* EB Garamond Bold Italic: matches retainai.org's own header site-title wordmark (distinct
+   from their IBM Plex Mono body/heading font), used only for their wordmark here */
+@font-face{font-family:"EB Garamond";src:url("/fonts/EBGaramond-BoldItalic.ttf") format("truetype");
+  font-weight:700;font-style:italic;font-display:swap}
 
 :root{
   /* primitive palette : field neutrals + brand accents */
@@ -30,7 +37,7 @@
   --font-display:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
   --font-body:"B612","Helvetica Neue",Arial,system-ui,sans-serif;
   --font-mono:"B612 Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --step--1:.8125rem; --step-0:.9375rem; --step-1:1.1rem; --step-2:1.45rem;
+  --step--2:.72rem; --step--1:.8125rem; --step-0:.9375rem; --step-1:1.1rem; --step-2:1.45rem;
   --step-3:1.95rem;   --step-4:2.6rem;   --step-5:clamp(2.6rem,6vw,4rem);
   --leading:1.55; --leading-tight:1.12;
   --track-label:.18em; --track-tight:-.01em;
@@ -102,21 +109,19 @@ section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
 /* ---- hero ---------------------------------------------------------------- */
 .hero{border-top:0;padding:var(--sp-8) 0 var(--sp-7)}
 .hero .eyebrow{margin:0 0 var(--sp-4);color:var(--accent-ink);letter-spacing:.2em}
-/* the handle is the hero lead (the name lives in the sticky topnav wordmark) */
-.handle{margin:0;color:var(--text);font-family:var(--font-mono);font-weight:700;
-  font-size:var(--step-3);letter-spacing:var(--track-tight)}
 .hero-body{display:flex;align-items:center;gap:var(--sp-5);margin-top:var(--sp-5);flex-wrap:wrap}
 .avatar{width:96px;height:96px;flex:none;object-fit:cover;
   border:var(--border-w) solid var(--border-strong);border-radius:50%}
 .tagline{margin:0;max-width:52ch;color:var(--text-dim);font-size:var(--step-1)}
 .hero .btn-row{margin-top:var(--sp-6)}
+.alma-maters{display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-5);margin-top:var(--sp-3)}
+.alma-maters img{height:32px;width:auto}
+.alma-maters .dot{color:var(--text-mute)}
 .socials{display:flex;flex-wrap:wrap;gap:.25rem}
-.hero .socials{margin-top:var(--sp-4)}
+.hero .socials{margin-top:var(--sp-3)}
 .socials a{display:inline-flex;padding:.4rem;color:var(--text-mute);transition:color .15s}
 .socials a:hover{color:var(--accent-ink)}
 .socials svg{width:22px;height:22px}
-.socials.big a{padding:.55rem}
-.socials.big svg{width:26px;height:26px}
 
 /* ---- buttons: mono, fixed height, outline that fills on hover ------------ */
 .btn-row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
@@ -133,23 +138,31 @@ section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
 
 /* ---- cards: translucent so the dot-grid ghosts through ------------------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-5)}
+/* auto-fill keeps the empty tracks, so a lone past-project card stays card-width */
+.grid-past{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
 .panel{background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(4px);
   border:var(--border-w) solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-5)}
 .card{display:block;text-decoration:none;color:inherit;transition:border-color .15s}
-.card:hover{border-color:var(--border-strong)}
-.card h3{font-size:var(--step-1);text-transform:uppercase;letter-spacing:.02em}
-.card .url{margin-left:.6ch;font-family:var(--font-mono);font-size:var(--step--1);
-  font-weight:400;text-transform:none;color:var(--text-mute)}
+a.card:hover{border-color:var(--border-strong)}   /* cards with nothing to link to don't offer a hover */
+.card h3{font-size:var(--step-1);text-transform:uppercase;letter-spacing:.02em;
+  display:flex;align-items:center;flex-wrap:wrap}   /* logo sits centered on the title, not on the baseline */
+.card-logo{height:1.2em;width:auto;margin-right:.5ch}
+.card-wordmark{height:1.8em;width:auto;max-width:100%}
 .card p{margin:.6rem 0 0;color:var(--text-dim)}
-
-/* ---- contact ------------------------------------------------------------- */
-.copy{margin-left:.5rem;font-family:var(--font-mono);font-size:var(--step--1);
-  color:var(--text-dim);background:transparent;cursor:pointer;
-  border:var(--border-w) solid var(--border-strong);border-radius:var(--radius);padding:.1rem .55rem}
-.copy:hover{border-color:var(--accent);color:var(--accent-ink)}
+.friends{gap:var(--sp-5)}
+.friends a{padding:.4rem}
+.friend-logo{height:28px;width:auto;object-fit:contain}
+/* the page background never goes dark, so light-on-transparent logos invert unconditionally,
+   not by prefers-color-scheme: reversing in dark mode would put a light logo on a light page */
+.invert{filter:invert(1)}
+.friend-with-word{display:inline-flex;align-items:center;gap:.5ch}
+.friend-word{font-size:var(--step-0);letter-spacing:.02em;color:var(--text)}
+.friend-word--roboto{font-family:"Roboto",sans-serif;font-weight:500}
+.friend-word--eb-garamond{font-family:"EB Garamond",serif;font-weight:700;font-style:italic}
 
 /* ---- footer -------------------------------------------------------------- */
-.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;
-  padding:var(--sp-7) 0 var(--sp-8);border-top:var(--border-w) solid var(--border);
+.foot{display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);
+  padding:var(--sp-6) 0 var(--sp-8);border-top:var(--border-w) solid var(--border);
   font-family:var(--font-mono);font-size:.72rem;color:var(--text-mute);
   letter-spacing:.06em;text-transform:uppercase}
+.foot-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;width:100%}

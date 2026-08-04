@@ -21,7 +21,16 @@ const socials = [
   { label: 'Truth Social', href: 'https://truthsocial.com/@DanielRedacted', evenodd: true,
     d: 'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z M6.5 6.5H17.5V8.7H13.1V17.5H10.9V8.7H6.5Z' },
 ];
-const heroSocials = socials.slice(0, 3);
+const heroSocials = socials.filter((s) => ['X', 'Substack', 'GitHub'].includes(s.label));
+
+const friends = [
+  { label: 'Life Impact International', href: 'https://lifeimpactintl.org', logo: '/images/lii-logo.png' },
+  { label: 'Hacker Fund', href: 'https://www.hacker.fund', logo: '/images/hackerfund-logo.png' },
+  { label: 'Chess Social', href: 'https://www.chesssocial.org', logo: '/images/chesssocial-logo.png', invert: true, wordmark: 'roboto' },
+  { label: 'KLARCK', href: 'https://www.klarckmusic.com', logo: '/images/klarck-logo.png' },
+  { label: 'RETAIN AI', href: 'https://retainai.org', logo: '/images/retainai-logo.png', invert: true, wordmark: 'eb-garamond' },
+  { label: 'UNA-USA', href: 'https://unausa.org', logo: '/images/unausa-logo.svg' },
+];
 ---
 
 <Base>
@@ -29,19 +38,19 @@ const heroSocials = socials.slice(0, 3);
     <!-- Hero -->
     <section class="hero">
       <p class="eyebrow label">Engineer · Founder</p>
-      <p class="handle">@DanielRedacted</p>
 
       <div class="hero-body">
         <img src="/images/avatar.jpg" alt="Daniel" width="96" height="96" class="avatar" />
         <p class="tagline">
-          Engineer. I build <a href="https://AP0110.com">AP0110</a>: open-source infrastructure
-          for an internet people can own and verify.
+          I lead teams, build solutions, and build communities around Digital Public
+          Infrastructure (DPI): systems people can own and verify.
         </p>
       </div>
 
-      <div class="btn-row">
-        <a class="btn btn-primary" href="mailto:Him@DanielRedacted.net">Email</a>
-        <a class="btn btn-ghost" href="https://AP0110.com" target="_blank" rel="noopener">AP0110</a>
+      <div class="alma-maters">
+        <img src="/images/ucr-wordmark.png" alt="UC Riverside" class="invert" />
+        <span class="dot">·</span>
+        <img src="/images/ucberkeley-wordmark.png" alt="UC Berkeley" class="invert" />
       </div>
 
       <div class="socials">
@@ -57,75 +66,129 @@ const heroSocials = socials.slice(0, 3);
       </div>
     </section>
 
-    <!-- Work -->
-    <section id="work">
-      <div class="sec-head"><h2>work</h2><span class="idx"><b>01</b> · what I build</span></div>
+    <!-- Projects -->
+    <section id="projects">
+      <div class="sec-head"><h2>projects</h2></div>
       <div class="grid">
-        <a class="panel card" href="https://AP0110.com" target="_blank" rel="noopener">
-          <h3>AP0110 <span class="url">AP0110.com</span></h3>
+        <a class="panel card" href="https://CaliforniaCompute.org" target="_blank" rel="noopener">
+          <h3><img src="/images/calcompute-logo.svg" alt="CalCompute" class="card-wordmark" /></h3>
           <p>
-            Co-founding engineer and CEO. AP0110 builds open-source infrastructure for the
-            Independent Internet (Web 4.0): AI and digital infrastructure that people and
-            institutions can own, verify, and operate for themselves.
+            I direct the UC CalCompute Coalition, the volunteer group spanning all ten UC
+            campuses behind CalCompute, California's public AI cloud under Senate Bill 53. The
+            aim is compute the public owns and operates instead of renting.
+          </p>
+        </a>
+
+        <a class="panel card" href="https://UNA-Human-Rights.org" target="_blank" rel="noopener">
+          <h3><img src="/images/unausa-logo.svg" alt="UNA-USA" class="card-wordmark" /></h3>
+          <p>
+            Lead Technical Advisor to the UNA-USA Human Rights Affinity Group. I help translate
+            UN human rights instruments into positions that hold up in the digital age, on
+            surveillance, algorithmic accountability, internet access, and Digital Public
+            Infrastructure (DPI).
+          </p>
+        </a>
+
+        <a class="panel card" href="/compute">
+          <h3>
+            <svg class="card-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
+              <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
+              <circle cx="12" cy="9" r="2" />
+              <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
+              <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
+              <path d="M9.5 18h5" />
+              <path d="m8 22 4-11 4 11" />
+            </svg>
+            My Private/Community Node
+          </h3>
+          <p>
+            I share my own cluster with students and researchers in my community: free access
+            to open-weight models, on infrastructure nobody can take away or change the terms
+            on.
           </p>
         </a>
 
         <a class="panel card" href="https://AP0110.org" target="_blank" rel="noopener">
-          <h3>AP0110.ORG <span class="url">AP0110.org</span></h3>
+          <h3><img src="/images/ap0110-logo.svg" alt="" class="card-logo" /><span class="mono">AP0110</span></h3>
           <p>
-            The public research side of the work: a wiki of primary sources, synthesis pages, and
-            a knowledge graph tracing the lineage of the Independent Internet. The graph is
-            rebuilt from the markdown on every deploy; agents can read the whole site as markdown.
-          </p>
-        </a>
-
-        <a class="panel card" href="https://CaliforniaCompute.org" target="_blank" rel="noopener">
-          <h3>CalCompute <span class="url">CaliforniaCompute.org</span></h3>
-          <p>
-            President of the UC CalCompute Coalition. CalCompute is California's public AI cloud,
-            established by Senate Bill 53: compute infrastructure the public owns and operates,
-            instead of only renting it from a handful of companies.
+            Co-founding engineer and CEO. We build open-source infrastructure for Web 4.0, the
+            Independent Internet: AI and digital tools people and institutions can own, verify,
+            and operate for themselves. <span class="mono">AP0110.org</span> is the research
+            side, a public wiki and knowledge graph tracing where that idea comes from.
           </p>
         </a>
       </div>
     </section>
 
-    <!-- Contact -->
-    <section id="contact">
-      <div class="sec-head"><h2>contact</h2><span class="idx"><b>02</b> · email is best</span></div>
-      <div class="panel">
-        <p style="margin:0">
-          <a href="mailto:Him@DanielRedacted.net" class="mono"><strong>Him@DanielRedacted.net</strong></a>
-          <button type="button" class="copy" data-copy="Him@DanielRedacted.net">copy</button>
-        </p>
+    <!-- Past projects -->
+    <section id="past-projects">
+      <div class="sec-head"><h2>past projects</h2></div>
+      <div class="grid grid-past">
+        <a class="panel card" href="https://devpost.com/software/penguinpal" target="_blank" rel="noopener">
+          <h3><img src="/images/penguinpal.png" alt="" class="card-logo" />PenguinPal</h3>
+          <p>
+            Category winner at LA Tech Week 2024, built with a team of five in 24 hours. An
+            intelligent inbox: AI summaries, categories, and priority ranking over the Gmail
+            you already had.
+          </p>
+        </a>
 
-        <div class="socials big" style="margin-top:var(--sp-5)">
-          {
-            socials.map((s) => (
-              <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
-                </svg>
-              </a>
-            ))
-          }
+        <div class="panel card">
+          <h3><img src="/images/HighlanderRacing.png" alt="Highlander Racing" class="card-wordmark invert" /></h3>
+          <p>
+            I inherited a university team that had never qualified and we reached Formula SAE
+            Lincoln 2018, 49th overall. My part was the air intake, an adjustable-throttle-stop
+            bell-mouth I designed and 3D-printed. I stayed on for the electric car the next
+            season.
+          </p>
         </div>
+
+        <a class="panel card" href="/garage">
+          <h3><img src="/images/Volkswagen-Logo-1967.png" alt="" class="card-logo" />VW Bug &amp; SuperBeetle</h3>
+          <p>
+            Two Volkswagens: the 1974 SuperBeetle I bought at 15 and got running by 16, and the
+            1968 Bug its sale paid for. Rewired back to original, plus a few additions that don't
+            cut into the car.
+          </p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Friends -->
+    <section id="friends">
+      <div class="sec-head"><h2>friends</h2></div>
+      <div class="socials friends">
+        {
+          friends.map((f) => (
+            <a href={f.href} target="_blank" rel="noopener" title={f.label} aria-label={f.label}
+              class={f.wordmark ? 'friend-with-word' : null}>
+              <img src={f.logo} alt={f.label}
+                class={f.invert ? 'friend-logo invert' : 'friend-logo'} />
+              {f.wordmark && <span class={`friend-word friend-word--${f.wordmark}`}>{f.label}</span>}
+            </a>
+          ))
+        }
       </div>
     </section>
 
     <footer class="foot">
-      <span>Daniel <span class="redacted">Redacted</span></span>
-      <span>danielredacted.net</span>
+      <div class="socials">
+        {
+          socials.map((s) => (
+            <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
+              </svg>
+            </a>
+          ))
+        }
+      </div>
+      <div class="foot-meta">
+        <span>Daniel <span class="redacted">Redacted</span></span>
+        <span>danielredacted.net</span>
+      </div>
     </footer>
   </main>
-
-  <script>
-    document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(btn.dataset.copy ?? '');
-        btn.textContent = 'copied';
-        setTimeout(() => (btn.textContent = 'copy'), 1500);
-      });
-    });
-  </script>
 </Base>

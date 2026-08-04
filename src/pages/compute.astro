@@ -1,0 +1,851 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import AltPair from '../components/AltPair.astro';
+import { models, toolGroups, hardware, runtime, network, alternatives } from '../data/tools.js';
+import { contours, coast } from '../data/terrain.js';
+
+// Look marks up by label rather than by position: tools.js is generated, and inserting an
+// entry used to silently rebind the wrong logo here. A typo now fails the build instead.
+const all = [...hardware, ...runtime, ...network, ...toolGroups.flatMap((g) => g.tools), ...models];
+const mark = (label) => {
+  const found = all.find((t) => t.label === label);
+  if (!found) throw new Error(`unknown mark: ${label}`);
+  return found;
+};
+const pair = (openLabel) => {
+  const found = alternatives.find((a) => a.open.label === openLabel);
+  if (!found) throw new Error(`unknown pair: ${openLabel}`);
+  return found;
+};
+
+// No clean vector mark exists for either: CWOP's only logo is a dated raster badge, and
+// TTN's marketing site has no fetchable brand SVG. Text-only badges, same chip styling.
+const cwop = { label: 'CWOP', url: 'https://www.wxqa.com/' };
+const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.org' };
+---
+
+<Base
+  title="my private/community node · Daniel ████"
+  description="A design document for a self-hosted node: the radio links, sensors, local power, AI compute, and the reasoning behind each piece."
+>
+  <section class="fieldmap" aria-label="Live field diagram of the node and its surroundings">
+    <svg class="map" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <!-- lucide radio-tower, plane: same hand-inlined pattern as index.astro (ISC) -->
+        <g id="tower" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
+          <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
+          <circle cx="12" cy="9" r="2" />
+          <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
+          <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
+          <path d="M9.5 18h5" />
+          <path d="m8 22 4-11 4 11" />
+        </g>
+        <g id="plane-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+        </g>
+      </defs>
+
+      <g class="graticule">
+        <line x1="320" y1="0" x2="320" y2="1000" />
+        <line x1="640" y1="0" x2="640" y2="1000" />
+        <line x1="960" y1="0" x2="960" y2="1000" />
+        <line x1="1280" y1="0" x2="1280" y2="1000" />
+        <line x1="0" y1="250" x2="1600" y2="250" />
+        <line x1="0" y1="500" x2="1600" y2="500" />
+        <line x1="0" y1="750" x2="1600" y2="750" />
+        <!-- graticule crossings carry redacted coordinates, the persona's censor bar in map form -->
+        <g class="tick"><rect x="574" y="482" width="36" height="13" /><text x="616" y="493">N</text></g>
+        <g class="tick"><rect x="968" y="248" width="36" height="13" /><text x="1010" y="259">W</text></g>
+      </g>
+
+      <g class="contours">
+        {contours.map((c) => <path d={c.d} class:list={[c.level % 200 === 0 && 'index']} />)}
+      </g>
+      <g class="coast">
+        {coast.map((d) => (
+          <>
+            <path class="shore-glow" d={d} />
+            <path class="shore" d={d} />
+          </>
+        ))}
+      </g>
+      <text class="sea-label" x="1260" y="820">OPEN WATER</text>
+
+      <!-- outbound signal front from the node -->
+      <circle class="wave" cx="640" cy="420" r="1200" />
+
+      <!-- peer towers: ping on receiving the front (--recv), node flashes on their reply -->
+      <g class="peer" style="--recv: 1.5s">
+        <circle class="ping" cx="760" cy="700" r="34" />
+        <svg x="745" y="685" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="784" y="705">RLY-01</text>
+      </g>
+      <g class="peer" style="--recv: 2s">
+        <circle class="ping" cx="320" cy="180" r="34" />
+        <svg x="305" y="165" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="344" y="185">RLY-02</text>
+      </g>
+      <g class="peer" style="--recv: 2.7s">
+        <circle class="ping" cx="1150" cy="260" r="34" />
+        <svg x="1135" y="245" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="1174" y="265">RLY-03</text>
+      </g>
+
+      <!-- the node -->
+      <g class="node">
+        <svg x="612" y="392" width="56" height="56" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="616" y="472">NODE</text>
+        <rect class="tag-redact" x="664" y="461" width="26" height="12" />
+      </g>
+
+      <!-- occasional overflights, ADS-B style -->
+      <g class="flight flight-a">
+        <g class="frame" transform="rotate(-21)">
+          <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
+          <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" />
+        </g>
+        <text class="tag" x="20" y="-12">N481TC FL340</text>
+      </g>
+      <g class="flight flight-b">
+        <g class="frame" transform="rotate(167)">
+          <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
+          <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" />
+        </g>
+        <text class="tag" x="20" y="-12">A2C7E9 FL265</text>
+      </g>
+    </svg>
+
+    <div class="hud hud-identity">
+      <p class="label eyebrow">FIELD DIAGRAM · COMMUNITY NODE</p>
+      <h1>My Private/Community Node</h1>
+    </div>
+
+    <dl class="hud hud-metrics">
+      <div class="metric hide-sm"><dt class="label">Solar eff</dt><dd id="m-solar">64%</dd></div>
+      <div class="metric"><dt class="label">Batt</dt><dd id="m-batt">78% CHG</dd></div>
+      <div class="metric hide-sm"><dt class="label">Cluster temp</dt><dd id="m-temp">47.2°C</dd></div>
+      <div class="metric"><dt class="label">Wx</dt><dd id="m-wx">MARINE LAYER · 8KT NW</dd></div>
+      <div class="metric hide-sm"><dt class="label">Mesh</dt><dd id="m-mesh">7 HEARD</dd></div>
+    </dl>
+
+    <div class="hud hud-compass" aria-hidden="true">
+      <span class="north">
+        <svg viewBox="0 0 24 24"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
+        N
+      </span>
+      <span class="scale"><span class="scale-bar"></span><span class="redacted">10</span> KM</span>
+    </div>
+
+    <a class="hud hud-more" href="#doc" aria-label="Continue to the design document">
+      <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+    </a>
+  </section>
+
+  <main id="doc" class="mx-auto w-full max-w-3xl px-6 pb-16">
+    <article class="prose-page">
+      <p>
+        This is a design document for a node I built and run myself. The word node is doing some
+        work in that sentence. What sits here is a small cluster, a few radios, a weather
+        station, and the power to keep them going when the grid does not. I want to explain why
+        each piece is there and why it is the piece I picked.
+      </p>
+      <p>
+        The reason any of it exists is that I spend my working days building infrastructure
+        people can own and run themselves rather than rent, which some people have started
+        calling Web 4.0 and others call the Independent Internet. There is an older term for a
+        piece of it: Digital Public Infrastructure, the compute and network and data layers a
+        society holds in common instead of routing through a handful of companies. Concentrating
+        those layers in a few data centers is the specific failure that decentralization exists
+        to answer. Compute is where the concentration is worst at the moment. Whoever owns the
+        machine decides what runs on it, and who stops being able to run anything when the terms
+        change.
+      </p>
+      <p>
+        Compute is a resource in the same sense bandwidth and electricity are resources.
+        Self-hosting is how you guarantee your own supply, since nobody can price you out of a
+        machine you already own, and it happens to be the arrangement that also lets you hand
+        the surplus to people around you. This is my node. It stays up because I am the one who
+        fixes it.
+      </p>
+    </article>
+
+    <section class="marks">
+      <div class="sec-head"><h2>mesh radio</h2><span class="idx"><b>01</b> · long range, no carrier</span></div>
+      <p>
+        The radio is built around a single trade: give up bandwidth, get back range and power
+        efficiency. A packet carries bytes rather than megabytes and travels slowly, and in
+        return it covers ground measured in miles on very little power, arriving at receivers
+        able to pull it out from under the noise floor. It runs in unlicensed spectrum, so there
+        is no SIM and no account anywhere.
+      </p>
+      <p>
+        Firmware is what turns that radio into a network. Every node repeats for every other
+        node, so there is no tower in the middle and therefore no operator, nobody positioned to
+        bill or throttle or switch anyone off. Coverage stops being a map a company publishes
+        and becomes a consequence of where people have put nodes, which means adding one
+        enlarges the network for everybody already on it. Day to day it is a link that does not
+        care whether the cell network is up or the ISP is having a bad afternoon.
+      </p>
+      <p>
+        The node repeats other people's traffic whether or not I can read it and whether or not
+        I know who sent it. Everything is encrypted end to end, so carrying a message never
+        meant seeing one. Anybody in range running their own node is already on the network,
+        since a mesh has no admission step for anyone to grant. Sharing here was settled by the
+        protocol rather than by me.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('Meshtastic')} />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>weather station</h2><span class="idx"><b>02</b> · sensors and telemetry</span></div>
+      <p>
+        The station reads the ordinary things and reports them over that same independent path
+        rather than into a manufacturer's app. Sensor traffic is small and infrequent, which is
+        precisely what long-range low-power radio is good at, so a volunteer-built network of
+        that kind carries part of it.
+      </p>
+      <p>
+        The readings land in open, nonprofit data commons that any station can feed and anyone
+        can query. That is the whole reason for choosing them over a vendor dashboard. A commons
+        cannot be repriced, gated, or shut down because a product line got cancelled, and the
+        data ends up useful to somebody other than me, which is never true of a private
+        dashboard.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('openSenseMap')} />
+        <Mark item={cwop} />
+        <Mark item={ttn} />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>amateur radio relay</h2><span class="idx"><b>03</b> · licensed, in progress</span></div>
+      <p>
+        A licensed relay station is in progress. It is a slower thing to add than the rest of
+        this, since it runs on a callsign and an examination rather than a purchase.
+      </p>
+      <p>
+        It covers a case the mesh does not. Unlicensed spectrum keeps the barrier to entry at
+        zero, which is most of why the mesh works at all, but it also caps transmit power and
+        limits what you may legally do with the link. A licensed service raises those ceilings
+        and hands you obligations in exchange: identify yourself, no encryption, nothing
+        commercial. Running both is the point. One is a network anybody can join without asking
+        permission, the other reaches considerably further and exists for the conditions where
+        the first one runs out.
+      </p>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>resilience</h2><span class="idx"><b>04</b> · power as a layer</span></div>
+      <p>
+        Everything else here assumes electricity, and that assumption is worth looking at
+        directly. A node running on a utility connection and nothing else has moved its
+        dependency rather than removed it. You have traded a cloud provider's terms for a
+        utility's. The utility is more reliable and no more yours.
+      </p>
+      <p>
+        So the design treats power as part of the system instead of an input to it. Generation
+        and storage are things a node can own the same way it owns a disk. Sun and wind are
+        worth having because they are inputs nobody bills for and nobody can switch off from an
+        office somewhere. Storage is what makes them usable, since the sun is not up when you
+        need it and the wind keeps its own schedule.
+      </p>
+      <p>
+        None of this makes the node self-sufficient in any absolute sense and I would not claim
+        it does. What it changes is the depth of a failure. An outage becomes an inconvenience
+        somewhere in the middle of the stack rather than an event that takes the whole thing
+        off the air.
+      </p>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>AI compute</h2><span class="idx"><b>05</b> · the machine</span></div>
+      <p>
+        Ownership is the design constraint the cluster is built around. A rented machine can be
+        suspended, repriced, or reclaimed on someone else's schedule, and none of those events
+        have anything to do with whether the work on it is going well. Hardware I can walk over
+        to and put a hand on removes that whole class of surprise. A smaller board handles the
+        jobs that have no business occupying a graphics card, the housekeeping and the sensor
+        plumbing.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('NVIDIA')} />
+        <Mark item={mark('AMD')} />
+        <Mark item={mark('Raspberry Pi')} />
+      </div>
+      <p>
+        Silicon and software stack are one subsystem here rather than two, because owning the
+        machine buys very little if what runs on it is a black box. An operating system and a
+        serving stack you can read are what let you find out what actually happens between a
+        request and an answer, fix it when it breaks, and keep it running after the people who
+        wrote it have moved on to something else. Nobody has to trust my description of the
+        setup. The code is right there.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('Linux')} />
+        <Mark item={mark('Docker')} />
+        <Mark item={mark('vLLM')} />
+        <Mark item={mark('AP0110')} />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>open weight models</h2><span class="idx"><b>06</b> · what it serves</span></div>
+      <p>
+        A model is a very large table of numbers. Training is the expensive part, months of
+        compute spent adjusting billions of those numbers until the table does something useful,
+        and what comes out the other end is a file. Everything the model knows is in there, and
+        running it is arithmetic over those numbers. An open weight model is one where the file
+        is published for anyone to download. A closed one stays on a company's servers, with an
+        opening you may send questions through.
+      </p>
+      <p>
+        Open weights and open source are not the same thing, and the two get blurred constantly.
+        Publishing weights says nothing about publishing the training data, the code, or the
+        method, and most releases keep all of that back. Licenses vary enough to be worth
+        reading. What you get is the artifact, which turns out to be the part that decides how
+        research goes. A model behind an interface someone else operates is a moving target: it
+        can be updated or retired underneath you, and a published result can stop reproducing
+        without a line of your code changing. A checkpoint on your own disk holds still. It can
+        be pinned, cited by hash, and handed to somebody who wants to rerun the experiment in
+        three years. Custody of the data follows from the same property, because a question you
+        never send anywhere is a question that never left, and for work under an ethics approval
+        that distinction is not a preference.
+      </p>
+      <p>
+        The last property is durability. Hosted models are deprecated on their provider's
+        schedule, while a file already on your disk cannot be recalled. The catch is that
+        weights arrive with none of the machinery to run them, which is what the cluster and the
+        power underneath it are for. A model you own and cannot serve is a file taking up space.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('Hugging Face')} />
+        <Mark item={mark('Llama')} />
+        <Mark item={mark('Qwen')} />
+        <Mark item={mark('DeepSeek')} />
+        <Mark item={mark('Mistral')} />
+        <Mark item={mark('Gemma')} />
+        <Mark item={mark('OpenMed')} />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>remote access</h2><span class="idx"><b>07</b> · the way in</span></div>
+      <p>
+        Getting to the cluster from outside is its own design problem. A network is one more
+        thing that can be metered or cut, and a carrier is one more party standing between me
+        and the machine, so the way in runs over encrypted overlays rather than anything exposed
+        directly to the open internet. Keeping several overlays running at once is deliberate.
+        They fail in different ways, they are trusted by different people, and the one that is
+        quickest to configure is not always the one I want sitting between a laptop in a hotel
+        and a machine at home.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('Tailscale')} />
+        <Mark item={mark('WireGuard')} />
+        <Mark item={mark('OpenVPN')} />
+        <Mark item={mark('AP0110')} />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>source control</h2><span class="idx"><b>08</b> · where the work lives</span></div>
+      <p>
+        A result reproduces from three things: the weights, the data, and the code that put them
+        together. Pinning a checkpoint and citing it by hash settles the first of those. If the
+        pipeline that consumed it lives on a platform able to lock an account or take a
+        repository down, what you have is partial in a way that tends not to surface until
+        somebody actually tries to rerun the work.
+      </p>
+      <p>
+        Keeping that history next to the compute is the obvious answer, and self-hosted forges
+        are mature enough now that it is a configuration decision rather than a project. There
+        is a practical version of the argument with no philosophy in it at all: institutional
+        accounts are temporary. Students lose them at graduation and researchers lose them on
+        moving, and work that lived on the account leaves with the account.
+      </p>
+      <p>
+        Nothing here runs a forge yet, so this section is reasoning rather than description.
+        When it happens, the thing worth weighing is governance rather than features, because
+        the mature options are near-identical software under different owners. The one worth
+        picking exists because its predecessor's stewardship moved into a company and the
+        maintainers forked instead of following it. That history matters when the whole point is
+        not having to trust a future owner.
+      </p>
+      <div class="mark-row">
+        <AltPair pair={pair('Forgejo')} openTitle="the self-hosted alternative" />
+      </div>
+    </section>
+
+    <section class="marks">
+      <div class="sec-head"><h2>community research</h2><span class="idx"><b>09</b> · what it is for</span></div>
+      <p>
+        Most of what the node gets used for falls into three kinds of work. The kind matters
+        more than which company wrote the software, since that is what decides whether any of
+        it helps with the problem in front of you.
+      </p>
+      <p>
+        Chat and search interfaces are for exploring an idea, triaging a stack of papers, or
+        checking a hypothesis without writing retrieval code for every question. The part that
+        matters for research is grounding. An answer tied to a specific set of sources is
+        something you can follow back and cite, while an answer drawn from a model's general
+        training is something you have to verify by hand before you dare use it.
+      </p>
+      <div class="mark-row">
+        <AltPair pair={pair('Open WebUI')} />
+        <AltPair pair={pair('SearXNG')} />
+        <AltPair pair={pair('Onyx')} />
+        <Mark item={mark('Cherry Studio')} />
+      </div>
+      <p>
+        Agentic coding tools matter to a lab that has to build or maintain a pipeline without an
+        engineering team to hand it to. The agent reads the codebase, makes a change, runs the
+        tests, and goes round again, which is the loop a person would work through anyway.
+        Because the agent sits on top of a model rather than being welded to one, it can be
+        pointed at whichever model suits the job in front of it.
+      </p>
+      <div class="mark-row">
+        <AltPair pair={pair('Cline')} />
+        <AltPair pair={pair('OpenHands')} />
+        <AltPair pair={pair('Goose')} />
+        <Mark item={mark('opencode')} />
+        <Mark item={mark('Kilo Code')} />
+      </div>
+      <p>
+        When no existing tool matches the workflow, the pieces for building one are much the
+        same every time: a notebook to prototype in, a framework for wiring a retrieval or agent
+        pipeline together, and a plain interface so the result can be handed to somebody who
+        does not read code.
+        Automation turns a script that ran once into something that runs on a schedule.
+        Observability is how you work out which step in a long chain of model calls produced a
+        wrong answer, which is otherwise close to guesswork.
+      </p>
+      <div class="mark-row">
+        <Mark item={mark('Jupyter')} />
+        <Mark item={mark('LangChain')} />
+        <Mark item={mark('LlamaIndex')} />
+        <Mark item={mark('Haystack')} />
+        <Mark item={mark('Gradio')} />
+        <Mark item={mark('Streamlit')} />
+        <Mark item={mark('Dify')} />
+        <AltPair pair={pair('n8n')} />
+        <AltPair pair={pair('Langfuse')} />
+      </div>
+      <p>
+        Students and researchers in my community work on the node too. I did not build it for
+        them and I would rather be accurate about that. I built it for my own work, found there
+        was capacity sitting idle, and decided hardware helping nobody was the worse outcome.
+        Sharing turned out to be a property of owning the thing rather than a reason to own it.
+      </p>
+      <p>
+        At the scale of a state that arrangement has a name and a literature behind it. At this
+        scale it is one node in one house, a couple of radios, and more capacity than one person
+        can use. The argument is the same size either way. Whoever owns the compute decides what
+        gets built on it, and I would rather that decision sit with the people doing the work.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // Ambient readouts for the field diagram. Values drift inside realistic bands.
+    const el = (id: string) => document.getElementById(id)!;
+    const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+    const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+
+    const WX_STATES = ['CLEAR', 'MARINE LAYER', 'OVERCAST', 'LT RAIN'];
+    const WX_DIRS = ['N', 'NNW', 'NW', 'WNW', 'W', 'SW'];
+    const randWx = () => ({ state: pick(WX_STATES), kt: 4 + Math.floor(Math.random() * 10), dir: pick(WX_DIRS) });
+
+    let batt = 58 + Math.random() * 30;
+    let temp = 43 + Math.random() * 10;
+    let mesh = 6 + Math.floor(Math.random() * 3);
+    let wx = randWx();
+
+    // Fraction of rated PV output for the current hour, dark outside 06:30-19:30.
+    const solar = () => {
+      const h = new Date().getHours() + new Date().getMinutes() / 60;
+      if (h < 6.5 || h > 19.5) return 0;
+      return Math.max(0, Math.round(Math.sin(((h - 6.5) / 13) * Math.PI) * 88 + (Math.random() * 6 - 3)));
+    };
+
+    const render = (s: number) => {
+      el('m-solar').textContent = `${s}%`;
+      el('m-batt').textContent = `${Math.round(batt)}% ${s > 35 ? 'CHG' : 'DISCHG'}`;
+      el('m-temp').textContent = `${temp.toFixed(1)}°C`;
+      el('m-wx').textContent = `${wx.state} · ${wx.kt}KT ${wx.dir}`;
+      el('m-mesh').textContent = `${mesh} HEARD`;
+    };
+
+    const tick = () => {
+      const s = solar();
+      batt = clamp(batt + (s > 35 ? 0.06 : -0.05) + (Math.random() - 0.5) * 0.1, 34, 100);
+      temp = clamp(temp + (Math.random() - 0.5) * 0.9, 37, 68);
+      if (Math.random() < 0.07) mesh = clamp(mesh + (Math.random() < 0.5 ? -1 : 1), 5, 9);
+      if (Math.random() < 0.04) wx = randWx();
+      render(s);
+    };
+
+    render(solar());
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(tick, 2500);
+  </script>
+
+  <style>
+    /* ---- fieldmap hero ----------------------------------------------------
+       Full-bleed stage, garage recipe: opaque bg + its own dot grid, because
+       the fixed body::before grid doesn't scroll and would double-print. */
+    .fieldmap {
+      position: relative;
+      z-index: 1;
+      height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
+      border-top: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, rgba(0, 0, 0, 0.09) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .graticule line {
+      stroke: var(--border);
+      stroke-width: 1;
+    }
+    .tick rect,
+    .tag-redact {
+      fill: var(--ink);
+    }
+    .tick text,
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      fill: var(--text-mute);
+    }
+    .contours path {
+      fill: none;
+      stroke: var(--border-strong);
+      stroke-width: 1;
+    }
+    .contours path.index {
+      stroke: var(--stone);
+      stroke-width: 1.3;
+    }
+    .coast .shore {
+      fill: none;
+      stroke: var(--field-grey);
+      stroke-width: 1.6;
+    }
+    /* ponytail: wide soft stroke suggests water instead of a filled sea polygon */
+    .coast .shore-glow {
+      fill: none;
+      stroke: var(--field-grey);
+      stroke-width: 10;
+      opacity: 0.07;
+    }
+    .sea-label {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.35em;
+      fill: var(--text-mute);
+      opacity: 0.55;
+    }
+
+    /* signal choreography: front expands 6s of an 8s cycle; each relay pings as
+       the front passes (--recv = distance / front speed) and the node flashes
+       when the reply makes it back (2x --recv, baked into nodeflash offsets) */
+    .wave {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+      animation: wave 8s linear infinite;
+    }
+    @keyframes wave {
+      0% { transform: scale(0.02); opacity: 0.75; }
+      70% { opacity: 0.1; }
+      75%, 100% { transform: scale(1); opacity: 0; }
+    }
+    .glyph {
+      color: var(--text-mute);
+      overflow: visible;
+    }
+    .node .glyph {
+      color: var(--text);
+      animation: nodeflash 8s linear infinite;
+    }
+    @keyframes nodeflash {
+      0%, 35%, 40%, 48%, 53%, 65%, 70%, 100% { color: var(--text); }
+      37.5%, 50%, 67.5% { color: var(--accent); }
+    }
+    .peer .ping {
+      fill: none;
+      stroke: var(--text-dim);
+      stroke-width: 1.2;
+      vector-effect: non-scaling-stroke;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+      animation: ping 8s linear infinite;
+      animation-delay: var(--recv);
+    }
+    @keyframes ping {
+      0% { transform: scale(0.25); opacity: 0.8; }
+      10%, 100% { transform: scale(1); opacity: 0; }
+    }
+    .peer .glyph {
+      animation: peerflash 8s linear infinite;
+      animation-delay: var(--recv);
+    }
+    @keyframes peerflash {
+      0% { color: var(--accent-ink); }
+      6%, 100% { color: var(--text-mute); }
+    }
+
+    .flight .trail {
+      stroke: var(--text-mute);
+      stroke-width: 1.5;
+      stroke-dasharray: 2 7;
+      opacity: 0.6;
+    }
+    .flight use {
+      color: var(--text-dim);
+    }
+    .flight-a {
+      animation: flight-a 150s linear infinite;
+      animation-delay: -145s;
+    }
+    @keyframes flight-a {
+      0% { transform: translate(-160px, 880px); }
+      40%, 100% { transform: translate(1760px, 140px); }
+    }
+    .flight-b {
+      animation: flight-b 180s linear infinite;
+      animation-delay: -60s;
+    }
+    @keyframes flight-b {
+      0% { transform: translate(1760px, 340px); }
+      33%, 100% { transform: translate(-200px, 780px); }
+    }
+
+    /* ---- HUD -------------------------------------------------------------- */
+    .hud {
+      position: absolute;
+      z-index: 2;
+    }
+    .hud-identity {
+      top: var(--sp-5);
+      left: var(--sp-5);
+      max-width: min(560px, 75vw);
+    }
+    .hud-identity .eyebrow {
+      margin: 0 0 var(--sp-2);
+      color: var(--accent-ink);
+      letter-spacing: 0.2em;
+    }
+    .hud-identity h1 {
+      font-size: var(--step-3);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .hud-metrics {
+      top: var(--sp-5);
+      right: var(--sp-5);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+      text-align: right;
+      padding: var(--sp-3) var(--sp-4);
+    }
+    .hud-metrics::before,
+    .hud-metrics::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      opacity: 0.7;
+    }
+    .hud-metrics::before {
+      top: 0;
+      left: 0;
+      border-top: 1.5px solid var(--text-mute);
+      border-left: 1.5px solid var(--text-mute);
+    }
+    .hud-metrics::after {
+      bottom: 0;
+      right: 0;
+      border-bottom: 1.5px solid var(--text-mute);
+      border-right: 1.5px solid var(--text-mute);
+    }
+    .metric .label {
+      font-size: var(--step--2);
+    }
+    .metric dd {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: var(--step-0);
+      color: var(--text);
+    }
+    .hud-compass {
+      bottom: var(--sp-5);
+      right: var(--sp-5);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-5);
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--text-mute);
+    }
+    .north {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4ch;
+    }
+    .north svg,
+    .hud-more svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .scale {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6ch;
+    }
+    .scale-bar {
+      display: inline-block;
+      width: 64px;
+      height: 6px;
+      border: 1.5px solid var(--text-mute);
+      border-top: none;
+    }
+    .hud-more {
+      bottom: var(--sp-4);
+      left: 50%;
+      margin-left: -19px;
+      display: inline-flex;
+      padding: 0.5rem;
+      color: var(--text-mute);
+      animation: bob 2.4s ease-in-out infinite;
+    }
+    .hud-more svg {
+      width: 22px;
+      height: 22px;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+
+    @media (max-width: 640px) {
+      .hide-sm {
+        display: none;
+      }
+      .hud-identity h1 {
+        font-size: var(--step-2);
+      }
+      .hud-metrics {
+        top: auto;
+        bottom: var(--sp-7);
+        right: var(--sp-4);
+      }
+      .hud-compass {
+        display: none;
+      }
+    }
+
+    /* the global reduced-motion rule kills transitions only; freeze the diagram too */
+    @media (prefers-reduced-motion: reduce) {
+      .fieldmap *,
+      .fieldmap {
+        animation: none !important;
+      }
+    }
+
+    .prose-page {
+      padding-top: var(--sp-7);
+    }
+    .prose-page p,
+    .marks > p {
+      margin: var(--sp-5) 0 0;
+      max-width: 62ch;
+      color: var(--text-dim);
+    }
+    .mark-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-3);
+      margin: var(--sp-4) 0 0;
+    }
+    :global(.mark) {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6ch;
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--text-dim);
+      text-decoration: none;
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0.4em 0.8em;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    :global(.mark:hover) {
+      color: var(--accent-ink);
+      border-color: var(--accent-ink);
+    }
+    :global(.mark:focus-visible) {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    :global(.mark svg) {
+      width: 1.1em;
+      height: 1.1em;
+      flex: none;
+      color: var(--text-mute);
+      transition: color 0.15s;
+    }
+    :global(.mark:hover svg) {
+      color: var(--accent-ink);
+    }
+    :global(.alt-pair) {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5ch;
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0.4em 0.8em;
+    }
+    :global(.alt-pair .mark) {
+      border: none;
+      padding: 0;
+    }
+    :global(.alt-pair .closed) {
+      color: var(--text-mute);
+    }
+    :global(.alt-arrow) {
+      width: 0.9em;
+      height: 0.9em;
+      color: var(--text-mute);
+      flex: none;
+    }
+  </style>
+</Base>

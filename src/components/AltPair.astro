@@ -1,0 +1,19 @@
+---
+// openTitle defaults to the deployed case; override it for marks that are design
+// rationale rather than something actually running here.
+const { pair, openTitle = 'what I run' } = Astro.props;
+---
+
+<span class="alt-pair">
+  <a href={pair.closed.url} target="_blank" rel="noopener" class="mark closed" title={`${pair.closed.label}, subscription`}>
+    <svg viewBox={pair.closed.vb} fill="currentColor" aria-hidden="true" set:html={pair.closed.svg} />
+    <span>{pair.closed.label}</span>
+  </a>
+  <svg class="alt-arrow" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 12h15m0 0-5.5-5.5M19 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+  <a href={pair.open.url} target="_blank" rel="noopener" class="mark open" title={`${pair.open.label}, ${openTitle}`}>
+    <svg viewBox={pair.open.vb} fill="currentColor" aria-hidden="true" set:html={pair.open.svg} />
+    <span>{pair.open.label}</span>
+  </a>
+</span>

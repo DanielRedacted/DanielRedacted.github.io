@@ -1,0 +1,8 @@
+---
+const { item } = Astro.props;
+---
+
+<a href={item.url} target="_blank" rel="noopener" class="mark">
+  {item.svg && <svg viewBox={item.vb} fill="currentColor" aria-hidden="true" set:html={item.svg} />}
+  <span>{item.label}</span>
+</a>

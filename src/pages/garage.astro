@@ -1,0 +1,914 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+
+// Icon matches for spec/feature copy, name-based so new specs/features stay icon-free by default.
+const labelIcon = (label: string) => (label === 'Displacement' || label === 'Cylinders' ? 'cylinder' : null);
+const featureIcon = (text: string) =>
+  text.includes('CB radio') ? 'radio'
+  : text.includes('radar detector') ? 'radar'
+  : text.includes('kill switch') ? 'power'
+  : null;
+
+// The chip row: declared upgrades first, then anything in features that maps to an icon.
+const chipsFor = (car) => [
+  ...(car.upgrades ?? []),
+  ...car.features.filter((f: string) => featureIcon(f)).map((f: string) => ({ icon: featureIcon(f), text: f })),
+];
+
+const CARS = [
+  {
+    year: '1974',
+    short: 'SuperBeetle',
+    name: '1974 SuperBeetle',
+    make: 'Volkswagen',
+    logo: '/images/Volkswagen-Logo-1967.png',
+    model: '/3d/1974_volkswagen_superbeetle.glb',
+    alt: '1974 Volkswagen SuperBeetle 3D model',
+    keyline: '46 hp · 1641 cc',
+    numeric: [
+      { label: 'Power', value: 46, display: '46 hp @ 4000 rpm' },
+      { label: 'Torque', value: 95, display: '95 lb-ft @ 2700 rpm' },
+      { label: 'Displacement', value: 1641, display: '1641 cc' },
+      { label: 'Curb weight', value: 1800, display: '1800 lb' },
+      { label: 'Length', value: 163.4, display: '163.4 in' },
+      { label: 'Wheelbase', value: 94.5, display: '94.5 in' },
+    ],
+    rows: [
+      { label: 'Engine', value: '1.6L flat-4, air-cooled' },
+      { label: 'Compression', value: '7.3:1' },
+      { label: 'Transmission', value: '4-speed manual' },
+      { label: 'Drive', value: 'Rear engine, RWD' },
+    ],
+    features: [
+      'President Adams FCC CB radio',
+      'Cobra radar detector',
+      'Paper air filter',
+    ],
+  },
+  {
+    year: '1968',
+    short: 'Bug',
+    name: '1968 Bug',
+    make: 'Volkswagen',
+    logo: '/images/Volkswagen-Logo-1967.png',
+    model: '/3d/1968_volkswagen_beetle.glb',
+    alt: '1968 Volkswagen Beetle 3D model',
+    keyline: '53 hp · 1600 cc',
+    numeric: [
+      { label: 'Power', value: 53, display: '53 hp @ 4200 rpm' },
+      { label: 'Torque', value: 78, display: '78 lb-ft @ 2600 rpm' },
+      { label: 'Displacement', value: 1600, base: 1493, display: '1600 cc' },
+      { label: 'Curb weight', value: 1745, display: '1745 lb' },
+      { label: 'Length', value: 158.7, display: '158.7 in' },
+      { label: 'Wheelbase', value: 94.5, display: '94.5 in' },
+    ],
+    upgrades: [{ icon: 'cylinder', text: 'Cylinders: aftermarket, 1493 to 1600 cc' }],
+    rows: [
+      { label: 'Engine', value: '1.6L flat-4, air-cooled' },
+      { label: 'Color', value: 'Zenith Blue (L639)', swatch: '#B4C0C8' },
+      { label: 'Compression', value: '7.5:1' },
+      { label: 'Transmission', value: '4-speed manual' },
+      { label: 'Drive', value: 'Rear engine, RWD' },
+    ],
+    features: [
+      'Original color, resprayed',
+      'Original matching body, engine, and transmission',
+      'Custom hidden kill switch (engine, not starter)',
+      'President Adams FCC CB radio',
+      'Cobra radar detector',
+      'Oil air filter',
+    ],
+    credit:
+      'Model: "1968 Volkswagen Beetle" by <a href="https://sketchfab.com/ddiaz-design" target="_blank" rel="noopener">Ddiaz Design</a> on <a href="https://sketchfab.com/3d-models/1968-volkswagen-beetle-969a477451ee40bb8e715ec0907d187e" target="_blank" rel="noopener">Sketchfab</a>, licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>.',
+  },
+  {
+    year: '2018',
+    short: 'IC',
+    name: '2018 IC',
+    make: 'Highlander Racing',
+    logo: '/images/HighlanderRacing.png',
+    wordmark: true,
+    model: null,
+    alt: '',
+    keyline: 'CBR600RR · 599 cc',
+    numeric: [
+      { label: 'Displacement', value: 599, display: '599 cc' },
+    ],
+    rows: [
+      { label: 'Engine', value: 'Honda CBR600RR inline-4' },
+      { label: 'Valvetrain', value: 'DOHC, 16 valves' },
+      { label: 'Cooling', value: 'Liquid-cooled' },
+      { label: 'Bore × stroke', value: '67.0 × 42.5 mm' },
+      { label: 'Transmission', value: '6-speed sequential' },
+      { label: 'Drive', value: 'Chain, RWD' },
+    ],
+    features: [
+      'Formula SAE Lincoln 2018, 49th overall',
+      'Custom 3D-printed bell-mouth intake, adjustable throttle stop',
+    ],
+  },
+  {
+    year: '2019',
+    short: 'Electric',
+    name: '2019 Electric',
+    make: 'Highlander Racing',
+    logo: '/images/HighlanderRacing.png',
+    wordmark: true,
+    model: null,
+    alt: '',
+    keyline: '4 in-hub motors',
+    numeric: [],
+    rows: [
+      { label: 'Motors', value: '4 custom in-hub' },
+      { label: 'Drive', value: 'AWD' },
+    ],
+    features: [],
+  },
+];
+
+// Bar widths are relative to the largest value for that label across the garage.
+const maxByLabel: Record<string, number> = {};
+for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.max(maxByLabel[s.label] ?? 0, s.value);
+---
+
+<Base
+  title="VW Bug & SuperBeetle · Daniel ████"
+  description="The garage: a 1968 Bug rebuilt to drive by 16, the 1974 SuperBeetle that paid for it, and Highlander Racing's 2018 IC and 2019 Electric FSAE cars."
+>
+  <section class="garage" aria-label="Garage">
+    <model-viewer
+      class="stage no-model"
+      loading="eager"
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="8000"
+      camera-orbit="-30deg 78deg auto"
+      interpolation-decay="200"
+      shadow-intensity="1"
+      interaction-prompt="none"
+      disable-zoom
+      touch-action="pan-y"
+    >
+      <div slot="progress-bar"></div>
+    </model-viewer>
+    <p class="stage-empty" hidden>No 3D model yet</p>
+    <div class="garage-stack">
+      <img src="/posters/1974-narrow-mirror.png" data-year="1974" alt="Select the 1974 SuperBeetle" />
+      <img src="/posters/1968-narrow-mirror.png" data-year="1968" alt="Select the 1968 Bug" />
+    </div>
+
+    <div class="hud hud-identity">
+      <button type="button" class="deselect" hidden>
+        <Icon name="arrow-left" class="icon" /> Garage
+      </button>
+      <p class="label make">
+        {CARS.map((car) => (
+          <span data-year={car.year} hidden>
+            {car.wordmark ? (
+              <img src={car.logo} alt={car.make} class="card-wordmark invert" />
+            ) : (
+              <><img src={car.logo} alt="" class="card-logo" /> {car.make}</>
+            )}
+          </span>
+        ))}
+      </p>
+      <h1 id="car-title">
+        <span data-year="garage">Garage</span>
+        {CARS.map((car) => <span data-year={car.year} hidden>{car.name}</span>)}
+      </h1>
+    </div>
+
+    <div class="hud hud-specs">
+      <button type="button" class="specs-toggle" aria-expanded="true" aria-controls="spec-sheets" hidden>Specs</button>
+      <aside id="spec-sheets">
+        {CARS.map((car) => (
+          <div
+            class="spec-sheet panel"
+            id={`specs-${car.year}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${car.year}`}
+            tabindex="0"
+            data-year={car.year}
+            hidden
+          >
+            {car.numeric.map((s, j) => (
+              <div class="spec spec-num">
+                <div class="spec-row">
+                  <span class="spec-label">
+                    {labelIcon(s.label) && <Icon name={labelIcon(s.label)} class="spec-icon" />}{s.label}
+                  </span>
+                  <span class="spec-value">{s.base && <span class="up">▲</span>}{s.display}</span>
+                </div>
+                <div class="bar-track">
+                  {s.base ? (
+                    <>
+                      <div class="bar-fill" style={`width:${((s.base / maxByLabel[s.label]) * 100).toFixed(1)}%`}></div>
+                      <div class="bar-fill upgrade" style={`width:${(((s.value - s.base) / maxByLabel[s.label]) * 100).toFixed(1)}%`}></div>
+                    </>
+                  ) : (
+                    <div class="bar-fill" style={`width:${((s.value / maxByLabel[s.label]) * 100).toFixed(1)}%`}></div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {car.rows.map((r) => (
+              <div class="spec">
+                <div class="spec-row">
+                  <span class="spec-label">
+                    {labelIcon(r.label) && <Icon name={labelIcon(r.label)} class="spec-icon" />}{r.label}
+                  </span>
+                  <span class="spec-value">
+                    {r.swatch && <span class="swatch" style={`background:${r.swatch}`}></span>}{r.value}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {chipsFor(car).length > 0 && (
+              <div class="feat-icons">
+                {chipsFor(car).map((c) => (
+                  <button type="button" class="feat-chip" aria-pressed="false" aria-label={c.text} title={c.text}>
+                    <Icon name={c.icon} />
+                    <span class="chip-text" hidden>{c.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {car.features.length > 0 && (
+              <>
+                <p class="label feat-head">Features</p>
+                <ul class="features">
+                  {car.features.map((f) => <li>{f}</li>)}
+                </ul>
+              </>
+            )}
+            {car.credit && (
+              <details class="credit">
+                <summary aria-label="Model credit">ⓘ</summary>
+                <p set:html={car.credit} />
+              </details>
+            )}
+          </div>
+        ))}
+      </aside>
+    </div>
+
+    <div class="hud hud-tiles" role="tablist" aria-label="Select car">
+      {CARS.map((car, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`tab-${car.year}`}
+          class:list={['tile', 'panel']}
+          aria-selected="false"
+          aria-controls={`specs-${car.year}`}
+          tabindex={i === 0 ? 0 : -1}
+          data-year={car.year}
+        >
+          <span class="tile-year label">{car.year}</span>
+          <strong class="tile-name">{car.short}</strong>
+          <span class="tile-keyline">{car.keyline}</span>
+        </button>
+      ))}
+    </div>
+
+  </section>
+
+  <main class="mx-auto w-full max-w-5xl px-6 pb-16">
+    <section class="story" data-year="1974" hidden>
+      <h2>1974 SuperBeetle</h2>
+      <p>
+        My first car, bought at 15 and not running, with a hard deadline: my 16th birthday. I
+        made it, cleaned the car up after, and the sale is what paid for the '68.
+      </p>
+    </section>
+
+    <section class="story" data-year="1968" hidden>
+      <h2>1968 Bug</h2>
+      <p>
+        My second car. What the SuperBeetle paid for: matching body and engine, in better
+        shape to start with. The project was to bring it back to original, not restyle it. I
+        rewired it completely, then added the handful of things I wanted without cutting into
+        it: a Bluetooth stereo, reverse and dash cameras, and a kill switch only I could find.
+        Sold it at 20.
+      </p>
+    </section>
+
+    <section class="story" data-year="2018" hidden>
+      <h2>2018 IC</h2>
+      <p>
+        I inherited a university team that had never qualified and we reached Formula SAE
+        Lincoln 2018, 49th overall. My part was the air intake, an adjustable-throttle-stop
+        bell-mouth I designed and 3D-printed.
+      </p>
+    </section>
+
+    <section class="story" data-year="2019" hidden>
+      <h2>2019 Electric</h2>
+      <p>
+        I stayed on for the electric car the next season, built around four custom in-hub
+        motors.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    import '@google/model-viewer';
+
+    const CARS = {
+      '1974': { src: '/3d/1974_volkswagen_superbeetle.glb', alt: '1974 Volkswagen SuperBeetle 3D model', title: '1974 SuperBeetle · Daniel ████' },
+      '1968': { src: '/3d/1968_volkswagen_beetle.glb', alt: '1968 Volkswagen Beetle 3D model', title: '1968 Bug · Daniel ████' },
+      '2018': { src: '', alt: '', title: '2018 IC · Daniel ████' },
+      '2019': { src: '', alt: '', title: '2019 Electric · Daniel ████' },
+    };
+    type Year = keyof typeof CARS;
+    const YEARS = Object.keys(CARS) as Year[];
+
+    const stage = document.querySelector('model-viewer.stage')!;
+    const tabs = [...document.querySelectorAll<HTMLButtonElement>('.hud-tiles [role="tab"]')];
+    const tablist = document.querySelector<HTMLElement>('.hud-tiles')!;
+    const swappable = document.querySelectorAll<HTMLElement>('.spec-sheet, #car-title span, .make span, .story');
+    const stageEmpty = document.querySelector<HTMLElement>('.stage-empty')!;
+    const stack = document.querySelector<HTMLElement>('.garage-stack')!;
+    const garageLabel = document.querySelector<HTMLElement>('#car-title [data-year="garage"]')!;
+    const specsToggle = document.querySelector<HTMLButtonElement>('.specs-toggle')!;
+    const deselectBtn = document.querySelector<HTMLButtonElement>('.deselect')!;
+    const sheets = document.querySelector<HTMLElement>('#spec-sheets')!;
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const originalTitle = document.title;
+
+    let current: Year | null = null;
+    let specsHidden = false;
+
+    // Posters are rendered from these same models at these same camera angles, so the
+    // poster -> model handoff is invisible. Wide screens open on the side profile.
+    const wide = matchMedia('(min-width: 721px)').matches;
+    const posterFor = (year: Year) => (CARS[year].src ? `/posters/${year}-${wide ? 'wide' : 'narrow'}.png` : '');
+    if (wide) stage.setAttribute('camera-orbit', '90deg 78deg auto');
+
+    function swap(year: Year) {
+      const { src, alt, title } = CARS[year];
+      if (src) {
+        // The poster covers the download, so the stage is never blank mid-swap.
+        stage.setAttribute('poster', posterFor(year));
+        (stage as { showPoster?: () => void }).showPoster?.();
+        stage.setAttribute('src', src);
+        stage.setAttribute('alt', alt);
+      } else {
+        stage.removeAttribute('src');
+        stage.removeAttribute('alt');
+        stage.removeAttribute('poster');
+      }
+      stage.classList.remove('fading');
+      stage.classList.toggle('no-model', !src);
+      stageEmpty.hidden = !!src;
+      swappable.forEach((el) => { el.hidden = el.dataset.year !== year; });
+      document.title = title;
+      const sheet = document.querySelector<HTMLElement>(`.spec-sheet[data-year="${year}"]`);
+      if (sheet && !specsHidden) animateSheet(sheet);
+    }
+
+    // Forza-style reveal: bars grow in and the numbers count up on car select.
+    function animateSheet(sheet: HTMLElement) {
+      if (reduceMotion.matches) return;
+      sheet.querySelectorAll<HTMLElement>('.bar-fill').forEach((bar) => {
+        const target = bar.style.width;
+        bar.style.transition = 'none';
+        bar.style.width = '0%';
+        void bar.offsetWidth;
+        bar.style.transition = '';
+        bar.style.width = target;
+      });
+      sheet.querySelectorAll<HTMLElement>('.spec-num .spec-value').forEach((el) => {
+        const nodes = [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE) as Text[];
+        if (!el.dataset.final) el.dataset.final = JSON.stringify(nodes.map((n) => n.nodeValue));
+        const finals: string[] = JSON.parse(el.dataset.final);
+        const run = String(Number(el.dataset.run ?? 0) + 1);
+        el.dataset.run = run;
+        const start = performance.now();
+        const tick = (now: number) => {
+          if (el.dataset.run !== run) return;
+          const t = Math.min(1, (now - start) / 500);
+          const ease = 1 - Math.pow(1 - t, 3);
+          nodes.forEach((n, i) => {
+            n.nodeValue = t === 1
+              ? finals[i]
+              : finals[i].replace(/\d+(\.\d+)?/g, (m) => {
+                  const decs = m.includes('.') ? m.split('.')[1].length : 0;
+                  return (parseFloat(m) * ease).toFixed(decs);
+                });
+          });
+          if (t < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function selectCar(year: Year) {
+      if (year === current) return;
+      const fromStack = current === null;
+      current = year;
+      history.replaceState(null, '', `#${year}`);
+      tabs.forEach((tab) => {
+        const active = tab.dataset.year === year;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+      });
+      if (fromStack) {
+        stack.hidden = true;
+        specsToggle.hidden = false;
+        deselectBtn.hidden = false;
+        swap(year);
+        return;
+      }
+      if (reduceMotion.matches) { swap(year); return; }
+      stage.classList.add('fading');
+      setTimeout(() => swap(year), 200);
+    }
+
+    // Mirrors the pre-selection state: no car, stack shown, HUD chrome hidden.
+    function returnToGarage() {
+      if (current === null) return;
+      current = null;
+      history.replaceState(null, '', location.pathname + location.search);
+      tabs.forEach((tab, i) => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+        tab.tabIndex = i === 0 ? 0 : -1;
+      });
+      swappable.forEach((el) => { el.hidden = true; });
+      garageLabel.hidden = false;
+      stage.removeAttribute('src');
+      stage.removeAttribute('alt');
+      stage.removeAttribute('poster');
+      // Hide the stage outright: model-viewer keeps rendering the last scene after src is removed.
+      stage.classList.add('no-model');
+      stage.classList.remove('fading');
+      stageEmpty.hidden = true;
+      stack.hidden = false;
+      specsToggle.hidden = true;
+      deselectBtn.hidden = true;
+      document.title = originalTitle;
+    }
+
+    function toggleSpecs(show?: boolean) {
+      specsHidden = show === undefined ? !specsHidden : !show;
+      sheets.hidden = specsHidden;
+      specsToggle.setAttribute('aria-expanded', String(!specsHidden));
+    }
+
+    stage.addEventListener('error', () => stage.classList.remove('fading'));
+
+    let warmed = false;
+    stage.addEventListener('load', () => {
+      stage.classList.remove('fading');
+      if (!warmed) {
+        warmed = true;
+        // Warm the HTTP cache so the first car switch doesn't stall on an 18.5 MB download.
+        if (!(navigator as { connection?: { saveData?: boolean } }).connection?.saveData) fetch(CARS['1974'].src);
+      }
+    });
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => selectCar(tab.dataset.year as Year)));
+
+    stack.querySelectorAll<HTMLImageElement>('img').forEach((img) =>
+      img.addEventListener('click', () => selectCar(img.dataset.year as Year)),
+    );
+
+    tablist.addEventListener('keydown', (e: KeyboardEvent) => {
+      const i = tabs.indexOf(document.activeElement as HTMLButtonElement);
+      if (i === -1) return;
+      let next = -1;
+      if (e.key === 'ArrowLeft') next = (i + tabs.length - 1) % tabs.length;
+      else if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = tabs.length - 1;
+      if (next === -1) return;
+      e.preventDefault();
+      tabs[next].focus();
+      selectCar(tabs[next].dataset.year as Year);
+    });
+
+    specsToggle.addEventListener('click', () => toggleSpecs());
+    deselectBtn.addEventListener('click', returnToGarage);
+
+    // Equipment chips: selecting one reveals its text, one at a time.
+    document.querySelectorAll<HTMLButtonElement>('.feat-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const wasOn = chip.getAttribute('aria-pressed') === 'true';
+        chip.parentElement!.querySelectorAll<HTMLButtonElement>('.feat-chip').forEach((c) => {
+          c.setAttribute('aria-pressed', 'false');
+          c.querySelector<HTMLElement>('.chip-text')!.hidden = true;
+        });
+        if (!wasOn) {
+          chip.setAttribute('aria-pressed', 'true');
+          chip.querySelector<HTMLElement>('.chip-text')!.hidden = false;
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (/^[1-4]$/.test(e.key)) selectCar(YEARS[Number(e.key) - 1]);
+      else if (e.key === 's' || e.key === 'S') toggleSpecs();
+      else if (e.key === 'Escape') returnToGarage();
+    });
+
+    // Small screens start with the spec sheet collapsed under the stage.
+    if (!wide) toggleSpecs(false);
+
+    // Deep link: #1968 / #1974 / #2018 / #2019 selects that car on load.
+    const linked = location.hash.slice(1) as Year;
+    if (CARS[linked]) selectCar(linked);
+  </script>
+
+  <style>
+    /* Full-bleed garage stage. Opaque bg + its own dot grid: the fixed body::before
+       grid doesn't scroll with the section and would double-print through it. */
+    .garage {
+      --upgrade: #4f7942; /* field-adjacent green, upgrade deltas only */
+      position: relative;
+      z-index: 1;
+      height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
+      border-top: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, rgba(0, 0, 0, 0.09) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.2s;
+      --poster-color: transparent; /* let the garage floor show through the placeholder */
+    }
+    .stage.fading {
+      opacity: 0;
+    }
+    .stage.no-model {
+      visibility: hidden;
+    }
+    .stage-empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-mute);
+    }
+    .stage-empty[hidden] {
+      display: none;
+    }
+    .garage-stack {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .garage-stack img {
+      height: 70%;
+      width: auto;
+      max-width: 48%;
+      object-fit: contain;
+      cursor: pointer;
+    }
+    .garage-stack img + img {
+      margin-left: -11%; /* parked in line */
+    }
+    .garage-stack[hidden] {
+      display: none;
+    }
+    .hud {
+      position: absolute;
+      z-index: 2;
+    }
+
+    .hud-identity {
+      top: var(--sp-5);
+      left: var(--sp-5);
+    }
+    .deselect {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5ch;
+      margin: 0 0 var(--sp-3);
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      font-weight: 700;
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-mute);
+      background: color-mix(in srgb, var(--surface) 72%, transparent);
+      backdrop-filter: blur(4px);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.4em 0.9em;
+      cursor: pointer;
+    }
+    .deselect:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .deselect:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    .deselect[hidden] {
+      display: none;
+    }
+    .hud-identity .make {
+      margin: 0;
+    }
+    .hud-identity .make span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5ch;
+    }
+    .hud-identity .make span[hidden] {
+      display: none;
+    }
+    .hud-identity h1 {
+      margin-top: var(--sp-2);
+      font-size: var(--step-4);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .hud-specs {
+      top: var(--sp-5);
+      right: var(--sp-5);
+      width: min(320px, calc(100vw - 2 * var(--sp-5)));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--sp-2);
+    }
+    .specs-toggle {
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      font-weight: 700;
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-mute);
+      background: color-mix(in srgb, var(--surface) 72%, transparent);
+      backdrop-filter: blur(4px);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.4em 0.9em;
+      cursor: pointer;
+    }
+    .specs-toggle[aria-expanded='true'] {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .specs-toggle:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    #spec-sheets {
+      width: 100%;
+    }
+    .spec-sheet {
+      max-height: calc(100dvh - 60px - 2 * var(--sp-5) - 3.5rem);
+      overflow: auto;
+    }
+    .spec {
+      padding: 0.45rem 0;
+      border-bottom: var(--border-w) solid var(--border);
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+    }
+    .spec:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+    .spec:first-child {
+      padding-top: 0;
+    }
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .spec-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4ch;
+      color: var(--text-mute);
+    }
+    .spec-value {
+      color: var(--text);
+      text-align: right;
+    }
+    .bar-track {
+      display: flex;
+      margin-top: 0.35rem;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--surface-sunk);
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .bar-fill.upgrade {
+      background: var(--upgrade);
+    }
+    .up {
+      color: var(--upgrade);
+      margin-right: 0.35ch;
+    }
+    /* Forza-style installed-equipment badges: a chip row above the Features list. */
+    .feat-icons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-top: var(--sp-3);
+      font-size: var(--step--1); /* icons stay the same size everywhere */
+    }
+    .feat-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6ch;
+      padding: 0.35em;
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-sunk);
+      color: var(--text-mute);
+      font: inherit;
+      cursor: pointer;
+    }
+    .feat-chip:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .feat-chip[aria-pressed='true'] {
+      color: var(--text);
+      border-color: var(--accent);
+      padding-right: 0.7em;
+    }
+    .feat-chip:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    .chip-text {
+      font-family: var(--font-mono);
+    }
+    .feat-head {
+      margin: var(--sp-4) 0 0;
+      border-top: var(--border-w) solid var(--border);
+      padding-top: var(--sp-3);
+    }
+    .features {
+      margin: var(--sp-2) 0 0;
+      padding-left: 1.1em;
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--text);
+    }
+    .features li {
+      padding: 0.15em 0;
+    }
+    .swatch {
+      display: inline-block;
+      width: 0.75em;
+      height: 0.75em;
+      margin-right: 0.4ch;
+      border: var(--border-w) solid var(--border-strong);
+      border-radius: 2px;
+      vertical-align: -1px;
+    }
+
+    .hud-tiles {
+      left: var(--sp-5);
+      bottom: var(--sp-5);
+      display: flex;
+      gap: var(--sp-3);
+    }
+    .tile {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      padding: var(--sp-3) var(--sp-4);
+      text-align: left;
+      color: var(--text-mute);
+      opacity: 0.75;
+      cursor: pointer;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+    .tile:hover {
+      opacity: 1;
+    }
+    .tile.active {
+      border-color: var(--accent);
+      color: var(--text);
+      opacity: 1;
+    }
+    .tile:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    .tile-name {
+      font-size: var(--step-1);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .tile-keyline {
+      font-family: var(--font-mono);
+      font-size: var(--step--2);
+      color: var(--text-mute);
+    }
+
+    @media (max-width: 720px) {
+      .garage {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-4);
+        height: auto;
+        overflow: visible;
+        padding: var(--sp-5) var(--sp-4);
+      }
+      .hud {
+        position: static;
+      }
+      .hud-identity {
+        order: 1;
+      }
+      .stage {
+        position: relative;
+        inset: auto;
+        order: 2;
+        height: 55vh;
+      }
+      .stage.no-model {
+        display: none;
+      }
+      .stage-empty,
+      .garage-stack {
+        position: static;
+        order: 2;
+        height: 55vh;
+      }
+      .hud-tiles {
+        order: 3;
+        overflow-x: auto;
+      }
+      .hud-specs {
+        order: 4;
+        width: 100%;
+        align-items: flex-start;
+      }
+      .spec-sheet {
+        max-height: none;
+      }
+    }
+
+    .story h2 {
+      font-size: var(--step-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .story p {
+      margin: var(--sp-4) 0 0;
+      max-width: 62ch;
+      color: var(--text-dim);
+    }
+    .credit {
+      margin-top: var(--sp-3);
+      font-family: var(--font-mono);
+      font-size: var(--step--2);
+      color: var(--text-mute);
+    }
+    .credit summary {
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
+    .credit summary::-webkit-details-marker {
+      display: none;
+    }
+    .credit summary:hover {
+      color: var(--text);
+    }
+    .credit p {
+      margin: var(--sp-2) 0 0;
+    }
+    .credit a {
+      color: inherit;
+    }
+  </style>
+</Base>
