@@ -1,5 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
+// import Globe from '../components/Globe.astro';   // hidden with the hero globe below
+import { books } from '../data/books.js';
+import { contours, coast } from '../data/terrain.js';
+
+// The node card's ground is the same SRTM terrain the /compute field diagram
+// draws, cropped to the card. Index lines only (every 200 m): the full 50 m set
+// is 142 kB of path data and reads as noise at card size.
+const topo = contours.filter((c) => c.level % 200 === 0);
 
 // Brand glyphs are Simple Icons (viewBox 0 0 24 24, single path); Truth Social
 // is a lettermark (rounded square with a T knockout) since no icon set carries it.
@@ -8,6 +16,8 @@ const socials = [
     d: 'M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z' },
   { label: 'Substack', href: 'https://DanielRedacted.substack.com',
     d: 'M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/danielredacted/',
+    d: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z' },
   { label: 'GitHub', href: 'https://github.com/DanielRedacted',
     d: 'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12' },
   { label: 'Reddit', href: 'https://www.reddit.com/u/DanielRedacted',
@@ -21,140 +31,618 @@ const socials = [
   { label: 'Truth Social', href: 'https://truthsocial.com/@DanielRedacted', evenodd: true,
     d: 'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z M6.5 6.5H17.5V8.7H13.1V17.5H10.9V8.7H6.5Z' },
 ];
-const heroSocials = socials.filter((s) => ['X', 'Substack', 'GitHub'].includes(s.label));
+const heroSocials = socials.filter((s) => ['LinkedIn', 'GitHub'].includes(s.label));
+
+// Merit-badge row: icon-only chips, one unique glyph per credential, the
+// certification's own name in the tooltip. Every badge opens the same modal,
+// which lists all of them with their verification links. Glyphs are
+// hand-inlined Lucide (ISC), same pattern as Icon.astro, except the three
+// SVG Repo glyphs kept alongside in public/images (Dassault, 3D printer,
+// welding hood) which are fills on their own viewBox, hence `vb`. SOLIDWORKS
+// names and issue dates come from the virtualtester validation pages.
+const certs = [
+  { title: 'SOLIDWORKS Design Associate (CSWA)', issuer: 'SOLIDWORKS', date: 'June 5, 2018',
+    href: 'https://cv.virtualtester.com/qr/?b=SLDWRKS&i=C-BYX9XXJP6F', stroke: true,
+    group: 'SOLIDWORKS',
+    svg: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>' },
+  { title: 'SOLIDWORKS Simulation Associate', issuer: 'SOLIDWORKS', date: 'December 1, 2022',
+    href: 'https://cv.virtualtester.com/qr/?b=SLDWRKS&i=C-Q89JFKZYSA', stroke: true, group: 'SOLIDWORKS',
+    svg: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>' },
+  { title: 'SOLIDWORKS Additive Manufacturing Associate', issuer: 'SOLIDWORKS', date: 'January 29, 2023',
+    href: 'https://cv.virtualtester.com/qr/?b=SLDWRKS&i=C-PE3UNXRWAV', stroke: true, group: 'SOLIDWORKS',
+    svg: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>' },
+  { title: 'SOLIDWORKS Sustainability Associate', issuer: 'SOLIDWORKS', date: 'March 10, 2023',
+    href: 'https://cv.virtualtester.com/qr/?b=SLDWRKS&i=C-SAHQ9ZT625', stroke: true, group: 'SOLIDWORKS',
+    svg: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>' },
+  /* temporarily hidden: 3D Printing, Hand Machining, CNC Machining, Welding badges
+  { title: '3D Printing', vb: '0 0 32 32',
+    svg: '<path d="M24,2H8C6.346,2,5,3.346,5,5v22c0,1.654,1.346,3,3,3h16c1.654,0,3-1.346,3-3V5C27,3.346,25.654,2,24,2z M8,4h16c0.552,0,1,0.448,1,1v7h-7v-1c0-0.552-0.448-1-1-1h-5c-0.552,0-1,0.448-1,1v1H7V5C7,4.448,7.448,4,8,4z M24,28h-1v-2c0-0.552-0.448-1-1-1H10c-0.552,0-1,0.448-1,1v2H8c-0.552,0-1-0.448-1-1V13h4v1c0,0.552,0.448,1,1,1h0.9l1.21,1.512c0.1,0.125,0.245,0.188,0.39,0.188c0.145,0,0.29-0.063,0.39-0.188L16.1,15H17c0.552,0,1-0.448,1-1v-1h7v14C25,27.552,24.552,28,24,28z M13,22.5c0,0.276,0.224,0.5,0.5,0.5h6c0.276,0,0.5,0.224,0.5,0.5S19.776,24,19.5,24h-6c-0.827,0-1.5-0.673-1.5-1.5s0.673-1.5,1.5-1.5h5c0.276,0,0.5-0.224,0.5-0.5S18.776,20,18.5,20H15c-0.551,0-1-0.449-1-1v-0.5c0-0.276,0.224-0.5,0.5-0.5s0.5,0.224,0.5,0.5V19h3.5c0.827,0,1.5,0.673,1.5,1.5S19.327,22,18.5,22h-5C13.224,22,13,22.224,13,22.5z"/>' },
+  { title: 'Hand Machining (Mill + Lathe)', stroke: true,
+    svg: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
+  { title: 'CNC Machining (G-code, Mill + Lathe)', stroke: true,
+    svg: '<path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/><path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/><path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/><path d="M7 20v2"/><path d="M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/>' },
+  { title: 'TIG/MIG/Stick Arc Welding', vb: '0 0 32 32',
+    svg: '<path d="M5,15H4c-0.552,0-1-0.448-1-1v-3c0-0.552,0.448-1,1-1h1V15z M21,11H11v3h10V11z M23,10v5c0,0.551-0.449,1-1,1H10c-0.551,0-1-0.449-1-1v-5c0-0.551,0.449-1,1-1h12C22.551,9,23,9.449,23,10z M22,10H10v5h12V10z M26,18.02c0,1.317-0.13,2.631-0.388,3.922l-1.129,5.646C24.202,28.991,22.971,30,21.541,30H10.459c-1.43,0-2.661-1.009-2.942-2.412l-1.129-5.646C6.13,20.65,6,19.337,6,18.02V7c0-2.761,2.239-5,5-5h10c2.761,0,5,2.239,5,5V18.02z M24,10c0-1.103-0.897-2-2-2H10c-1.103,0-2,0.897-2,2v5c0,1.103,0.897,2,2,2h12c1.103,0,2-0.897,2-2V10z M28,10h-1v5h1c0.552,0,1-0.448,1-1v-3C29,10.448,28.552,10,28,10z"/>' },
+  */
+  { title: 'Forklift B Certified', issuer: 'HAAS Automation', stroke: true,
+    svg: '<path d="M12 12H5a2 2 0 0 0-2 2v5"/><path d="M15 19h7"/><path d="M16 19V2"/><path d="M6 12V7a2 2 0 0 1 2-2h2.172a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 16 10.828"/><path d="M7 19h4"/><circle cx="13" cy="19" r="2"/><circle cx="5" cy="19" r="2"/>' },
+  { title: 'ISO/IEC 27001:2022 Lead Auditor', issuer: 'Mastermind Assurance',
+    href: 'https://learn.mastermindassurance.com/certificates/wbnlupdfjm',
+    mask: '/images/mastermind.png' },
+  { title: 'Adult and Pediatric First Aid/CPR/AED', issuer: 'American Red Cross',
+    href: 'https://www.redcross.org/take-a-class/qrCode?certnumber=00M5B8O',
+    svg: '<path d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7z"/>' },
+  { title: 'Ordained Minister', date: 'June 9, 2019', stroke: true,
+    svg: '<path d="M13.877,7.949 L13.877,1.9 L10.123,1.9 L10.123,7.949 L4.177,7.949 L4.177,11.704 L10.123,11.704 L10.123,21.926 L13.877,21.926 L13.877,11.704 L19.823,11.704 L19.823,7.949 z" stroke-width="2"/>' },
+];
+
+// A grouped chip stands in for every cert carrying that group name, with its own
+// glyph and title; the certs themselves still get their own rows in the modal.
+const groups = {
+  SOLIDWORKS: { title: 'SOLIDWORKS certifications', stroke: false,
+    svg: '<path d="M21.161 8.04c1.063.192 1.93.34 2.129.79.223.508-.935.54-1.518.551-2.797.054-4.483.11-4.568 1.06-.11 1.223 1.195 2.454 2.484 4.181 1.177 1.576 2.515 3.132 2.13 4.582-.481 1.807-2.696 2.19-4.805 2.19-2.02.001-3.935-.323-4.739-.482-1.001-.198-.852-.693-.585-.852.298-.178 2-.182 3.184-.252.974-.058 3.802-.056 4.243-.78.54-.888-.783-2.406-1.999-3.996-1.517-1.983-3.183-4.031-2.301-5.527 1.14-1.935 4.48-1.802 6.345-1.465 M7.482 10.987c1.771-.104 3.923.206 5.13 1.13.602.46 1.024 1.305.78 2.274-.698 2.75-3.301 6.078-9.085 8.635-1.84.813-3.286 1.124-3.59.906-.326-.234.623-2.05.908-2.652.924-1.95 2.077-3.85 3.202-5.59.414-.64 1.054-1.75 1.633-1.661.518.08-.089 1.26-.488 2.01-.671 1.258-2.52 4.755-1.91 4.964 1.348.462 7.673-4.35 6.74-7.029-.432-1.244-3.178-1.362-4.908-1.362-.786 0-2.505.186-2.6-.417-.102-.555 2.61-1.115 4.188-1.208 M11.851.034c2.066-.098 4.51.342 4.965 1.8.747 2.388-3.036 5.872-6.332 7.581-.808.42-1.298.535-1.502.506-.195-.027-.225-.221-.162-.355.118-.251.649-.763 1.36-1.32 3.711-2.897 4.918-5.024 4.217-5.885-.449-.552-2.33-.936-4.283-.936-.53 0-1.924.123-2.067-.367C7.93.655 9.8.13 11.85.034"/>' },
+};
+
+// One chip per group; ungrouped entries are their own group. The chip carries
+// the row indices it stands for so the modal can highlight all of them.
+const chips = [];
+certs.forEach((c, i) => {
+  const hit = c.group && chips.find((x) => x.group === c.group);
+  if (hit) hit.rows.push(i);
+  else chips.push({ ...c, ...groups[c.group], rows: [i] });
+});
 
 const friends = [
   { label: 'Life Impact International', href: 'https://lifeimpactintl.org', logo: '/images/lii-logo.png' },
   { label: 'Hacker Fund', href: 'https://www.hacker.fund', logo: '/images/hackerfund-logo.png' },
   { label: 'Chess Social', href: 'https://www.chesssocial.org', logo: '/images/chesssocial-logo.png', invert: true, wordmark: 'roboto' },
   { label: 'KLARCK', href: 'https://www.klarckmusic.com', logo: '/images/klarck-logo.png' },
+  { label: 'UNA-USA', href: 'https://unausa.org', logo: '/images/unausa-logo-color.svg' },
   { label: 'RETAIN AI', href: 'https://retainai.org', logo: '/images/retainai-logo.png', invert: true, wordmark: 'eb-garamond' },
-  { label: 'UNA-USA', href: 'https://unausa.org', logo: '/images/unausa-logo.svg' },
 ];
+
+// Gallery exhibits: images and citations only, no editorial. Titles are the
+// original published titles or captions where one exists; untitled works get
+// a factual subject line. All images displayed uncropped (the Quirinale
+// notice forbids derivatives; the rest inherit the honest treatment).
+// File numbers are download order, not display order; FIG numbers follow
+// this array.
+const exhibits = [
+  // Daniel may swap this href for the quirinale.it photo-gallery page for the
+  // 13/03/2026 sitting once he has it from a browser (Cloudflare blocks tooling).
+  { src: '/photos/gallery/03-quirinale-defence-council.jpg', w: 1200, h: 675, big: true,
+    alt: "Italy's Supreme Defence Council in session at Palazzo del Quirinale, phones sealed in faraday bags on the table",
+    title: 'Consiglio Supremo di Difesa, Palazzo del Quirinale. Phones in faraday bags.',
+    meta: '2026-03-13 · photo: Quirinale.it',
+    href: 'https://www.quirinale.it/it/comunicato/presidente-mattarella-ha-presieduto-consiglio-supremo-difesa-28', source: 'quirinale.it' },
+  { src: '/photos/gallery/02-netanyahu-taped-phone.jpg', w: 1024, h: 691,
+    alt: "Benjamin Netanyahu's phone with tape covering the camera, Jerusalem",
+    title: 'Benjamin Netanyahu, taped phone camera. Jerusalem.',
+    meta: '2026-01-27 · photo: Moti Kastel, Channel 14, all rights reserved',
+    href: 'https://www.kikar.co.il/news/t9j78v', source: 'kikar.co.il' },
+  { src: '/photos/gallery/06-dc-street-washington-dc.jpg', w: 1600, h: 1215, hidden: true,
+    alt: 'Bus shelter screen in Washington, DC showing a Windows recovery screen during the CrowdStrike outage',
+    title: '2024.0720 DC Street, Washington, DC',
+    meta: '2024-07-20 · photo: Ted Eytan',
+    license: { label: 'CC BY-SA 2.0', href: 'https://creativecommons.org/licenses/by-sa/2.0/' },
+    href: 'https://www.flickr.com/photos/taedc/53873827429/', source: 'flickr.com' },
+  { src: '/photos/gallery/04-crowdstrike-bsod-lga.jpg', w: 1600, h: 1200,
+    alt: 'Departure displays at LaGuardia Airport showing Windows blue screens during the CrowdStrike outage',
+    title: 'CrowdStrike BSOD at LGA',
+    meta: '2024-07-19 · photo: Smishra1',
+    license: { label: 'CC BY-SA 4.0', href: 'https://creativecommons.org/licenses/by-sa/4.0/' },
+    href: 'https://commons.wikimedia.org/wiki/File:CrowdStrike_BSOD_at_LGA.jpg', source: 'commons.wikimedia.org' },
+  { src: '/photos/gallery/05-dulles-airport-crowdstruck.jpg', w: 1600, h: 1085, hidden: true,
+    alt: 'Arrivals boards at Dulles Airport showing Windows recovery screens during the CrowdStrike outage',
+    title: 'Dulles Airport CrowdStruck',
+    meta: '2024-07-19 · photo: reivax',
+    license: { label: 'CC BY-SA 2.0', href: 'https://creativecommons.org/licenses/by-sa/2.0/' },
+    href: 'https://www.flickr.com/photos/reivax/53867936421/', source: 'flickr.com' },
+  { src: '/photos/gallery/12-newark-nbc.jpg', w: 1500, h: 1000,
+    alt: 'Travelers walking past a departures board showing a blue error screen at Newark Liberty International Airport',
+    title: 'Travelers walk past a departures board displaying a blue error screen at Newark Liberty International Airport on Friday.',
+    meta: '2024-07-19 · photo: Bing Guan, Reuters, all rights reserved',
+    href: 'https://www.nbcnews.com/tech/tech-news/microsoft-blue-screen-of-death-global-outage-rcna162674', source: 'nbcnews.com' },
+  { src: '/photos/gallery/10-ap-iwamura-nyc.jpg', w: 1600, h: 1067,
+    alt: 'Airport screens showing a blue error message, New York',
+    title: 'Screens show a blue error message in an airport. New York.',
+    meta: '2024-07-19 · AP Photo/Yuki Iwamura, all rights reserved',
+    href: 'https://www.al.com/business/2025/07/microsofts-dreaded-blue-screen-of-death-is-going-away-heres-whats-replacing-it.html', source: 'al.com' },
+  { src: '/photos/gallery/13-macys-nbc.jpg', w: 1500, h: 1000,
+    alt: "A large display outside Macy's in New York City projecting a blue error screen",
+    title: "A blue screen projects an error outside Macy's in New York City on Friday.",
+    meta: '2024-07-19 · photo: Sean Reis, NBC News, all rights reserved',
+    href: 'https://www.nbcnews.com/tech/tech-news/microsoft-blue-screen-of-death-global-outage-rcna162674', source: 'nbcnews.com' },
+  { src: '/photos/gallery/17-reddit-times-square.jpg', w: 1500, h: 844, big: true,
+    alt: 'Times Square billboards showing Windows blue screens during the CrowdStrike outage',
+    title: 'Times Square Crowdstrike BSOD',
+    meta: '2024-07-19 · posted by u/Joke_Mummy, r/pics',
+    href: 'https://www.reddit.com/r/pics/comments/1e7h3bn/times_square_crowdstrike_bsod/', source: 'reddit.com' },
+  { src: '/photos/gallery/16-reddit-bluescreen-day.jpg', w: 751, h: 1200,
+    alt: 'Image posted to r/windows during the CrowdStrike outage, titled happy international bluescreen day',
+    title: 'happy international bluescreen day 🟦',
+    meta: '2024-07-19 · posted by u/SHYAMz, r/windows',
+    href: 'https://www.reddit.com/r/windows/comments/1e749zg/happy_international_bluescreen_day/', source: 'reddit.com' },
+  { src: '/photos/gallery/11-shanghai-nbc.jpg', w: 1500, h: 1000, hidden: true,
+    alt: 'A man in front of a monitor showing a Windows blue screen in Shanghai',
+    title: 'A man faces a Windows blue screen in Shanghai on July 19, 2024.',
+    meta: '2024-07-19 · photo: Wang Gang, FeatureChina, all rights reserved',
+    href: 'https://www.nbcnews.com/tech/tech-news/microsoft-blue-screen-of-death-global-outage-rcna162674', source: 'nbcnews.com' },
+  { src: '/photos/gallery/14-ankara-nbc.jpg', w: 1500, h: 1000,
+    alt: 'Computer screens showing blue recovery screens in Ankara, Turkiye',
+    title: 'Blue screen of death errors on computer screens, Ankara, Turkiye (photo illustration).',
+    meta: '2024-07-19 · photo: Harun Ozalp, Anadolu via Getty Images, all rights reserved',
+    href: 'https://www.nbcnews.com/news/us-news/crowdstrike-update-caused-global-outage-likely-skipped-checks-experts-rcna162839', source: 'nbcnews.com' },
+  { src: '/photos/gallery/09-denver-airport-tnw.jpg', w: 1000, h: 520,
+    alt: 'Gate displays at Denver International Airport showing Windows blue screens during the CrowdStrike outage',
+    title: 'CrowdStrike Windows Blue Screens at Denver International Airport',
+    meta: '2024-07-19 · photographer uncredited · via TechNewsWorld',
+    href: 'https://www.technewsworld.com/story/gartner-ids-recovery-steps-for-crowdstrike-screen-of-death-disaster-179289.html', source: 'technewsworld.com' },
+  { src: '/photos/gallery/07-crowdstrike-blue-screen-of-death.png', w: 1024, h: 768, hidden: true,
+    alt: 'Windows blue screen of death naming the CrowdStrike csagent.sys driver',
+    title: 'CrowdStrike blue screen of death',
+    meta: '2024-07-19 · screenshot: Jonathan Flusser · public domain',
+    href: 'https://x.com/osxdude/status/1814300248258351177', source: 'x.com/osxdude' },
+  { src: '/photos/gallery/18-mcafee-faraday-room.jpg', w: 1200, h: 675,
+    alt: 'John McAfee speaking in his faraday room, still frame from his video on X',
+    title: 'John McAfee in his faraday room. Video still.',
+    meta: '2019-08-04 · video: John McAfee, all rights reserved',
+    href: 'https://x.com/officialmcafee/status/1157987470027440128', source: 'x.com/officialmcafee' },
+  { src: '/photos/gallery/01-zuckerberg-taped-laptop.jpg', w: 1600, h: 1600,
+    alt: 'Mark Zuckerberg holding an Instagram 500 million users frame; the laptop behind him has tape over its webcam and microphone jack',
+    title: 'Mark Zuckerberg, Facebook post (untitled). Taped webcam and mic jack.',
+    meta: '2016-06-21 · (c) Mark Zuckerberg / Meta, all rights reserved',
+    href: 'https://www.facebook.com/zuck/posts/10102910648972921', source: 'facebook.com/zuck' },
+  { src: '/photos/gallery/08-pope-francis-ipad.jpg', w: 800, h: 750, big: true,
+    alt: "Pope Francis registering for World Youth Day on an iPad, a sticker covering the tablet's front camera",
+    title: 'Pope Francis registers for World Youth Day on an iPad. Sticker over the front camera.',
+    meta: "2015-07-26 · photo: L'Osservatore Romano, all rights reserved",
+    href: 'https://x.com/CDA/status/816504372024799233', source: 'x.com/CDA' },
+];
+// hidden: kept sourced and on disk, just not shown (single-screen shots that
+// don't carry the scale of the outage)
+const shown = exhibits.filter((x) => !x.hidden);
+
+// explore-grid placement: 3 rows of square units. Bigs (2x2) alternate top
+// edge / bottom edge and always keep a column of 1x1s between them; smalls
+// then fill the remaining cells column by column, left to right, so the
+// exhibit sequence advances horizontally and date clusters stay together.
+// Trailing cells may stay empty (ragged end); holes never open mid-strip as
+// long as smalls outnumber the cells the big pattern creates.
+const ROWS = 3;
+const bigTiles = shown.filter((x) => x.big);
+const smallTiles = shown.filter((x) => !x.big);
+const spot = new Map();
+const occupied = new Set();
+let nextCol = 1;
+bigTiles.forEach((x, i) => {
+  if (i > 0) nextCol += 1; // the separating column of 1x1s
+  const row = i % 2 === 0 ? 1 : ROWS - 1;
+  spot.set(x, { row, col: nextCol, span: 2 });
+  [0, 1].forEach((dr) => [0, 1].forEach((dc) => occupied.add(`${row + dr},${nextCol + dc}`)));
+  nextCol += 2;
+});
+let cols = Math.max(nextCol - 1, 1);
+const freeCells = () => {
+  const cells = [];
+  for (let c = 1; c <= cols; c++)
+    for (let r = 1; r <= ROWS; r++) if (!occupied.has(`${r},${c}`)) cells.push({ row: r, col: c });
+  return cells;
+};
+while (freeCells().length < smallTiles.length) cols += 1;
+freeCells().slice(0, smallTiles.length).forEach((cell, i) => spot.set(smallTiles[i], { ...cell, span: 1 }));
 ---
 
-<Base>
-  <main class="mx-auto w-full max-w-3xl px-6">
-    <!-- Hero -->
-    <section class="hero">
-      <p class="eyebrow label">Engineer · Founder</p>
+<Base title="Daniel Romo · Mechanical Engineer & Founder">
+  <div class="cloud-banner" aria-hidden="true"></div>
+  {/* Start the clouds at a random point in the strip. sessionStorage is the whole
+      trick: a new tab is a new visit, a refresh picks up where the drift had got
+      to. We don't watch the animation, we store the start offset plus the load
+      time and re-derive the position from elapsed wall clock, which is the same
+      number without an unload listener. TILE/DURATION must match .cloud-banner in
+      global.css. Inline + adjacent to the div so it lands before first paint. */}
+  <script is:inline>
+    try {
+      const TILE = 12903, DURATION = 4800000, was = +sessionStorage.getItem("cloudT");
+      const resumed = was
+        ? (+sessionStorage.getItem("cloudX") + ((Date.now() - was) * TILE) / DURATION) % TILE
+        : NaN;
+      /* a non-finite stored offset would render --cloud-x as "NaNpx", which
+         invalidates the whole background shorthand and blanks the banner for the
+         rest of the session; falling back to a fresh start heals it on reload */
+      const x = Number.isFinite(resumed) ? resumed : Math.random() * TILE;
+      sessionStorage.setItem("cloudX", x);
+      sessionStorage.setItem("cloudT", Date.now());
+      document.querySelector(".cloud-banner").style.setProperty("--cloud-x", -x + "px");
+    } catch {} /* storage blocked: the banner just starts at 0 */
+  </script>
 
-      <div class="hero-body">
+  <!-- Hero: full window width, identity left, globe right -->
+  <section class="hero col">
+    <div class="hero-grid">
+      <div class="hero-id">
         <img src="/images/avatar.jpg" alt="Daniel" width="96" height="96" class="avatar" />
+
+        <h1><span class="wordmark">Daniel Romo</span></h1>
+
+        <p class="eyebrow label">Mechanical Engineer</p>
+
+        <!-- Every role is a link: down to its card's target or out to the org.
+             Claims are sourced from the project cards below; nothing new is asserted here. -->
         <p class="tagline">
-          I lead teams, build solutions, and build communities around Digital Public
-          Infrastructure (DPI): systems people can own and verify.
+        <!-- 
+          I'm the founder of <a href="https://AP0110.org" target="_blank" rel="noopener"><span class="mono">AP0110</span></a>,
+          partnered with the Universities of California to build Web 4 infrastructure for
+          organizations that need sovereignty. I'm the Director of the
+          <a href="https://CaliforniaCompute.org" target="_blank" rel="noopener">UC CalCompute Coalition</a>,
+          designing the framework for America's first public AI platform. I advise
+          <a href="https://UNA-Human-Rights.org" target="_blank" rel="noopener">UNA-USA Human Rights</a>
+          on technology strategy, build technology with
+          <a href="https://lifeimpactintl.org" target="_blank" rel="noopener">Life Impact International</a>
+          for anti-trafficking organizations, mentor and judge at
+          <a href="https://www.hacker.fund" target="_blank" rel="noopener">Hacker Fund</a>
+          hackathons including LA Hacks, and share <a href="/compute/">my own compute node</a>
+          with students and researchers in my community.
+        -->
+          On a quest to build digital independence for myself and others.
         </p>
+
+        <div class="alma-maters">
+          <img src="/images/ucr-wordmark.png" alt="UC Riverside" class="invert" />
+          <span class="dot">·</span>
+          <img src="/images/ucberkeley-wordmark.png" alt="UC Berkeley" class="invert" />
+        </div>
+
+        <!-- LinkedIn + GitHub only; the rest of the socials stay off until the
+             handle question is settled (see the footer row) -->
+        <div class="socials">
+          {
+            heroSocials.map((s) => (
+              <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
+                </svg>
+              </a>
+            ))
+          }
+        </div>
+
+        <!-- temporarily hidden: certifications & skills, badge row + modal
+        <div class="certs">
+          {
+            chips.map((c) => (
+              <button type="button" class="cert" aria-haspopup="dialog" data-rows={c.rows.join(' ')}
+                title={c.title} aria-label={`${c.title}. Open certifications`}>
+                {c.mask
+                  ? <span class="mask-glyph" style={`--m:url(${c.mask})`} />
+                  : <svg viewBox={c.vb ?? '0 0 24 24'} aria-hidden="true" class:list={{tall: c.tall}}
+                      fill={c.stroke ? 'none' : 'currentColor'}
+                      stroke={c.stroke ? 'currentColor' : 'none'}
+                      stroke-width={c.stroke ? 2 : null}
+                      stroke-linecap={c.stroke ? 'round' : null}
+                      stroke-linejoin={c.stroke ? 'round' : null}
+                      set:html={c.svg} />}
+              </button>
+            ))
+          }
+        </div>
+        -->
       </div>
 
-      <div class="alma-maters">
-        <img src="/images/ucr-wordmark.png" alt="UC Riverside" class="invert" />
-        <span class="dot">·</span>
-        <img src="/images/ucberkeley-wordmark.png" alt="UC Berkeley" class="invert" />
-      </div>
+      <!-- temporarily hidden: the globe
+      <div class="hero-globe"><Globe /></div>
+      -->
+    </div>
+  </section>
 
-      <div class="socials">
+  <!-- temporarily hidden with the badge row above
+  One modal for the whole badge row: every badge opens it
+  <dialog class="certlog" aria-label="Certifications">
+    <div class="log-head">
+      <p class="label">CERTIFICATIONS &amp; SKILLS</p>
+      <button type="button" class="log-close" aria-label="Close certifications">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+      </button>
+    </div>
+    <ul class="cert-list">
+      {
+        certs.map((c) => (
+          <li>
+            {c.mask
+              ? <span class="cert-glyph mask-glyph" style={`--m:url(${c.mask})`} />
+              : <svg class:list={['cert-glyph', {tall: c.tall}]} viewBox={c.vb ?? '0 0 24 24'} aria-hidden="true"
+                  fill={c.stroke ? 'none' : 'currentColor'}
+                  stroke={c.stroke ? 'currentColor' : 'none'}
+                  stroke-width={c.stroke ? 2 : null}
+                  stroke-linecap={c.stroke ? 'round' : null}
+                  stroke-linejoin={c.stroke ? 'round' : null}
+                  set:html={c.svg} />}
+            <span class="cert-meta">
+              {c.href
+                ? <a href={c.href} target="_blank" rel="noopener">{c.title}</a>
+                : <b>{c.title}</b>}
+              <span>{[c.issuer, c.date].filter(Boolean).join(' · ')}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </dialog>
+  -->
+
+  <main class="col">
+    <!-- Projects -->
+    <section id="projects">
+      <div class="sec-head"><h2>projects</h2></div>
+      <div class="grid">
+        <a class="panel card card-calcompute" href="https://CaliforniaCompute.org" target="_blank" rel="noopener" aria-label="CalCompute">
+          <h3>
+            <span class="card-wordmark card-wordmark--mask">
+              <span class="cc-icon" style="--m:url(/images/calcompute-logo.svg)" />
+              <span class="cc-text" style="--m:url(/images/calcompute-logo.svg)" />
+            </span>
+          </h3>
+          <p>
+            <!-- Director, UC CalCompute Coalition: coordinating California Researchers, Institutions, and Communities to design the Framework for America's first Public AI Platform. -->
+            <!-- 
+            Organizing the creation of the Framework for California's Public Digital Infrastructure.
+            -->
+            Helping the fourth largest economy apply AI to making the world a better place at-scale. 
+          </p>
+        </a>
+
+        <a class="panel card card-unausa" href="https://UNA-Human-Rights.org" target="_blank" rel="noopener">
+          <h3><img src="/images/unausa-logo.svg" alt="UNA-USA" class="card-wordmark" /></h3>
+          <p>
+            Advising UNA-USA Human Rights' technology strategy & implementation. Together we're building Digital Public
+            Infrastructure (DPI).
+          </p>
+        </a>
+
+        <a class="panel card card-lii" href="/lii/">
+          <h3><img src="/images/lii-logo.png" alt="Life Impact International" class="card-wordmark" /></h3>
+          <p>
+          <!-- 
+            Empowering the world's leading Anti-human-trafficking organizations with the
+            technology they need to operate safely.
+          -->
+            Applying impactful technologies where it's needed most.
+          </p>
+        </a>
+
+        <a class="panel card card-ap0110" href="https://AP0110.org" target="_blank" rel="noopener">
+          <h3><img src="/images/ap0110-logo.svg" alt="" class="card-logo invert" /><span class="mono">AP0110</span></h3>
+          <p>
+          <!-- 
+            Partnered with the Universities of California to translate the lessons we learn in the field into Web 4 solutions for orgs that require sovereignty.
+            The internet wasn't designed to be owned by corporations. 
+          -->
+            Building sovereign tech you can trust, because you don't have to.
+          </p>
+        </a>
+
+        <a class="panel card card-node card-node--full" href="/compute">
+          <svg class="card-topo" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+            {topo.map((c) => <path d={c.d} />)}
+            {coast.map((d) => <path class="shore" d={d} />)}
+          </svg>
+          <!-- Flyover: one craft crosses the card at a time on a random heading,
+               drops a single beacon mid-pass, and the node relays it. Both glyphs
+               ship; the script shows whichever it picked. Paths are copied from
+               /compute's #plane-icon and #sat-icon (Lucide, ISC) so the two
+               surfaces draw the same aircraft and the same satellite. -->
+          <span class="flyer" aria-hidden="true">
+            <svg class="fly-plane" viewBox="0 0 24 24">
+              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+            </svg>
+            <svg class="fly-sat" viewBox="0 0 24 24">
+              <path d="m13.5 6.5-3.148-3.148a1.205 1.205 0 0 0-1.704 0L6.352 5.648a1.205 1.205 0 0 0 0 1.704L9.5 10.5" />
+              <path d="M16.5 7.5 19 5" />
+              <path d="m17.5 10.5 3.148 3.148a1.205 1.205 0 0 1 0 1.704l-2.296 2.296a1.205 1.205 0 0 1-1.704 0L13.5 14.5" />
+              <path d="M9 21a6 6 0 0 0-6-6" />
+              <path d="M9.352 10.648a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l4.296-4.296a1.205 1.205 0 0 0 0-1.704l-2.296-2.296a1.205 1.205 0 0 0-1.704 0z" />
+            </svg>
+          </span>
+          <!-- the craft's beacon is a sibling, not a child: like the map's rings it
+               stays parked at the point of emission while the craft flies on -->
+          <span class="beacon" aria-hidden="true"></span>
+          <h3>
+            <span class="node-emit">
+            <svg class="card-logo" viewBox="0 0 30.056 30.026" aria-hidden="true">
+              <g id="node-icon" transform="translate(3.025, 3.1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path class="signal" d="M4.9,16.1 C1,12.2 1,5.8 4.9,1.9" />
+                <path class="signal" d="M7.8,4.7 C5.848,6.722 5.519,9.812 7,12.2" />
+                <path d="M16,19.926 C16,21.03 15.105,21.926 14,21.926 C12.895,21.926 12,21.03 12,19.926 C12,18.821 12.895,17.926 14,17.926 C15.105,17.926 16,18.821 16,19.926 z" />
+                <path class="signal" d="M16.2,4.8 C18.2,6.8 18.46,9.91 17,12.27" />
+                <path class="signal" d="M19.1,1.9 C20.972,3.768 22.024,6.305 22.024,8.95 C22.114,11.018 21.236,12.834 20.217,14.566" />
+                <path d="M6.8,18.926 L12,18.926" />
+                <path d="M12,17.926 L12,6.926" />
+                <path d="M12.2,15.542 L17.2,15.542" />
+                <path d="M17.2,15.542 L17.2,18.926" />
+                <path d="M8.456,18.926 L8.456,21.926" />
+              </g>
+            </svg>
+            <!-- ring pool, same trick as the /compute beacons: hover fires the next
+                 one, so a quick re-hover overlaps instead of restarting the last -->
+            {Array.from({ length: 4 }).map(() => <span class="ping" />)}
+            </span>
+            Homestead
+          </h3>
+          <p>
+          <!-- 
+            I share my own cluster with students and researchers in my community: free access
+            to open-weight models, on infrastructure nobody can take away or change the terms
+            on.
+          -->
+            An ongoing study of how technology can be applied to improving the human quality of live by maximizing the use of resources and automating the mundane.
+          </p>
+        </a>
+
+      </div>
+    </section>
+
+    {/* temporarily hidden: garage section (the /garage page and its nav link stay).
+        JSX comment, not an HTML one: the PenguinPal block below is already inside
+        `<!-- -->`, and its `-->` would close an outer HTML comment early.
+    <!-- Past projects -->
+    <section id="past-projects">
+      <div class="sec-head" style="margin-bottom:0;"><h2>garage</h2></div>
+      <img src="/posters/1968-wide-mirror3.png" alt="1968 Volkswagen Beetle" class="section-banner" />
+      <div class="grid">
+        <!-- temporarily hidden: PenguinPal, S.A.V.E.R., Haas Automation, Machine Shop cards
+        <a class="panel card" href="https://devpost.com/software/penguinpal" target="_blank" rel="noopener">
+          <h3><img src="/images/penguinpal.png" alt="" class="card-logo" />PenguinPal
+            <svg class="card-badge" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="Gold" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Category winner"><path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2"/><path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2"/><path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3"/><path d="M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/></svg>
+          </h3>
+          <p>
+            Best Use of Kindo + WhiteRabbitNeo at Cerebral Beach Hacks, LA Tech Week 2024,
+            built with a team of five in 24 hours. An intelligent inbox: AI summaries,
+            categories, and priority ranking over the Gmail you already had.
+          </p>
+        </a>
+
+        <div class="panel card">
+          <h3><img src="/images/nasa-logo.svg" alt="" class="card-logo" />S.A.V.E.R.</h3>
+          <p>
+            Senior project built for a NASA-sponsored challenge: an autonomous rescue vehicle
+            that triangulates a beacon's position in Python across three software-defined
+            radios.
+          </p>
+        </div>
+
+        <div class="panel card">
+          <h3><img src="/images/HAAS.png" alt="" class="card-logo" />Haas Automation<span class="card-year">2022</span></h3>
+          <p>
+            Optimized and relocated a lathe manufacturing line as a Manufacturing Engineer at HAAS HQ.
+          </p>
+        </div>
+
+        <div class="panel card">
+          <h3><img src="/images/ucr-monogram.png" alt="" class="card-logo" />Machine Shop<span class="card-year">2021&ndash;22</span></h3>
+          <p>
+            Shop Assistant in UCR's BCOE machine shop. Filled part orders and helped
+            students machine their own.
+          </p>
+        </div>
+        -->
+
+        <div class="stack">
+          <a class="panel card" href="/garage#2019">
+            <h3><img src="/images/HighlanderRacing.png" alt="Highlander Racing" class="card-wordmark invert" />EV 2019</h3>
+            <p>
+              I stayed on for the team's first electric car, four custom in-hub motors driving
+              all four wheels.
+            </p>
+          </a>
+
+          <a class="panel card" href="/garage#2018">
+            <h3><img src="/images/HighlanderRacing.png" alt="Highlander Racing" class="card-wordmark invert" />IC 2018</span>
+            </h3>
+            <p>
+              Powertrain Team Lead for UCR's Formula SAE team. We took a team that had never
+              qualified to its first competition: 49th overall at FSAE Lincoln 2018.
+            </p>
+          </a>
+        </div>
+
+        <div class="stack">
+          <a class="panel card" href="/garage#1968">
+            <h3><img src="/images/Volkswagen-Logo-1967.png" alt="" class="card-logo" />1968 Bug+</h3>
+            <p>
+              Bought with what the SuperBeetle sold for. Rewired back to original, plus a few
+              additions.
+            </p>
+          </a>
+
+          <a class="panel card" href="/garage#1974">
+            <h3><img src="/images/Volkswagen-Logo-1967.png" alt="" class="card-logo" />1974 SuperBeetle</h3>
+            <p>
+              Bought my first project car at 15, got it running for my 16th, and flipped it at 17 for the Bug.
+            </p>
+          </a>
+        </div>
+      </div>
+    </section>
+    */}
+
+    <!-- temporarily hidden: library shelf + gallery wall (the /library pages
+         still build, they're just not linked from here or the topnav)
+
+    Library: the shelf itself, book spines in a row. The full filterable
+    ledger lives at /library; this row is the books, nothing else.
+    <section id="library">
+      <div class="sec-head">
+        <h2><a href="/library/" style="color:inherit;text-decoration:none">library</a></h2>
+        <span class="idx"><a href="/library/">the full ledger &rarr;</a></span>
+      </div>
+      <div class="shelf">
         {
-          heroSocials.map((s) => (
-            <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
-              </svg>
+          books.map((b, i) => (
+            <a class="spine" href={`/library/${b.slug}/`} data-cat={b.category}
+              data-h={(i + 1) % 4 === 0 ? 'short' : (i + 1) % 3 === 0 ? 'tall' : null}
+              title={[b.title, b.author].filter(Boolean).join(' · ')}>
+              <span class="s-title">{b.title}</span>
+              <span class:list={['s-pd', { on: b.pd }]} aria-hidden="true" />
             </a>
           ))
         }
       </div>
     </section>
 
-    <!-- Projects -->
-    <section id="projects">
-      <div class="sec-head"><h2>projects</h2></div>
-      <div class="grid">
-        <a class="panel card" href="https://CaliforniaCompute.org" target="_blank" rel="noopener">
-          <h3><img src="/images/calcompute-logo.svg" alt="CalCompute" class="card-wordmark" /></h3>
-          <p>
-            I direct the UC CalCompute Coalition, the volunteer group spanning all ten UC
-            campuses behind CalCompute, California's public AI cloud under Senate Bill 53. The
-            aim is compute the public owns and operates instead of renting.
-          </p>
-        </a>
-
-        <a class="panel card" href="https://UNA-Human-Rights.org" target="_blank" rel="noopener">
-          <h3><img src="/images/unausa-logo.svg" alt="UNA-USA" class="card-wordmark" /></h3>
-          <p>
-            Lead Technical Advisor to the UNA-USA Human Rights Affinity Group. I help translate
-            UN human rights instruments into positions that hold up in the digital age, on
-            surveillance, algorithmic accountability, internet access, and Digital Public
-            Infrastructure (DPI).
-          </p>
-        </a>
-
-        <a class="panel card" href="/compute">
-          <h3>
-            <svg class="card-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
-              <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
-              <circle cx="12" cy="9" r="2" />
-              <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
-              <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
-              <path d="M9.5 18h5" />
-              <path d="m8 22 4-11 4 11" />
-            </svg>
-            My Private/Community Node
-          </h3>
-          <p>
-            I share my own cluster with students and researchers in my community: free access
-            to open-weight models, on infrastructure nobody can take away or change the terms
-            on.
-          </p>
-        </a>
-
-        <a class="panel card" href="https://AP0110.org" target="_blank" rel="noopener">
-          <h3><img src="/images/ap0110-logo.svg" alt="" class="card-logo" /><span class="mono">AP0110</span></h3>
-          <p>
-            Co-founding engineer and CEO. We build open-source infrastructure for Web 4.0, the
-            Independent Internet: AI and digital tools people and institutions can own, verify,
-            and operate for themselves. <span class="mono">AP0110.org</span> is the research
-            side, a public wiki and knowledge graph tracing where that idea comes from.
-          </p>
-        </a>
+    Gallery: seven exhibits, images only on the wall; citations live in the
+    shared dialog below, one row per exhibit, opened by clicking a tile
+    (same pattern as the cert badges and their log). Tiles are height-fixed
+    and width-natural: aspect ratios preserved, nothing cropped.
+    <section id="gallery">
+      <div class="sec-head">
+        <h2>gallery</h2>
       </div>
-    </section>
-
-    <!-- Past projects -->
-    <section id="past-projects">
-      <div class="sec-head"><h2>past projects</h2></div>
-      <div class="grid grid-past">
-        <a class="panel card" href="https://devpost.com/software/penguinpal" target="_blank" rel="noopener">
-          <h3><img src="/images/penguinpal.png" alt="" class="card-logo" />PenguinPal</h3>
-          <p>
-            Category winner at LA Tech Week 2024, built with a team of five in 24 hours. An
-            intelligent inbox: AI summaries, categories, and priority ranking over the Gmail
-            you already had.
-          </p>
-        </a>
-
-        <div class="panel card">
-          <h3><img src="/images/HighlanderRacing.png" alt="Highlander Racing" class="card-wordmark invert" /></h3>
-          <p>
-            I inherited a university team that had never qualified and we reached Formula SAE
-            Lincoln 2018, 49th overall. My part was the air intake, an adjustable-throttle-stop
-            bell-mouth I designed and 3D-printed. I stayed on for the electric car the next
-            season.
-          </p>
+      <div class="strip">
+        <div class="wall">
+          {
+            shown.map((x, i) => {
+              const s = spot.get(x);
+              return (
+                <button type="button" class="tile" data-fig={i}
+                  style={`grid-area: ${s.row} / ${s.col} / span ${s.span} / span ${s.span}`}>
+                  <img src={x.src} width={x.w} height={x.h} loading="lazy" alt={x.alt} />
+                </button>
+              );
+            })
+          }
         </div>
-
-        <a class="panel card" href="/garage">
-          <h3><img src="/images/Volkswagen-Logo-1967.png" alt="" class="card-logo" />VW Bug &amp; SuperBeetle</h3>
-          <p>
-            Two Volkswagens: the 1974 SuperBeetle I bought at 15 and got running by 16, and the
-            1968 Bug its sale paid for. Rewired back to original, plus a few additions that don't
-            cut into the car.
-          </p>
-        </a>
       </div>
+
+      One lightbox for the whole wall: a tile opens its own slide larger,
+      with only that exhibit's citation visible; prev/next walk the set
+      <dialog class="certlog figlog" aria-label="Exhibit">
+        <div class="log-head">
+          <button type="button" class="log-close" aria-label="Close exhibit">
+            <svg viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+          </button>
+        </div>
+        {
+          shown.map((x) => (
+            <figure class="slide">
+              <img src={x.src} width={x.w} height={x.h} loading="lazy" alt={x.alt} />
+              <figcaption class="cert-meta">
+                <a href={x.href} target="_blank" rel="noopener">{x.title}</a>
+                <span>
+                  {x.meta}
+                  {x.license && <> · <a href={x.license.href} target="_blank" rel="noopener">{x.license.label}</a></>}
+                  {' · '}{x.source}
+                </span>
+              </figcaption>
+            </figure>
+          ))
+        }
+        <div class="log-nav">
+          <button type="button" class="fig-prev" aria-label="Previous exhibit">&lsaquo; prev</button>
+          <button type="button" class="fig-next" aria-label="Next exhibit">next &rsaquo;</button>
+        </div>
+      </dialog>
     </section>
+    -->
 
     <!-- Friends -->
     <section id="friends">
@@ -166,29 +654,477 @@ const friends = [
               class={f.wordmark ? 'friend-with-word' : null}>
               <img src={f.logo} alt={f.label}
                 class={f.invert ? 'friend-logo invert' : 'friend-logo'} />
-              {f.wordmark && <span class={`friend-word friend-word--${f.wordmark}`}>{f.label}</span>}
+              {f.wordmark && (
+                <span class:list={['friend-word', `friend-word--${f.wordmark}`, { 'friend-word--stack': f.stack }]}>
+                  {f.bold
+                    ? <>{f.label.slice(0, -f.bold.length)}<strong>{f.bold}</strong></>
+                    : f.label}
+                </span>
+              )}
             </a>
           ))
         }
       </div>
     </section>
-
-    <footer class="foot">
-      <div class="socials">
-        {
-          socials.map((s) => (
-            <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
-              </svg>
-            </a>
-          ))
-        }
-      </div>
-      <div class="foot-meta">
-        <span>Daniel <span class="redacted">Redacted</span></span>
-        <span>danielredacted.net</span>
-      </div>
-    </footer>
   </main>
+
+  <!-- Footer: full window width, matching the header bar -->
+  <footer class="foot">
+    <!-- temporarily hidden: footer socials row
+    <div class="socials">
+      {
+        socials.map((s) => (
+          <a href={s.href} target="_blank" rel="noopener" title={s.label} aria-label={s.label}>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d={s.d} fill-rule={s.evenodd ? 'evenodd' : null} />
+            </svg>
+          </a>
+        ))
+      }
+    </div>
+    -->
+    <div class="foot-meta">
+      <span class="foot-name">Daniel Romo</span>
+      <span>
+        <a href="mailto:me@danielromo.org">email</a> &middot;
+        <a href="https://www.linkedin.com/in/danielredacted/" target="_blank" rel="noopener">LinkedIn</a> &middot;
+        <a href="https://github.com/DanielRedacted" target="_blank" rel="noopener">GitHub</a> &middot;
+        <a href="/invite">invite me</a>
+      </span>
+    </div>
+  </footer>
 </Base>
+
+<style>
+  /* Topo ground for the node card. z-index -1 paints it above the panel's own
+     background but below the in-flow title and copy, so nothing else moves;
+     isolation pins that to the card instead of the page. non-scaling-stroke
+     keeps the lines hairline at whatever size `slice` crops the frame to. */
+  .card-node { position: relative; overflow: hidden; isolation: isolate }
+  a.card-node:hover { border-color: var(--accent); cursor: crosshair }
+  .card-node--full { grid-column: 1 / -1 }
+
+  /* ink sits one step above --night (the flattest-black token) while still
+     clearing >14:1 against white text; the logo's black mark inverts to white
+     via the shared .invert utility (it's a transparent SVG, so the flip costs
+     nothing else) */
+  .card-ap0110 { background: var(--ink); backdrop-filter: none; color: var(--text-inverse) }
+  .card-ap0110 p { color: var(--stone) }
+  /* both marks read small at the shared 1.2em; h3's align-items:center keeps them centered */
+  .card-ap0110 .card-logo, .card-node .card-logo { height: 1.8em }
+
+  /* garage row: the Highlander wordmark (1.8em) and the VW roundel (1.2em) meet
+     in the middle so the four card titles sit on one line of marks */
+  #past-projects .card-wordmark, #past-projects .card-logo { height: 1.5em }
+
+  /* the wordmark's own blue (#1295d8, every path in calcompute-logo.svg), lifted
+     as the full card fill. The wordmark rides in as two currentColor masks (the
+     .mask-glyph trick already used for the cert badges) instead of an <img>
+     filter, so each half's color can transition independently on hover; a
+     single mask can't do that since it's one solid fill. Both masks reference
+     the full logo but clip-path crops each to its own half. The source file
+     has no separate icon-only/text-only asset to point at instead. Split point
+     (22%) and edges come from each half's own path bbox against the 2460.769 x
+     569.731 viewBox: icon spans 0-20.7%, text spans 23.1-100%. */
+  .card-calcompute { background: #1295d8; backdrop-filter: none }
+  .card-calcompute p { color: var(--text-inverse) }
+  .card-wordmark--mask { position: relative; display: block; aspect-ratio: 2460.769 / 569.731 }
+  .card-wordmark--mask > span {
+    position: absolute; inset: 0; background: currentColor; color: var(--text-inverse);
+    -webkit-mask: var(--m) center/contain no-repeat; mask: var(--m) center/contain no-repeat;
+  }
+  .cc-icon { clip-path: inset(0 78% 0 0) }
+  .cc-text { clip-path: inset(0 0 0 22%); transition: color .2s }
+  .card-calcompute:hover .cc-text { color: #FDB515 }   /* UC gold; icon stays white */
+
+  /* unausa-logo.svg's paths are already fill:#FFFFFF on transparent, so the
+     wordmark needs no filter here, unlike the AP0110/CalCompute marks */
+  .card-unausa { background: #2663aa; backdrop-filter: none; color: var(--text-inverse) }
+  .card-unausa p { color: var(--text-inverse) }
+  .card-topo {
+    position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1;
+    fill: none; stroke: var(--border-strong); stroke-width: 1; opacity: 0.75;
+    pointer-events: none;
+  }
+  .card-topo path { vector-effect: non-scaling-stroke }   /* not inherited, so it goes on the paths */
+  .card-topo .shore { stroke: var(--field-grey); opacity: 0.35 }
+
+  /* Hover ping: rings leave the node glyph and run out to the card edges, where
+     .card-node's overflow clips them. Width/height animate rather than
+     transform:scale so the ring keeps its 2px stroke the whole way out.
+     The glyph sits at the card's left edge, so covering a full-width card takes
+     a diameter of twice the content column, hence calc, not a px literal that
+     goes stale the next time --col moves. */
+  .node-emit { position: relative; display: inline-flex; align-items: center }
+  .ping {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    width: 0; height: 0; border-radius: 50%;
+    border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+  }
+  .ping.live { animation: ping 1.8s ease-out }
+  @keyframes ping {
+    from { width: 0; height: 0; opacity: 0.7 }
+    to { width: calc(var(--col) * 2); height: calc(var(--col) * 2); opacity: 0 }
+  }
+
+  /* Flyover. The script parks it with a transform, so nothing here positions it
+     beyond the -12px margins that put its own center on the transform's point.
+     z-index -1 alongside the topo, later in the DOM, so it flies over the terrain
+     and behind the copy rather than across it. */
+  .flyer {
+    position: absolute; left: 0; top: 0; z-index: -1; margin: -12px 0 0 -12px;
+    width: 24px; height: 24px; opacity: 0; pointer-events: none;
+    color: var(--field-grey);
+  }
+  .flyer.live { opacity: 0.8 }
+  .flyer svg {
+    display: none; width: 100%; height: 100%;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .flyer[data-kind='plane'] .fly-plane, .flyer[data-kind='sat'] .fly-sat { display: block }
+
+  /* One beacon per pass. Grey and card-wide, like the map's incoming .ring, so
+     it reads as somebody else's traffic; the accent is reserved for what the
+     node itself sends. The script parks it (left/top) and sizes it to the far
+     corner (--r), then times the node's answer to when the front gets there. */
+  .beacon {
+    position: absolute; z-index: -1; --r: 0px; --ms: 0ms;
+    translate: -50% -50%;
+    width: 0; height: 0; border-radius: 50%;
+    border: 1.5px solid var(--text-mute); opacity: 0; pointer-events: none;
+  }
+  /* duration is set per emission, not fixed: the front has to travel at the same
+     px/s as .ping below, and every beacon has a different distance to cover */
+  .beacon.live { animation: beacon var(--ms) linear }
+  @keyframes beacon {
+    from { width: 0; height: 0; opacity: 0.45 }
+    85% { opacity: 0.06 }
+    to { width: var(--r); height: var(--r); opacity: 0 }
+  }
+  /* the node lights up the moment a front reaches it, same tell as the map's .rx */
+  .card-node .card-logo { transition: color 0.15s }
+  .card-node .card-logo.rx { color: var(--accent) }
+
+  @media (prefers-reduced-motion: reduce) { .ping, .flyer, .beacon { display: none } }
+
+  /* Library shelf: book spines standing on a plank, scrolled sideways. Titles
+     run down the spine (vertical-rl); the top band is a category color from the
+     FIELD primitives; the accent foot dot marks public-domain works. The
+     filterable ledger UI lives on /library, not here. */
+  /* Full-bleed endless scroller: breaks out of the .col gutter so the row runs
+     window edge to window edge. No inline padding, because the loop has no first
+     book to align under the heading. overflow-y stays clipped no matter what we
+     ask for (a scroller on one axis forces the other to auto), so the block
+     padding is the clearance that keeps the taller spines and their focus rings
+     off the boundary.
+     ponytail: 50vw counts the classic scrollbar, so on Firefox/Windows the row
+     overhangs the viewport by ~half a scrollbar. Measure it into a --sb var if
+     that ever shows up as a stray horizontal scroll. */
+  .shelf {
+    display: flex; align-items: flex-end; gap: 5px;
+    margin-inline: calc(50% - 50vw);
+    padding: var(--sp-3) 0 var(--sp-4);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;              /* the shelf scrolls, but bare: no bar */
+  }
+  .shelf::-webkit-scrollbar { display: none }
+  .spine {
+    flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    width: 42px; height: 206px; padding: 8px 0;
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(4px);
+    border: var(--border-w) solid var(--border);
+    border-top: 4px solid var(--band, var(--border-strong));
+    border-radius: 3px 3px 0 0;
+    text-decoration: none; transition: border-color 0.15s;
+  }
+  /* ponytail: fake shelf wear, height jitter by position rather than per-book
+     data. It rides on the element (not :nth-child) so the loop's clones keep the
+     same run of heights and the wrap stays seamless. */
+  .spine[data-h='tall'] { height: 216px }
+  .spine[data-h='short'] { height: 196px }
+  .spine[data-cat='business'] { --band: var(--coyote) }
+  .spine[data-cat='strategy'] { --band: var(--gunmetal) }
+  .spine[data-cat='fiction'] { --band: var(--khaki) }
+  .spine[data-cat='memoir'] { --band: var(--loam) }
+  .spine[data-cat='faith'] { --band: var(--sand) }
+  .spine[data-cat='textbook'] { --band: var(--field-grey) }
+  .spine:hover { border-color: var(--border-strong); border-top-color: var(--band) }
+  .spine:focus-visible { outline: none; box-shadow: var(--ring) }
+  .s-title {
+    writing-mode: vertical-rl;
+    font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1; min-height: 0;
+  }
+  .spine:hover .s-title { color: var(--accent-ink) }
+  .s-pd { width: 7px; height: 7px; flex: none; border-radius: 1px; background: transparent }
+  .s-pd.on { background: var(--accent) }
+
+  /* Gallery wall: same full-bleed breakout as the shelf, one scroller holding
+     two stacked tile rows (explore-grid style). Tiles are height-fixed and
+     width-natural: aspect ratios preserved, no object-fit, no cropping anywhere
+     (the Quirinale terms forbid it, and the rest just inherit the honest
+     treatment). The overhanging next tile is the scroll affordance, same tell
+     as the shelf. Citations live in the .figlog dialog, not on the wall. */
+  .strip {
+    display: flex; gap: var(--sp-2);
+    margin-inline: calc(50% - 50vw);
+    padding: var(--sp-3) var(--pad-x) var(--sp-4);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .wall { flex: none }
+  .strip::-webkit-scrollbar { display: none }
+  /* explore grid: 3 square units tall, placement computed in frontmatter
+     (grid-area inline per tile). Every tile crops to cover its square; the
+     lightbox shows the intact frame. */
+  .wall {
+    --u: min(15vh, 9rem);
+    display: grid;
+    grid-template-rows: repeat(3, var(--u));
+    grid-auto-columns: var(--u);
+    gap: var(--sp-2); width: max-content;
+  }
+  .tile {
+    padding: 0; background: none; cursor: pointer;
+    border: var(--border-w) solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: border-color 0.15s;
+  }
+  .tile img { display: block; width: 100%; height: 100%; object-fit: cover }
+  .tile:hover { border-color: var(--accent-ink) }
+  .tile:focus-visible { outline: none; box-shadow: var(--ring) }
+  /* lightbox: certlog bones widened to fit a photo; one slide picked at a time.
+     Image keeps its natural ratio inside the max box, never cropped. The image
+     cap budgets for the header, worst-case caption, and nav inside the
+     certlog 76dvh ceiling, and overflow is clipped: the dialog never scrolls. */
+  .figlog { width: min(900px, calc(100vw - 2 * var(--sp-5))); overflow: hidden }
+  .figlog .log-head { justify-content: flex-end }
+  .slide { display: none; margin: var(--sp-4) 0 0 }
+  .slide.is-picked { display: flex; flex-direction: column; gap: var(--sp-3) }
+  .slide img {
+    display: block; margin-inline: auto;
+    width: auto; height: auto; max-width: 100%;
+    max-height: min(52vh, calc(76dvh - 17rem));
+    border: var(--border-w) solid var(--border); border-radius: var(--radius);
+  }
+  .figlog .cert-meta span a {
+    color: inherit; font-size: inherit; font-weight: inherit;
+    text-decoration: underline; text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+  }
+  .figlog .cert-meta span a:hover { color: var(--accent-ink); text-decoration-color: currentColor }
+  .log-nav { display: flex; justify-content: space-between; margin-top: var(--sp-4) }
+  .log-nav button {
+    background: none; cursor: pointer;
+    font-family: var(--font-mono); font-size: var(--step--1); color: var(--text-dim);
+    border: var(--border-w) solid var(--border); border-radius: var(--radius-lg);
+    padding: 0.4em 0.8em; transition: color 0.15s, border-color 0.15s;
+  }
+  .log-nav button:hover { color: var(--accent-ink); border-color: var(--accent-ink) }
+  .log-nav button:focus-visible { outline: none; box-shadow: var(--ring) }
+</style>
+
+<script>
+  /* temporarily hidden with the cert badge row and modal
+  // native dialog handles the focus trap and Escape; clicking the backdrop
+  // lands on the dialog element itself, which is the only extra close path
+  const dlg = document.querySelector<HTMLDialogElement>('.certlog')!;
+  const rows = dlg.querySelectorAll<HTMLLIElement>('.cert-list li');
+  document.querySelectorAll<HTMLElement>('.cert').forEach((badge) => {
+    badge.addEventListener('click', () => {
+      // a badge may stand for several rows (grouped certs), so it carries their indices
+      const picked = badge.dataset.rows!.split(' ').map(Number);
+      rows.forEach((row, j) => row.classList.toggle('is-picked', picked.includes(j)));
+      dlg.showModal();
+      rows[picked[0]]?.scrollIntoView({ block: 'nearest' });
+    });
+  });
+  dlg.querySelector('.log-close')!.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  */
+
+  /* temporarily hidden with the gallery section above
+  // gallery lightbox: one slide picked at a time; prev/next and arrow keys
+  // walk the set with wraparound. Same dialog bones as the cert log.
+  const flog = document.querySelector<HTMLDialogElement>('.figlog')!;
+  const slides = flog.querySelectorAll<HTMLElement>('.slide');
+  let fig = 0;
+  const show = (i: number) => {
+    fig = (i + slides.length) % slides.length;
+    slides.forEach((s, j) => s.classList.toggle('is-picked', j === fig));
+  };
+  // delegation, so cloned tiles from the endless wall below work too
+  const strip = document.querySelector<HTMLElement>('.strip')!;
+  strip.addEventListener('click', (e) => {
+    const tile = (e.target as HTMLElement).closest<HTMLElement>('.tile');
+    if (tile) { show(Number(tile.dataset.fig)); flog.showModal(); }
+  });
+  flog.querySelector('.fig-prev')!.addEventListener('click', () => show(fig - 1));
+  flog.querySelector('.fig-next')!.addEventListener('click', () => show(fig + 1));
+  flog.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') show(fig - 1);
+    if (e.key === 'ArrowRight') show(fig + 1);
+  });
+  flog.querySelector('.log-close')!.addEventListener('click', () => flog.close());
+  flog.addEventListener('click', (e) => { if (e.target === flog) flog.close(); });
+
+  // Endless wall, same trick as the shelf below, but cloning the whole grid:
+  // tiles carry absolute grid columns, so individual children can't wrap.
+  // Engages only when the wall overflows the window; narrower walls stay a
+  // static row. Clones are hidden from assistive tech and skipped by Tab;
+  // clicks on them still work via the strip delegation above.
+  const wall = strip.querySelector<HTMLElement>('.wall')!;
+  if (wall.offsetWidth > strip.clientWidth) {
+    const copy = () => {
+      const c = wall.cloneNode(true) as HTMLElement;
+      c.setAttribute('aria-hidden', 'true');
+      c.querySelectorAll<HTMLElement>('.tile').forEach((t) => (t.tabIndex = -1));
+      return c;
+    };
+    const lead = copy();
+    strip.prepend(lead);
+    const period = wall.offsetLeft - lead.offsetLeft;
+    // ponytail: copy count fixed at load, same ceiling as the shelf loop
+    const trailing = Math.ceil(strip.clientWidth / period) + 1;
+    for (let i = 0; i < trailing; i++) strip.append(copy());
+    strip.scrollLeft = period;
+    strip.addEventListener('scroll', () => {
+      if (strip.scrollLeft < period) strip.scrollLeft += period;
+      else if (strip.scrollLeft >= period * 2) strip.scrollLeft -= period;
+    });
+  }
+  */
+
+  // node card relay: hover fires a ping, and so does a passing craft's beacon.
+  // Round-robin the ring pool so overlapping rings coexist.
+  const card = document.querySelector<HTMLElement>('.card-node')!;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const pings = [...card.querySelectorAll<HTMLElement>('.ping')];
+    let p = 0;
+    const restart = (el: HTMLElement) => {
+      el.classList.remove('live');
+      void el.getBoundingClientRect(); // reflow, or the one-shot never replays
+      el.classList.add('live');
+    };
+    const firePing = () => restart(pings[p++ % pings.length]);
+    card.addEventListener('mouseenter', firePing);
+
+    // One front speed for every ring on the card: .ping covers a --col radius in
+    // 1.8s, so a craft's beacon gets whatever duration its own reach costs at
+    // that same rate. Reading the token beats a px literal here, which is how
+    // the ping's reach went stale the last time this card changed shape.
+    const root = getComputedStyle(document.documentElement);
+    const rem = parseFloat(root.fontSize);
+    const PING_S = 1.8;   // keep in step with the .ping animation below
+    const FRONT = (parseFloat(root.getPropertyValue('--col')) * rem) / PING_S;   // px per second
+
+    // Beacon emission, ported from the /compute map's `emit`. The ring is parked
+    // where the craft was when it keyed up (it does not travel on with it) and
+    // expands to the furthest card corner. The node answers only once that front
+    // has actually covered the distance to the glyph, so the delay is that
+    // distance at the shared front speed, not a constant.
+    const beacon = card.querySelector<HTMLElement>('.beacon')!;
+    const emitter = card.querySelector<HTMLElement>('.node-emit')!;
+    const glyph = card.querySelector<HTMLElement>('.card-logo')!;
+    const emit = (x: number, y: number, w: number, h: number) => {
+      const reach = Math.max(
+        Math.hypot(x, y), Math.hypot(w - x, y),
+        Math.hypot(x, h - y), Math.hypot(w - x, h - y),
+      );
+      beacon.style.left = `${x}px`;
+      beacon.style.top = `${y}px`;
+      beacon.style.setProperty('--r', `${reach * 2}px`);
+      beacon.style.setProperty('--ms', `${(reach / FRONT) * 1000}ms`);
+      restart(beacon);
+
+      const c = card.getBoundingClientRect();
+      const n = emitter.getBoundingClientRect();
+      const travel = Math.hypot(x - (n.left + n.width / 2 - c.left), y - (n.top + n.height / 2 - c.top));
+      setTimeout(() => {
+        glyph.classList.add('rx');
+        setTimeout(() => glyph.classList.remove('rx'), 450);
+        firePing();
+      }, (travel / FRONT) * 1000);
+    };
+
+    // Flyover. Every pass picks its own craft, heading, speed, and beacon
+    // moment, so it's WAAPI rather than CSS keyframes. Chaining the next pass
+    // off this one's `finished` is what keeps exactly one craft in the air.
+    const flyer = card.querySelector<HTMLElement>('.flyer')!;
+    const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+    const fly = () => {
+      const { width: w, height: h } = card.getBoundingClientRect();
+      const angle = rand(0, 2 * Math.PI);
+      const run = Math.hypot(w, h) / 2 + 40;   // enter and exit clear of the card
+      // path runs through the card center, parameterised on t in [-1, 1]
+      const px = (t: number) => w / 2 + Math.cos(angle) * run * t;
+      const py = (t: number) => h / 2 + Math.sin(angle) * run * t;
+      // the plane glyph already noses up-right, so +45deg aligns it with heading;
+      // a satellite has no nose, so it flies as drawn
+      const plane = Math.random() < 0.5;
+      const spin = plane ? ` rotate(${(angle * 180) / Math.PI + 45}deg)` : '';
+      const at = (t: number) => `translate(${px(t)}px, ${py(t)}px)${spin}`;
+      flyer.dataset.kind = plane ? 'plane' : 'sat';
+
+      // The beacon has to key up while the craft is over the card, so the
+      // emission point is drawn from the stretch of the path inside it: on a
+      // steep heading across a short card that window is narrow, and a flat
+      // fraction of the flight would key up off-frame. One axis is always
+      // finite here, since cos and sin can't both be zero.
+      const inside = Math.min(Math.abs(w / 2 / Math.cos(angle)), Math.abs(h / 2 / Math.sin(angle)));
+      const keyAt = (rand(-0.75, 0.75) * inside) / run;
+
+      const dur = rand(7000, 14000);
+      const pass = flyer.animate(
+        [{ transform: at(-1) }, { transform: at(1) }],
+        { duration: dur, easing: 'linear' },
+      );
+      flyer.classList.add('live');
+      setTimeout(() => emit(px(keyAt), py(keyAt), w, h), (dur * (keyAt + 1)) / 2);
+      pass.finished.then(() => {
+        flyer.classList.remove('live');
+        setTimeout(fly, rand(12000, 40000));
+      });
+    };
+    setTimeout(fly, rand(4000, 15000));
+  }
+
+  // Endless shelf. The row is cloned front and back, so the spines repeat with a
+  // fixed period; parking the scroll inside the middle copy and adding or
+  // subtracting one whole period at the edges puts identical pixels under the
+  // cursor, which reads as a row with no start and no finish. Clones are hidden
+  // from assistive tech and skipped by Tab, so every real book is still
+  // reachable exactly once. Without JS this stays a plain scrollable row of
+  // the shelf, which is the same content minus the wrap.
+  const shelf = document.querySelector<HTMLElement>('.shelf');
+  if (shelf) {
+    const set = [...shelf.children] as HTMLElement[];
+    const copy = () =>
+      set.map((el) => {
+        const c = el.cloneNode(true) as HTMLElement;
+        c.setAttribute('aria-hidden', 'true');
+        c.tabIndex = -1;
+        return c;
+      });
+
+    const lead = copy();
+    shelf.prepend(...lead);
+    const period = set[0].offsetLeft - lead[0].offsetLeft;
+    // enough trailing copies that a whole period always fits past the viewport,
+    // otherwise the jump at the far edge would run out of track to land on
+    // ponytail: copy count is fixed at load; a resize far wider needs a reload
+    const trailing = Math.ceil(shelf.clientWidth / period) + 1;
+    for (let i = 0; i < trailing; i++) shelf.append(...copy());
+
+    shelf.scrollLeft = period;
+    shelf.addEventListener('scroll', () => {
+      if (shelf.scrollLeft < period) shelf.scrollLeft += period;
+      else if (shelf.scrollLeft >= period * 2) shelf.scrollLeft -= period;
+    });
+  }
+</script>

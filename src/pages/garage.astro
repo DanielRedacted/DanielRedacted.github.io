@@ -16,6 +16,21 @@ const chipsFor = (car) => [
   ...car.features.filter((f: string) => featureIcon(f)).map((f: string) => ({ icon: featureIcon(f), text: f })),
 ];
 
+// Track outlines traced from OpenStreetMap raceway geometry (ODbL), normalized to a 100x100 box.
+const TRACKS = {
+  adams: {
+    name: 'Adams Motorsports Park',
+    loc: 'Jurupa Valley, California',
+    url: 'https://adamsmotorsportspark.com',
+    d: 'M22.8 43.3 L22.6 40.2 L23.7 37.8 L25.4 35.7M91.9 56.8 L97.0 65.8M33.5 37.7 L37.5 38.7 L43.8 41.8 L59.7 57.1 L61.7 59.4 L64.7 62.9M70.6 79.2 L74.4 73.8M92.4 69.2 L89.0 71.1 L88.0 75.3 L87.7 80.3 L86.2 83.2 L83.6 85.1 L80.4 85.6 L77.3 84.1 L70.6 79.2 L32.2 50.4 L22.8 43.3 L1.4 27.1 L0.1 24.8 L0.0 22.1 L1.0 19.3 L2.6 17.2 L5.4 16.2 L8.4 15.9 L12.1 16.4 L15.1 17.9 L17.2 20.5 L17.4 23.4 L16.6 27.7 L16.2 30.4 L17.0 32.6 L18.6 34.0 L21.4 35.2 L25.4 35.7 L30.0 36.3 L33.5 37.7 L35.8 39.7 L40.6 46.4 L44.7 51.1 L54.1 57.9 L59.4 60.9 L64.7 62.9 L65.9 63.4 L70.2 65.8 L72.1 69.2 L73.6 73.2 L74.4 73.8 L76.0 74.9 L78.8 75.2 L81.0 73.9 L82.9 71.6 L82.8 69.4 L80.4 65.2 L91.9 56.8 L99.7 51.0M66.5 22.4 L67.6 25.4 L68.7 29.3 L69.7 31.2 L71.3 32.7 L73.6 33.7 L76.4 34.1 L87.0 35.0M46.6 33.5 L45.9 30.2 L46.5 27.0 L48.5 23.6M37.5 14.7 L40.8 19.3 L43.8 22.6 L45.9 23.8 L48.5 23.6 L53.3 20.9 L58.1 18.8M35.8 14.4 L37.5 14.7 L58.1 18.8 L61.6 19.5 L66.5 22.4 L75.8 27.9 L87.0 35.0 L90.6 37.2 L93.8 39.9 L97.2 43.3 L99.3 47.2 L99.7 51.0 L100.0 53.8 L97.0 65.8 L96.1 68.0 L94.5 69.2 L92.4 69.2 L88.7 69.0 L80.4 65.2 L67.6 53.5 L46.6 33.5 L42.5 29.6 L36.5 24.0 L33.3 20.3 L32.9 17.7 L33.7 15.8 Z',
+  },
+  topgear: {
+    name: 'Top Gear Test Track',
+    loc: 'Dunsfold Aerodrome, Surrey, UK',
+    d: 'M47.1 58.2 L51.2 58.2 L54.1 58.1 L54.5 58.1 L55.0 58.0 L55.5 58.0 L56.0 57.9 L56.4 57.7 L56.8 57.5 L57.2 57.3 L57.5 57.1 L57.8 56.8 L58.0 56.4 L58.2 56.1 L58.4 55.7 L58.5 55.3 L58.7 54.9 L58.8 54.4 L58.8 53.9 L58.8 53.4 L58.7 53.0 L58.5 52.6 L58.3 52.2 L58.1 51.9 L57.7 51.6 L57.3 51.3 L56.9 51.1 L56.4 50.9 L55.9 50.8 L54.8 50.6 L53.8 50.6 L49.3 50.8 L48.7 50.8 L48.3 50.9 L47.9 50.9 L47.6 50.9 L47.2 50.9 L46.9 50.8 L46.6 50.8 L38.0 46.8 L37.3 46.5 L36.7 46.1 L36.2 45.8 L35.7 45.4 L35.4 44.9 L35.0 44.4 L34.7 43.8 L34.5 43.5 L34.4 43.1 L34.3 42.8 L34.2 42.3 L34.1 41.9 L34.1 41.4 L34.0 40.8 L34.0 40.3 L34.1 39.8 L34.1 39.4 L34.3 38.9 L34.5 38.6 L34.8 38.2 L35.1 37.9 L35.5 37.6 L35.8 37.3 L36.5 36.7 L37.3 36.0 L37.9 35.5 L38.6 35.0 L39.3 34.6 L39.9 34.2 L40.4 33.9 L41.1 33.7 L41.8 33.4 L42.8 33.0 L43.4 32.8 L44.0 32.6 L44.9 32.5 L45.4 32.4 L46.0 32.3 L46.5 32.2 L47.2 32.2 L49.7 32.2 L52.8 32.4 L56.7 32.4 L59.0 32.2 L61.6 31.9 L63.7 31.6 L64.5 31.5 L65.1 31.4 L65.3 31.4 L65.6 31.3 L68.1 30.6 L69.1 30.3 L69.9 30.1 L70.6 29.8 L77.6 27.2 L80.6 26.1 L85.6 24.3 L89.0 23.0 L91.6 22.0 L93.4 21.4 L93.6 21.3 L93.8 21.3 L94.0 21.3 L94.3 21.3 L94.5 21.4 L94.6 21.4 L94.8 21.5 L95.0 21.6 L95.3 21.8 L95.6 21.9 L95.9 22.2 L96.1 22.5 L96.3 22.8 L96.5 23.2 L97.6 26.3 L99.8 32.0 L99.9 32.5 L100.0 33.1 L100.0 33.6 L100.0 34.1 L99.9 34.5 L99.8 35.0 L99.5 35.7 L99.2 36.3 L98.7 37.1 L98.3 37.9 L97.8 38.6 L97.2 39.1 L96.6 39.7 L95.9 40.2 L95.4 40.5 L94.9 40.8 L94.4 41.0 L82.6 46.3 L70.7 51.4 L69.7 51.9 L68.6 52.3 L67.5 52.6 L66.4 52.7 L65.4 52.8 L64.5 52.9 L63.6 52.9 L62.7 52.8 L62.0 52.7 L61.3 52.7 L60.6 52.5 L59.9 52.4 L59.5 52.3 L58.9 52.1 L58.4 51.9 L57.7 51.6 L55.9 50.8 L39.8 43.3 L39.2 43.1 L38.7 43.0 L38.2 42.9 L37.7 42.8 L36.8 42.8 L36.1 42.8 L35.4 42.8 L34.8 42.8 L34.3 42.8 L33.7 42.9 L33.1 42.9 L32.4 43.0 L31.9 43.1 L31.3 43.2 L30.6 43.4 L30.1 43.5 L29.7 43.7 L29.1 43.9 L28.7 44.1 L28.2 44.4 L27.8 44.6 L27.4 45.0 L26.9 45.4 L23.8 48.3 L21.9 50.1 L18.9 53.0 L16.9 54.8 L13.6 57.7 L7.1 63.5 L6.5 64.0 L5.1 65.4 L2.1 68.3 L1.8 68.6 L1.6 68.9 L1.4 69.2 L1.1 69.7 L0.9 70.1 L0.7 70.5 L0.5 71.0 L0.3 71.6 L0.2 72.2 L0.1 72.6 L0.0 72.9 L0.0 73.2 L0.0 73.5 L0.0 73.7 L0.0 74.1 L0.1 74.4 L0.1 74.6 L0.2 74.9 L0.4 75.3 L0.5 75.6 L0.7 76.0 L0.9 76.3 L1.1 76.6 L1.3 76.9 L1.6 77.1 L1.8 77.4 L2.0 77.6 L2.3 77.8 L2.6 78.0 L3.0 78.2 L3.4 78.4 L3.6 78.5 L3.9 78.6 L4.1 78.7 L4.3 78.7 L4.7 78.7 L5.1 78.7 L5.4 78.5 L5.7 78.3 L5.9 78.1 L6.1 77.8 L6.2 77.4 L6.4 77.1 L6.5 76.7 L6.6 76.3 L6.7 76.0 L6.8 75.6 L6.9 75.2 L7.1 74.9 L7.3 74.8 L7.6 74.5 L7.9 74.4 L14.2 71.7 L24.4 67.4 L46.0 58.4 L46.5 58.3 Z',
+  },
+};
+
 const CARS = [
   {
     year: '1974',
@@ -25,6 +40,8 @@ const CARS = [
     logo: '/images/Volkswagen-Logo-1967.png',
     model: '/3d/1974_volkswagen_superbeetle.glb',
     alt: '1974 Volkswagen SuperBeetle 3D model',
+    status: 'Sold',
+    track: 'topgear',
     keyline: '46 hp · 1641 cc',
     numeric: [
       { label: 'Power', value: 46, display: '46 hp @ 4000 rpm' },
@@ -54,6 +71,8 @@ const CARS = [
     logo: '/images/Volkswagen-Logo-1967.png',
     model: '/3d/1968_volkswagen_beetle.glb',
     alt: '1968 Volkswagen Beetle 3D model',
+    status: 'Sold',
+    track: 'topgear',
     keyline: '53 hp · 1600 cc',
     numeric: [
       { label: 'Power', value: 53, display: '53 hp @ 4200 rpm' },
@@ -89,8 +108,11 @@ const CARS = [
     make: 'Highlander Racing',
     logo: '/images/HighlanderRacing.png',
     wordmark: true,
+    invert: true,
     model: null,
     alt: '',
+    status: 'Retired',
+    track: 'adams',
     keyline: 'CBR600RR · 599 cc',
     numeric: [
       { label: 'Displacement', value: 599, display: '599 cc' },
@@ -115,8 +137,11 @@ const CARS = [
     make: 'Highlander Racing',
     logo: '/images/HighlanderRacing.png',
     wordmark: true,
+    invert: true,
     model: null,
     alt: '',
+    status: 'Retired',
+    track: 'adams',
     keyline: '4 in-hub motors',
     numeric: [],
     rows: [
@@ -124,6 +149,66 @@ const CARS = [
       { label: 'Drive', value: 'AWD' },
     ],
     features: [],
+  },
+  {
+    year: '2026',
+    short: 'GR Yaris',
+    name: '2026 GR Yaris',
+    make: 'Toyota',
+    logo: '/images/Toyota-Logo-2026.png',
+    model: '/3d/Toyota_GR_Yaris.glb',
+    alt: '2026 Toyota GR Yaris 3D model',
+    status: 'Coming Soon',
+    keyline: '296 hp · 1618 cc',
+    numeric: [
+      { label: 'Power', value: 296, display: '296 hp @ 6500 rpm' },
+      { label: 'Torque', value: 295, display: '295 lb-ft' },
+      { label: 'Displacement', value: 1618, display: '1618 cc' },
+      { label: 'Curb weight', value: 2822, display: '2822 lb' },
+      { label: 'Length', value: 157.3, display: '157.3 in' },
+      { label: 'Wheelbase', value: 100.8, display: '100.8 in' },
+    ],
+    rows: [
+      { label: 'Engine', value: 'G16E-GTS 1.6L inline-3, turbo' },
+      { label: 'Valvetrain', value: 'DOHC 12-valve, Dual VVT-i' },
+      { label: 'Bore × stroke', value: '87.5 × 89.7 mm' },
+      { label: 'Compression', value: '10.5:1' },
+      { label: 'Transmission', value: '6-speed manual' },
+      { label: 'Drive', value: 'GR-FOUR AWD' },
+    ],
+    features: [],
+  },
+  {
+    year: '1969',
+    short: 'Charger',
+    name: '1969 Charger R/T',
+    make: 'Dodge',
+    logo: '/images/1969-dodge-logo.png',
+    wordmark: true,
+    model: '/3d/1969_Dodge%20Charger.glb',
+    alt: '1969 Dodge Charger 3D model',
+    status: 'Coming Soon',
+    keyline: '375 hp · 440 cu in',
+    numeric: [
+      { label: 'Power', value: 375, display: '375 hp @ 4600 rpm' },
+      { label: 'Torque', value: 482, display: '482 lb-ft @ 3200 rpm' },
+      { label: 'Displacement', value: 7206, display: '7206 cc' },
+      { label: 'Curb weight', value: 3792, display: '3792 lb' },
+      { label: 'Length', value: 208, display: '208.0 in' },
+      { label: 'Wheelbase', value: 117, display: '117.0 in' },
+    ],
+    rows: [
+      { label: 'Engine', value: '440 Magnum RB V8, 439.7 cu in' },
+      { label: 'Fuel system', value: '4-barrel carburetor' },
+      { label: 'Bore × stroke', value: '109.7 × 95.3 mm' },
+      { label: 'Compression', value: '10.1:1' },
+      { label: 'Transmission', value: '4-speed manual' },
+      { label: 'Drive', value: 'Front engine, RWD' },
+    ],
+    features: [
+      'President Adams FCC CB radio',
+      'Cobra radar detector',
+    ],
   },
 ];
 
@@ -133,8 +218,8 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
 ---
 
 <Base
-  title="VW Bug & SuperBeetle · Daniel ████"
-  description="The garage: a 1968 Bug rebuilt to drive by 16, the 1974 SuperBeetle that paid for it, and Highlander Racing's 2018 IC and 2019 Electric FSAE cars."
+  title="Garage · Daniel Romo"
+  description="The garage: a 1974 SuperBeetle bought broken at 15 and driving by 16, the 1968 Bug its sale paid for, Highlander Racing's 2018 IC and 2019 Electric FSAE cars, and a 2026 GR Yaris and 1969 Charger still to come."
 >
   <section class="garage" aria-label="Garage">
     <model-viewer
@@ -148,6 +233,7 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       shadow-intensity="1"
       interaction-prompt="none"
       disable-zoom
+      disable-tap
       touch-action="pan-y"
     >
       <div slot="progress-bar"></div>
@@ -156,6 +242,8 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
     <div class="garage-stack">
       <img src="/posters/1974-narrow-mirror.png" data-year="1974" alt="Select the 1974 SuperBeetle" />
       <img src="/posters/1968-narrow-mirror.png" data-year="1968" alt="Select the 1968 Bug" />
+      <img src="/posters/2026-narrow-mirror.png" data-year="2026" alt="Select the 2026 GR Yaris" />
+      <img src="/posters/1969-narrow-mirror.png" data-year="1969" alt="Select the 1969 Charger" />
     </div>
 
     <div class="hud hud-identity">
@@ -166,7 +254,7 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
         {CARS.map((car) => (
           <span data-year={car.year} hidden>
             {car.wordmark ? (
-              <img src={car.logo} alt={car.make} class="card-wordmark invert" />
+              <img src={car.logo} alt={car.make} class:list={['card-wordmark', { invert: car.invert }]} />
             ) : (
               <><img src={car.logo} alt="" class="card-logo" /> {car.make}</>
             )}
@@ -177,6 +265,9 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
         <span data-year="garage">Garage</span>
         {CARS.map((car) => <span data-year={car.year} hidden>{car.name}</span>)}
       </h1>
+      <p class="status">
+        {CARS.map((car) => <span data-year={car.year} hidden>{car.status}</span>)}
+      </p>
     </div>
 
     <div class="hud hud-specs">
@@ -225,20 +316,23 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
               </div>
             ))}
             {chipsFor(car).length > 0 && (
-              <div class="feat-icons">
-                {chipsFor(car).map((c) => (
-                  <button type="button" class="feat-chip" aria-pressed="false" aria-label={c.text} title={c.text}>
-                    <Icon name={c.icon} />
-                    <span class="chip-text" hidden>{c.text}</span>
-                  </button>
-                ))}
-              </div>
+              <>
+                <p class="label feat-head">Upgrades</p>
+                <div class="feat-icons">
+                  {chipsFor(car).map((c) => (
+                    <button type="button" class="feat-chip" aria-pressed="false" aria-label={c.text} title={c.text} data-text={c.text}>
+                      <Icon name={c.icon} />
+                    </button>
+                  ))}
+                </div>
+                <p class="chip-caption" hidden></p>
+              </>
             )}
-            {car.features.length > 0 && (
+            {car.features.filter((f) => !featureIcon(f)).length > 0 && (
               <>
                 <p class="label feat-head">Features</p>
                 <ul class="features">
-                  {car.features.map((f) => <li>{f}</li>)}
+                  {car.features.filter((f) => !featureIcon(f)).map((f) => <li>{f}</li>)}
                 </ul>
               </>
             )}
@@ -255,6 +349,11 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
 
     <div class="hud hud-tiles" role="tablist" aria-label="Select car">
       {CARS.map((car, i) => (
+        <>
+        {/* Splits the cars I have had from the ones still to come. */}
+        {car.status === 'Coming Soon' && CARS[i - 1]?.status !== 'Coming Soon' && (
+          <span class="tile-divider" aria-hidden="true"></span>
+        )}
         <button
           type="button"
           role="tab"
@@ -269,12 +368,43 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
           <strong class="tile-name">{car.short}</strong>
           <span class="tile-keyline">{car.keyline}</span>
         </button>
+        </>
       ))}
+    </div>
+
+    <div class="hud hud-track">
+      {CARS.filter((car) => car.track).map((car) => {
+        const track = TRACKS[car.track];
+        const map = (
+          <svg
+            viewBox="0 0 100 100"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            aria-hidden={track.url ? undefined : 'true'}
+          >
+            <path d={track.d} />
+          </svg>
+        );
+        return (
+          <figure class="track" data-year={car.year} hidden>
+            {track.url ? (
+              <a href={track.url} target="_blank" rel="noopener" aria-label={track.name} title={track.name}>
+                {map}
+              </a>
+            ) : (
+              map
+            )}
+          </figure>
+        );
+      })}
     </div>
 
   </section>
 
-  <main class="mx-auto w-full max-w-5xl px-6 pb-16">
+  <main class="col col-wide pb-16">
     <section class="story" data-year="1974" hidden>
       <h2>1974 SuperBeetle</h2>
       <p>
@@ -298,8 +428,8 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       <h2>2018 IC</h2>
       <p>
         I inherited a university team that had never qualified and we reached Formula SAE
-        Lincoln 2018, 49th overall. My part was the air intake, an adjustable-throttle-stop
-        bell-mouth I designed and 3D-printed.
+        Lincoln 2018: 49th overall, 45th in acceleration. My part was the air intake, an
+        adjustable-throttle-stop bell-mouth I designed and 3D-printed.
       </p>
     </section>
 
@@ -310,16 +440,28 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
         motors.
       </p>
     </section>
+
+    <section class="story" data-year="2026" hidden>
+      <h2>2026 GR Yaris</h2>
+      <p>God, I love driving!</p>
+    </section>
+
+    <section class="story" data-year="1969" hidden>
+      <h2>1969 Charger R/T</h2>
+      <p>God, I love driving!</p>
+    </section>
   </main>
 
   <script>
     import '@google/model-viewer';
 
     const CARS = {
-      '1974': { src: '/3d/1974_volkswagen_superbeetle.glb', alt: '1974 Volkswagen SuperBeetle 3D model', title: '1974 SuperBeetle · Daniel ████' },
-      '1968': { src: '/3d/1968_volkswagen_beetle.glb', alt: '1968 Volkswagen Beetle 3D model', title: '1968 Bug · Daniel ████' },
-      '2018': { src: '', alt: '', title: '2018 IC · Daniel ████' },
-      '2019': { src: '', alt: '', title: '2019 Electric · Daniel ████' },
+      '1974': { src: '/3d/1974_volkswagen_superbeetle.glb', alt: '1974 Volkswagen SuperBeetle 3D model', title: '1974 SuperBeetle · Daniel Romo' },
+      '1968': { src: '/3d/1968_volkswagen_beetle.glb', alt: '1968 Volkswagen Beetle 3D model', title: '1968 Bug · Daniel Romo' },
+      '2018': { src: '', alt: '', title: '2018 IC · Daniel Romo' },
+      '2019': { src: '', alt: '', title: '2019 Electric · Daniel Romo' },
+      '2026': { src: '/3d/Toyota_GR_Yaris.glb', alt: '2026 Toyota GR Yaris 3D model', title: '2026 GR Yaris · Daniel Romo' },
+      '1969': { src: '/3d/1969_Dodge%20Charger.glb', alt: '1969 Dodge Charger 3D model', title: '1969 Charger R/T · Daniel Romo' },
     };
     type Year = keyof typeof CARS;
     const YEARS = Object.keys(CARS) as Year[];
@@ -327,7 +469,7 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
     const stage = document.querySelector('model-viewer.stage')!;
     const tabs = [...document.querySelectorAll<HTMLButtonElement>('.hud-tiles [role="tab"]')];
     const tablist = document.querySelector<HTMLElement>('.hud-tiles')!;
-    const swappable = document.querySelectorAll<HTMLElement>('.spec-sheet, #car-title span, .make span, .story');
+    const swappable = document.querySelectorAll<HTMLElement>('.spec-sheet, #car-title span, .make span, .status span, .hud-track .track, .story');
     const stageEmpty = document.querySelector<HTMLElement>('.stage-empty')!;
     const stack = document.querySelector<HTMLElement>('.garage-stack')!;
     const garageLabel = document.querySelector<HTMLElement>('#car-title [data-year="garage"]')!;
@@ -460,6 +602,30 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
 
     stage.addEventListener('error', () => stage.classList.remove('fading'));
 
+    // model-viewer snaps the turntable to full speed the frame auto-rotate-delay
+    // expires. Ease rotation-per-second up from a standstill instead. Its own delay
+    // timer restarts on a user-interaction camera-change, so mirror that to stay in
+    // step; changing the rate mid-spin doesn't restart it.
+    const SPIN = 5.625; // deg/s, model-viewer's own default rate (PI/32 rad/s)
+    const RAMP = 1800;
+    const SPIN_DELAY = Number(stage.getAttribute('auto-rotate-delay'));
+    let spinFrom = 0;
+    function softSpin() {
+      const t0 = (spinFrom = performance.now());
+      stage.setAttribute('rotation-per-second', '0deg');
+      const tick = (now: number) => {
+        if (spinFrom !== t0) return;
+        const t = Math.min(1, (now - t0 - SPIN_DELAY) / RAMP);
+        if (t > 0) stage.setAttribute('rotation-per-second', `${(SPIN * t * t * (3 - 2 * t)).toFixed(3)}deg`);
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    stage.addEventListener('camera-change', (e) => {
+      if ((e as CustomEvent).detail.source === 'user-interaction') softSpin();
+    });
+    softSpin();
+
     let warmed = false;
     stage.addEventListener('load', () => {
       stage.classList.remove('fading');
@@ -493,24 +659,25 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
     specsToggle.addEventListener('click', () => toggleSpecs());
     deselectBtn.addEventListener('click', returnToGarage);
 
-    // Equipment chips: selecting one reveals its text, one at a time.
+    // Equipment chips: selecting one names it in the caption below the row, one at a time.
     document.querySelectorAll<HTMLButtonElement>('.feat-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         const wasOn = chip.getAttribute('aria-pressed') === 'true';
-        chip.parentElement!.querySelectorAll<HTMLButtonElement>('.feat-chip').forEach((c) => {
-          c.setAttribute('aria-pressed', 'false');
-          c.querySelector<HTMLElement>('.chip-text')!.hidden = true;
-        });
-        if (!wasOn) {
+        const caption = chip.closest('.spec-sheet')!.querySelector<HTMLElement>('.chip-caption')!;
+        chip.parentElement!.querySelectorAll('.feat-chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+        if (wasOn) {
+          caption.hidden = true;
+        } else {
           chip.setAttribute('aria-pressed', 'true');
-          chip.querySelector<HTMLElement>('.chip-text')!.hidden = false;
+          caption.textContent = chip.dataset.text!;
+          caption.hidden = false;
         }
       });
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (/^[1-4]$/.test(e.key)) selectCar(YEARS[Number(e.key) - 1]);
+      if (/^[1-6]$/.test(e.key)) selectCar(YEARS[Number(e.key) - 1]);
       else if (e.key === 's' || e.key === 'S') toggleSpecs();
       else if (e.key === 'Escape') returnToGarage();
     });
@@ -643,6 +810,26 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       text-transform: uppercase;
       letter-spacing: 0.02em;
     }
+    .status {
+      margin: var(--sp-3) 0 0;
+    }
+    .status span {
+      display: inline-block;
+      padding: 0.25em 0.7em;
+      border: var(--border-w) solid var(--border-strong);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--surface) 72%, transparent);
+      backdrop-filter: blur(4px);
+      font-family: var(--font-mono);
+      font-size: var(--step--2);
+      font-weight: 700;
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-mute);
+    }
+    .status span[hidden] {
+      display: none;
+    }
 
     .hud-specs {
       top: var(--sp-5);
@@ -735,7 +922,7 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       display: flex;
       flex-wrap: wrap;
       gap: var(--sp-2);
-      margin-top: var(--sp-3);
+      margin-top: var(--sp-2);
       font-size: var(--step--1); /* icons stay the same size everywhere */
     }
     .feat-chip {
@@ -758,14 +945,19 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
     .feat-chip[aria-pressed='true'] {
       color: var(--text);
       border-color: var(--accent);
-      padding-right: 0.7em;
     }
     .feat-chip:focus-visible {
       outline: none;
       box-shadow: var(--ring);
     }
-    .chip-text {
+    .chip-caption {
+      margin: var(--sp-2) 0 0;
       font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--text);
+    }
+    .chip-caption[hidden] {
+      display: none;
     }
     .feat-head {
       margin: var(--sp-4) 0 0;
@@ -797,6 +989,36 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       bottom: var(--sp-5);
       display: flex;
       gap: var(--sp-3);
+    }
+
+    /* Forza-style track map outline, above the car tiles */
+    .hud-track {
+      left: var(--sp-5);
+      bottom: calc(var(--sp-5) + 6.5rem); /* clears the tile row below */
+      color: var(--stone);
+    }
+    .track {
+      margin: 0;
+    }
+    .track[hidden] {
+      display: none;
+    }
+    .track svg {
+      width: 128px;
+      height: 128px;
+      overflow: visible; /* the outline touches the viewBox edges */
+      display: block;
+    }
+    .track a {
+      display: block;
+      color: inherit;
+    }
+    .track a:hover {
+      color: var(--text-dim);
+    }
+    .track a:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
     }
     .tile {
       display: flex;
@@ -831,6 +1053,12 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       font-family: var(--font-mono);
       font-size: var(--step--2);
       color: var(--text-mute);
+    }
+    .tile-divider {
+      align-self: stretch;
+      flex: none;
+      width: var(--border-w);
+      background: var(--border-strong);
     }
 
     @media (max-width: 720px) {
@@ -874,6 +1102,13 @@ for (const car of CARS) for (const s of car.numeric) maxByLabel[s.label] = Math.
       }
       .spec-sheet {
         max-height: none;
+      }
+      .hud-track {
+        order: 5;
+      }
+      .track svg {
+        width: 104px;
+        height: 104px;
       }
     }
 

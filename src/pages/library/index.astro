@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import BookLedger from '../../components/BookLedger.astro';
+import { books } from '../../data/books.js';
+---
+
+<Base
+  title="Library · Daniel Romo"
+  description="The books on my shelf: strategy, fiction, memoir, faith, and the engineering textbooks, with my field notes on each."
+>
+  <main class="col pb-16">
+    <section>
+      <div class="sec-head">
+        <h2>library</h2>
+        <span class="idx"><b>{String(books.length).padStart(2, '0')}</b> · volumes on the shelf</span>
+      </div>
+      <BookLedger />
+    </section>
+  </main>
+</Base>

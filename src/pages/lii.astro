@@ -1,0 +1,601 @@
+---
+import Base from '../layouts/Base.astro';
+
+// Headline figures. Every one is Life Impact's own published number from their
+// 2025 annual report (lifeimpactintl.org/about-us/report), except the last,
+// which is UNICEF's 2026 appeal for Burma. The strip walks from the campus out
+// to the region on purpose: the first three are people this page is about, the
+// fourth is the size of the thing they are standing in front of.
+const figures = [
+  { n: '92', unit: 'children', of: 'lived at the Promise Land in 2025' },
+  { n: '32', unit: 'rescued', of: 'brought out in 2025, from 40 cases investigated' },
+  { n: '11', unit: 'came back', of: 'rescued as children, now on staff' },
+  { n: '4.9M', unit: 'children', of: 'in Burma needing humanitarian aid this year' },
+];
+
+// The resilience question, drawn as the shape it always takes rather than as a
+// picture of anywhere. Three columns: the outside dependency that can stop, the
+// local thing that has to carry the load when it does, and the human outcome
+// that is the actual point. Lines are wrapped by hand (no measuring in SVG),
+// so keep each string under about 26 characters or it will overrun the box.
+const layers = [
+  {
+    row: 'power',
+    out: ['the grid'],
+    on: ['generation and storage'],
+    keeps: ['light, cold storage,', 'charged radios'],
+  },
+  {
+    row: 'water',
+    out: ['delivered water'],
+    on: ['tanks, generation,', 'filtration'],
+    keeps: ['drinking, cooking,', 'washing'],
+  },
+  {
+    row: 'comms',
+    out: ['the tower', 'and the ISP'],
+    on: ['local radio,', 'local network'],
+    keeps: ['reaching help,', 'reaching each other'],
+  },
+  {
+    row: 'watch',
+    out: ['response from town'],
+    on: ['gate, lighting,', 'a local record'],
+    keeps: ['knowing who is', 'on the grounds'],
+  },
+];
+
+// Diagram geometry. One place to move things from; the boxes, the chevrons and
+// the column heads all derive from these. Width is deliberately restrained: the
+// figure's min-width holds the 16px mono above the 13px legibility floor, and a
+// wider frame would push that min-width past the content column and make the
+// drawing scroll on desktop as well as on a phone.
+const COL = { out: 120, on: 420, keep: 720 };
+const BOX_W = 260;
+const BOX_H = 80;
+const GAP = 40; // between columns; the 10-wide chevron sits centered in it
+const ROW_Y = [70, 175, 280, 385]; // box tops
+const cy = (i) => ROW_Y[i] + BOX_H / 2;
+// one line sits on the middle, two straddle it
+const lineY = (i, lines, k) => (lines.length === 1 ? cy(i) + 6 : cy(i) - 6 + k * 24);
+// chevrons ride in the gaps, one after each of the first two columns
+const chevX = [COL.out + BOX_W + (GAP - 10) / 2, COL.on + BOX_W + (GAP - 10) / 2];
+
+const sources = [
+  {
+    who: 'Life Impact International',
+    what: 'Annual Report 2025',
+    href: 'https://lifeimpactintl.org/about-us/report/',
+    for: 'Children at the Promise Land, rescues and investigations, the eighteen safe homes, national staff, rescued children now on staff, the transition home, the Houses of Hope in Burma, and the photograph policy.',
+  },
+  {
+    who: 'Life Impact International',
+    what: '25 Years of Freedom',
+    href: 'https://lifeimpactintl.org/25-years-of-freedom/',
+    for: 'The founding in 2001, the first prevention home, the sixty a day moved to Bangkok, and the first rescue.',
+  },
+  {
+    who: 'Life Impact International',
+    what: 'Free to be a Child',
+    href: 'https://lifeimpactintl.org/free/',
+    for: 'The homes running out of room and the buildings going up to fix it.',
+  },
+  {
+    who: 'UNICEF',
+    what: 'Humanitarian Action for Children 2026, Myanmar',
+    href: 'https://www.unicef.org/appeals/myanmar',
+    for: 'The 16.2 million people and 4.9 million children in need, and the 3.6 million displaced.',
+  },
+  {
+    who: 'UNICEF Thailand and the National Human Rights Commission of Thailand',
+    what: 'Situation of Unaccompanied and Separated Children from Myanmar in Border Areas of Thailand',
+    href: 'https://www.unicef.org/thailand/reports/situation-unaccompanied-and-separated-children-myanmar-border-areas-thailand',
+    for: 'The 3,693 children counted across 99 facilities in three border provinces, and the increase since 2019.',
+  },
+];
+---
+
+<Base
+  title="the promise land · Daniel Romo"
+  description="Life Impact International shelters rescued children on the Thai-Burma border. I am going to their campus to find out what the place does when things stop working, to teach the kids, and to work out which technology is worth putting there."
+>
+  <main class="col">
+    <div class="page-head">
+      <p class="label eyebrow">THAI-BURMA BORDER · CHILD PROTECTION</p>
+      <h1>The Promise Land</h1>
+      <a class="org" href="https://lifeimpactintl.org" target="_blank" rel="noopener">
+        <img src="/images/lii-logo.png" alt="Life Impact International" />
+      </a>
+    </div>
+
+    <section class="intro">
+      <p class="lead">
+        Lana Vasquez moved to Thailand in 2001, at twenty-four, and opened a home for
+        fifty-two children who were likely to be sold. Twenty-five years later she runs
+        <a href="https://lifeimpactintl.org" target="_blank" rel="noopener">Life Impact
+        International</a>, and some of the children she took in first are the people
+        running it with her.
+      </p>
+      <p>
+        I have been her technical consultant since 2023. Almost all of that has happened
+        from a desk in California, which is a strange way to help with anything. This page
+        is about the part where I stop doing it that way.
+      </p>
+      <p>
+        I am flying to Thailand to spend time on the campus they call the Promise Land. Two
+        things happen while I am there. I find out what that place does when something stops
+        working, and I teach the kids some of what I know about computers. A third thing
+        happens after I leave, and I will get to it at the bottom.
+      </p>
+      <p>
+        Life Impact is a Christian nonprofit. They work in Thailand, in Burma, in the war
+        zones in between, and in Brazil.
+      </p>
+
+      <div class="grid figures" role="group" aria-label="Life Impact International in 2025">
+        {
+          figures.map((f) => (
+            <div class="panel fig">
+              <p class="fig-n">{f.n}</p>
+              <p class="fig-unit">{f.unit}</p>
+              <p class="fig-of">{f.of}</p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="fig-src">
+        The first three are Life Impact's own figures for 2025. The fourth is UNICEF's for
+        this year. Everything on this page is sourced at the bottom.
+      </p>
+    </section>
+
+    <section id="border">
+      <div class="sec-head"><h2>the border</h2><span class="idx"><b>01</b> · why there</span></div>
+      <p class="lead">
+        Burma has been at war with itself since 1948, and the phase that started with the coup
+        in 2021 is the worst of it.
+      </p>
+      <p>
+        UNICEF's count for this year is 4.9 million children who need humanitarian aid, part
+        of 16.2 million people. Around 3.6 million have been pushed out of their homes, and
+        more than a third of those are children. An earthquake in 2025 landed on top of all
+        of it.
+      </p>
+      <p>
+        Some of them walk east into Thailand. The ones who arrive without a parent get
+        counted, eventually. In 2024 there were 3,693 unaccompanied and separated children
+        from Burma living in institutional care across three Thai provinces along the border,
+        spread over 99 facilities, up 38 percent in five years. That is the number of children
+        somebody found and wrote down.
+      </p>
+      <p>
+        None of this is news to the people I am going to see. When Life Impact started working
+        that border, sixty women and children a day were being moved to the red light
+        districts in Bangkok. Their first rescue was an eight year old girl whose mother had
+        sold her for $24. Lana talked the mother into handing over the child instead, and
+        passed the traffickers on the road as they came to collect her.
+      </p>
+    </section>
+
+    <section id="promise-land">
+      <div class="sec-head"><h2>the promise land</h2><span class="idx"><b>02</b> · what they built</span></div>
+      <p class="lead">
+        What they built is a place children stay, and it is sized for people rather than for
+        throughput.
+      </p>
+      <p>
+        A rescued child goes to a transition home first, for somewhere between six and twelve
+        months, and gets medical care, mental health care, and whatever the courts need. Then
+        they move onto the Promise Land, into one of eighteen family-style safe homes, each
+        with house parents. Ninety-two children lived there in 2025. Thirty-two were rescued
+        that year, out of forty cases investigated.
+      </p>
+      <p>
+        Eighty-seven national staff run the place. Eleven of them are people Life Impact
+        rescued as children. There are three generations of rescued children on that campus
+        now, and the older ones are helping raise the younger ones.
+      </p>
+      <p>
+        The pressure is in the wrong direction. Their emergency shelter is past capacity and
+        they have said so publicly, and they are enlarging the building to keep up with how
+        many children are coming through the door. On the Burma side, twenty-eight children
+        are in the care of the Houses of Hope, and a second house was finished in 2025 because
+        the first one filled.
+      </p>
+      <p>
+        The staff detail is the one I keep coming back to. A child rescued in the early years
+        is an adult on the payroll now. Anything I help put in has to still be working when
+        the children currently on that campus are the ones maintaining it, which rules out
+        most of what I would otherwise be tempted to bring.
+      </p>
+    </section>
+
+    <section id="road">
+      <div class="sec-head"><h2>the road</h2><span class="idx"><b>03</b> · getting there</span></div>
+      <p class="lead">
+        Los Angeles to Bangkok is the easy half. It is long and boring and somebody else's
+        solved problem.
+      </p>
+      <p>
+        After that the country changes shape and the last stretch is overland. I am not doing
+        that stretch alone. I have engaged a guide with military experience who speaks the
+        language and has worked in the region. That is not theater. Moving people and
+        equipment along a remote road near a border with an active war on the other side of it
+        is something people do badly when they improvise, and I would rather pay for somebody
+        who has already done it.
+      </p>
+      <p>
+        Hardware is coming with me, and it is staying there. I am not going to describe it on
+        a public page. The next section explains why.
+      </p>
+      <p>
+        Two companies have agreed to supply equipment at cost. One of them pulls drinking
+        water out of the air. The other builds solar and battery power at a scale that can
+        carry a campus. Neither is named here yet. I will name them when something of theirs
+        is running, and when they have told me they want to be named.
+      </p>
+    </section>
+
+    <section id="audit">
+      <div class="sec-head"><h2>what breaks</h2><span class="idx"><b>04</b> · the audit</span></div>
+      <p class="lead">
+        The audit is one question asked over and over: what happens when this stops.
+      </p>
+      <figure class="diagram rzdiagram">
+        <div class="scroller">
+          <svg
+            viewBox="0 0 1010 500"
+            role="img"
+            aria-label="A three column diagram. When the grid stops, generation and storage has to carry light, cold storage and charged radios. When delivered water stops, tanks, generation and filtration have to carry drinking, cooking and washing. When the tower and the ISP stop, local radio and a local network have to carry reaching help and reaching each other. When response from town stops, the gate, lighting and a local record have to carry knowing who is on the grounds."
+          >
+            <text class="rz-head" x={COL.out + BOX_W / 2} y="38" text-anchor="middle">WHEN THIS STOPS</text>
+            <text class="rz-head" x={COL.on + BOX_W / 2} y="38" text-anchor="middle">THIS HAS TO CARRY IT</text>
+            <text class="rz-head" x={COL.keep + BOX_W / 2} y="38" text-anchor="middle">SO THIS KEEPS WORKING</text>
+
+            {
+              layers.map((l, i) => (
+                <>
+                  <text class="rz-row" x={COL.out - 24} y={cy(i) + 5} text-anchor="end">{l.row}</text>
+
+                  <g class="rz-out">
+                    <rect x={COL.out} y={ROW_Y[i]} width={BOX_W} height={BOX_H} rx="3" />
+                    {l.out.map((line, k) => (
+                      <text x={COL.out + BOX_W / 2} y={lineY(i, l.out, k)} text-anchor="middle">{line}</text>
+                    ))}
+                  </g>
+
+                  <path class="rz-chev" d={`M${chevX[0]} ${cy(i) - 9} l 10 9 l -10 9`} />
+
+                  <g class="rz-on">
+                    <rect x={COL.on} y={ROW_Y[i]} width={BOX_W} height={BOX_H} rx="3" />
+                    {l.on.map((line, k) => (
+                      <text x={COL.on + BOX_W / 2} y={lineY(i, l.on, k)} text-anchor="middle">{line}</text>
+                    ))}
+                  </g>
+
+                  <path class="rz-chev" d={`M${chevX[1]} ${cy(i) - 9} l 10 9 l -10 9`} />
+
+                  <g class="rz-keep">
+                    <line x1={COL.keep - 16} y1={ROW_Y[i] + 8} x2={COL.keep - 16} y2={ROW_Y[i] + BOX_H - 8} />
+                    {l.keeps.map((line, k) => (
+                      <text x={COL.keep + BOX_W / 2} y={lineY(i, l.keeps, k)} text-anchor="middle">{line}</text>
+                    ))}
+                  </g>
+                </>
+              ))
+            }
+          </svg>
+        </div>
+      </figure>
+
+      <p>
+        The shape of the answer is always the same. Every service a place like this depends on
+        has something outside it that can fail, and something inside it that has to carry the
+        load when it does. That drawing is the shape in general. It is not a picture of
+        anywhere in particular.
+      </p>
+      <p>
+        So I am going to walk the place and pull on things. The grid goes down at night: what
+        goes with it, and for how long. The water delivery does not arrive: how many days are
+        in the tank. The tower goes out: who can still reach whom, and how does anybody call
+        for help. Someone comes through the gate who should not be there: how long before
+        anyone knows.
+      </p>
+      <p>
+        What I actually find goes to Life Impact and stops there. It will not appear on this
+        page and it will not become a case study. A public account of where a place is weak,
+        when that place is where trafficked children sleep, is worth real money to exactly the
+        wrong people. Life Impact will not publish a photograph of a rescued child's face. I
+        am applying the same rule to the building.
+      </p>
+    </section>
+
+    <section id="lessons">
+      <div class="sec-head"><h2>the lessons</h2><span class="idx"><b>05</b> · teaching</span></div>
+      <p class="lead">
+        Then I am going to teach, which is the part I am most nervous about.
+      </p>
+      <p>
+        The curriculum is written and it does not open with AI. It opens with what a computer
+        is, physically, as an object with parts you can put a finger on. Then what a network
+        is, and why two machines talking to each other is not magic. Then what a model is
+        doing when it predicts the next word, where that turns out to be useful, and how to
+        catch it when it is confidently wrong.
+      </p>
+      <p>
+        Most of these kids have had their schooling interrupted, and for many of them the
+        language of instruction is their second or third. So it is hands on real hardware the
+        whole way through. Reading about a machine you are not allowed to touch mostly teaches
+        you that machines belong to other people.
+      </p>
+      <p>
+        What I want them to leave with is small. The machine is knowable. It has parts. It was
+        made by people not much older than they are. If one of them decides to go and find out
+        the rest without me, that pays for the trip.
+      </p>
+    </section>
+
+    <section id="neighbors">
+      <div class="sec-head"><h2>the neighbors</h2><span class="idx"><b>06</b> · everyone else on that border</span></div>
+      <p class="lead">
+        Life Impact is not the only organization doing this work in that region, and I want to
+        meet the others.
+      </p>
+      <p>
+        Meetings are being arranged with other anti-trafficking organizations working nearby.
+        I am not naming them here before I have met them and asked.
+      </p>
+      <p>
+        The reason to sit down with them is practical. If what I design only works on one
+        campus, I have built a hobby. Everyone doing this work along that border has the same
+        power problem and the same connectivity problem. They are also all holding sensitive
+        records about children in places where a stolen laptop is an actual event rather than
+        a compliance hypothetical. Whatever survives contact with the Promise Land should be
+        something the organization down the road can stand up without me.
+      </p>
+    </section>
+
+    <section id="after">
+      <div class="sec-head"><h2>what comes back</h2><span class="idx"><b>07</b> · the assessment</span></div>
+      <p class="lead">
+        The recommendation gets written after I have been there.
+      </p>
+      <p>
+        An organization this size runs on records. Who is here. Who is enrolled. Who is due at
+        the clinic. What was spent, and what was promised to whom. Everywhere else in the
+        world the answer to that is cloud software, and on a border with unreliable power and
+        unreliable connectivity that answer needs checking hard. Something that only works
+        while the link is up is a demo.
+      </p>
+      <p>
+        So the assessment waits until I have watched the place have a bad day. When it is
+        written, and when anything in it is deployed and running, that will show up here.
+      </p>
+    </section>
+
+    <section id="sources">
+      <div class="sec-head"><h2>sources</h2><span class="idx"><b>08</b> · check my work</span></div>
+      <ol class="src">
+        {
+          sources.map((s) => (
+            <li>
+              <a href={s.href} target="_blank" rel="noopener">{s.who}, {s.what}</a>
+              <span>{s.for}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-meta">
+      <span class="foot-name">Daniel Romo</span>
+      <span>
+        <a href="mailto:me@danielromo.org">email</a> &middot;
+        <a href="https://www.linkedin.com/in/danielredacted/" target="_blank" rel="noopener">LinkedIn</a> &middot;
+        <a href="https://github.com/DanielRedacted" target="_blank" rel="noopener">GitHub</a> &middot;
+        <a href="/invite">invite me</a>
+      </span>
+    </div>
+  </footer>
+</Base>
+
+<style>
+  /* ---- page head ---------------------------------------------------------- */
+  .page-head {
+    padding: var(--sp-7) 0 var(--sp-6);
+  }
+  .page-head .eyebrow {
+    margin: 0 0 var(--sp-2);
+    color: var(--accent-ink);
+    letter-spacing: 0.2em;
+  }
+  .page-head h1 {
+    font-size: var(--step-3);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  /* the partner's own wordmark, at reading size and linked to them */
+  .org {
+    display: inline-block;
+    margin-top: var(--sp-5);
+  }
+  .org img {
+    height: 34px;
+    width: auto;
+  }
+
+  /* the intro runs on from the title, so no rule above it */
+  .intro {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  /* ---- prose -------------------------------------------------------------- */
+  /* same measure and BLUF treatment as /compute: each section opens with its
+     conclusion at full ink, and the supporting prose sits dimmed beneath it */
+  section > p {
+    margin: var(--sp-5) 0 0;
+    max-width: 62ch;
+    color: var(--text-dim);
+  }
+  section > p.lead {
+    color: var(--text);
+    font-size: var(--step-1);
+    max-width: 54ch;
+    border-left: 2px solid var(--accent);
+    padding-left: var(--sp-4);
+  }
+
+  /* ---- figure strip ------------------------------------------------------- */
+  /* rides the global .grid/.panel pair, so it inherits the two-to-one column
+     collapse at 640px instead of setting a breakpoint of its own */
+  .figures {
+    margin-top: var(--sp-6);
+  }
+  .fig p {
+    margin: 0;
+  }
+  .fig-n {
+    font-family: var(--font-mono);
+    font-size: var(--step-4);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent-ink);
+  }
+  .fig-unit {
+    margin-top: var(--sp-2) !important;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .fig-of {
+    margin-top: var(--sp-2) !important;
+    color: var(--text-dim);
+  }
+  .fig-src {
+    font-size: var(--step--1);
+    color: var(--text-mute);
+  }
+
+  /* ---- diagram chrome ------------------------------------------------------
+     The house exhibit-diagram idiom, per design-system/diagrams.md: HUD corner
+     brackets on the figure, no title, no caption, no border, the drawing running
+     to the corners. The brackets stay pinned to the figure while the drawing
+     itself scrolls, so a narrow window scrolls the diagram rather than shrinking
+     its type out of legibility. min-width holds the 16px mono at or above the
+     13px floor (16 * 820 / 1010 = 13.0) and stays inside the content column on
+     desktop, so only phones and small tablets scroll. */
+  .diagram {
+    position: relative;
+    margin: var(--sp-6) 0 0;
+    max-width: 860px;
+  }
+  .diagram::before,
+  .diagram::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+  }
+  .diagram::before {
+    top: 0;
+    left: 0;
+    border-top: 1.5px solid var(--text-mute);
+    border-left: 1.5px solid var(--text-mute);
+  }
+  .diagram::after {
+    bottom: 0;
+    right: 0;
+    border-bottom: 1.5px solid var(--text-mute);
+    border-right: 1.5px solid var(--text-mute);
+  }
+  .diagram .scroller {
+    overflow-x: auto;
+  }
+  .diagram svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 820px;
+  }
+
+  /* ---- resilience diagram -------------------------------------------------- */
+  .rzdiagram text {
+    font-family: var(--font-mono);
+  }
+  .rz-head {
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    fill: var(--text-mute);
+  }
+  .rz-row {
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    fill: var(--accent-ink);
+    font-weight: 700;
+  }
+  /* dashed: the part of the system somebody else owns and can take away */
+  .rz-out rect {
+    fill: none;
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 5;
+  }
+  .rz-out text {
+    font-size: 16px;
+    fill: var(--text-mute);
+  }
+  /* solid and inked: the part that is on site and under the operator's hand */
+  .rz-on rect {
+    fill: var(--accent-ghost);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .rz-on text {
+    font-size: 16px;
+    fill: var(--text);
+  }
+  /* no box on the outcome column: it is the reason, not a component */
+  .rz-keep text {
+    font-size: 16px;
+    fill: var(--text-dim);
+  }
+  .rz-keep line {
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+  }
+  .rz-chev {
+    fill: none;
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---- sources ------------------------------------------------------------- */
+  .src {
+    margin: 0;
+    padding-left: 1.4em;
+    max-width: 72ch;
+    color: var(--text-dim);
+  }
+  .src li + li {
+    margin-top: var(--sp-4);
+  }
+  .src li::marker {
+    font-family: var(--font-mono);
+    color: var(--text-mute);
+  }
+  .src span {
+    display: block;
+    margin-top: var(--sp-1);
+    font-size: var(--step--1);
+    color: var(--text-mute);
+  }
+</style>

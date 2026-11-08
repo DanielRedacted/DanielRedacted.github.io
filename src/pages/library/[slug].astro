@@ -1,0 +1,131 @@
+---
+import Base from '../../layouts/Base.astro';
+import { books } from '../../data/books.js';
+
+export function getStaticPaths() {
+  return books.map((book) => ({ params: { slug: book.slug }, props: { book } }));
+}
+
+const { book } = Astro.props;
+const idx = String(books.indexOf(book) + 1).padStart(2, '0');
+const total = String(books.length).padStart(2, '0');
+const meta = [book.author, book.year].filter(Boolean).join(' · ');
+---
+
+<Base title={`${book.title} · Daniel Romo`} description={`Field notes on ${book.title}.`}>
+  <main class="col pb-16">
+    <section>
+      <p class="label back"><a href="/library/">← LIBRARY</a></p>
+      <div class="sec-head">
+        <h2>{book.title}</h2>
+        <span class="idx"><b>{idx}</b> · {book.category}</span>
+      </div>
+      {meta && <p class="label byline">{meta}</p>}
+
+      <!-- field-report card: the design-system composite, corner brackets and all -->
+      <article class="report">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="rh">
+          <span class="co">FIELD NOTES</span>
+          <span class="co">{idx} / {total}</span>
+        </div>
+        <div class="rb">
+          {book.notes.length ? book.notes.map((p) => <p>{p}</p>) : <p class="pending">NOTES PENDING</p>}
+        </div>
+      </article>
+
+      {book.pd && <p class="label pd-note">IN THE US PUBLIC DOMAIN · FULL TEXT WILL BE HOSTED HERE</p>}
+      {book.url && (
+        <p class="label src-note">
+          <a href={book.url} rel="noopener noreferrer" target="_blank">VIEW SOURCE DOCUMENT →</a>
+        </p>
+      )}
+    </section>
+  </main>
+</Base>
+
+<style>
+  .back {
+    margin: var(--sp-5) 0 var(--sp-5);
+  }
+  .back a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .back a:hover {
+    color: var(--accent-ink);
+  }
+  .byline {
+    margin: calc(-1 * var(--sp-4)) 0 var(--sp-5);
+  }
+
+  /* field-report card, recipe from design-system/index.html (--env swapped for --accent) */
+  .report {
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(4px);
+    border: var(--border-w) solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+  }
+  .report .corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .report .corner.tl { top: 7px; left: 7px; border-top: 2px solid var(--text-mute); border-left: 2px solid var(--text-mute); }
+  .report .corner.tr { top: 7px; right: 7px; border-top: 2px solid var(--text-mute); border-right: 2px solid var(--text-mute); }
+  .report .corner.bl { bottom: 7px; left: 7px; border-bottom: 2px solid var(--text-mute); border-left: 2px solid var(--text-mute); }
+  .report .corner.br { bottom: 7px; right: 7px; border-bottom: 2px solid var(--text-mute); border-right: 2px solid var(--text-mute); }
+  .report .rh {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: var(--border-w) solid var(--border);
+    background: var(--surface-sunk);
+  }
+  .report .rh .co {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-mute);
+    letter-spacing: 0.1em;
+  }
+  .report .rb {
+    padding: var(--sp-5);
+  }
+  .report .rb p {
+    margin: 0 0 var(--sp-3);
+    color: var(--text-dim);
+  }
+  .report .rb p:last-child {
+    margin-bottom: 0;
+  }
+  .report .rb .pending {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.1em;
+    color: var(--text-mute);
+  }
+
+  .pd-note {
+    margin-top: var(--sp-4);
+    color: var(--accent-ink);
+  }
+
+  .src-note {
+    margin-top: var(--sp-4);
+  }
+  .src-note a {
+    color: var(--accent-ink);
+    text-decoration: none;
+  }
+  .src-note a:hover {
+    text-decoration: underline;
+  }
+</style>

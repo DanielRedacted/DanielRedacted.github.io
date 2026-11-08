@@ -7,7 +7,7 @@ interface Props {
 }
 
 const {
-  title = 'Daniel ████',
+  title = 'Daniel Romo',
   description =
     'Helping You take advantage of the internet and prevent the internet from taking advantage of you.',
 } = Astro.props;
@@ -32,13 +32,26 @@ const path = Astro.url.pathname;
     <link rel="manifest" href="/site.webmanifest" />
   </head>
   <body>
-    <header>
-      <div class="bar mx-auto w-full max-w-3xl px-6">
-        <a href="/" class="sigil" aria-label="Daniel Redacted, home">
-          <span class="wordmark">Daniel</span>
-        </a>
-      </div>
-    </header>
+    {/* no header on the homepage: the hero carries the name, and the cloud
+        banner runs clear to the top of the page */}
+    {path !== '/' && (
+      <header>
+        <div class="bar w-full">
+          <a href="/" class="sigil" aria-label="Daniel Romo, home">
+            <span class="wordmark">Daniel Romo</span>
+          </a>
+          <nav class="topnav" aria-label="Site">
+            {
+              // 'library' temporarily hidden with the homepage shelf; pages still build
+              ['lii', 'compute', 'toolbox', 'garage'].map((p) => (
+                <a href={`/${p}/`} class="label"
+                  aria-current={path.startsWith(`/${p}`) ? 'page' : undefined}>{p}</a>
+              ))
+            }
+          </nav>
+        </div>
+      </header>
+    )}
 
     <slot />
   </body>

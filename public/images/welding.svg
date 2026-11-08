@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Uploaded to svgrepo.com" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 width="800px" height="800px" viewBox="0 0 32 32" xml:space="preserve">
+<style type="text/css">
+	.stone_een{fill:#111918;}
+	.st0{fill:#0B1719;}
+</style>
+<path class="stone_een" d="M5,15H4c-0.552,0-1-0.448-1-1v-3c0-0.552,0.448-1,1-1h1V15z M21,11H11v3h10V11z M23,10v5
+	c0,0.551-0.449,1-1,1H10c-0.551,0-1-0.449-1-1v-5c0-0.551,0.449-1,1-1h12C22.551,9,23,9.449,23,10z M22,10H10v5h12V10z M26,18.02
+	c0,1.317-0.13,2.631-0.388,3.922l-1.129,5.646C24.202,28.991,22.971,30,21.541,30H10.459c-1.43,0-2.661-1.009-2.942-2.412
+	l-1.129-5.646C6.13,20.65,6,19.337,6,18.02V7c0-2.761,2.239-5,5-5h10c2.761,0,5,2.239,5,5V18.02z M24,10c0-1.103-0.897-2-2-2H10
+	c-1.103,0-2,0.897-2,2v5c0,1.103,0.897,2,2,2h12c1.103,0,2-0.897,2-2V10z M28,10h-1v5h1c0.552,0,1-0.448,1-1v-3
+	C29,10.448,28.552,10,28,10z"/>
+</svg>

@@ -5,7 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 
-// Copyright (c) 2024 Daniel ████ (@DanielRedacted)
+// Copyright (c) 2024 Daniel Romo (@DanielRedacted)
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

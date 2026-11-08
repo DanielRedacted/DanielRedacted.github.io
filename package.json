@@ -1,19 +1,24 @@
 {
-  "name": "danielredacted-net",
+  "name": "danielromo-org",
   "version": "1.0.0",
   "description": "Daniel Redacted — personal site",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "check": "! grep -rn '[–—]' src/pages src/layouts src/components",
+    "prebuild": "npm run check",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "@google/model-viewer": "^4.3.1",
     "@tailwindcss/vite": "^4.1.17",
     "astro": "^5.15.0",
-    "tailwindcss": "^4.1.17"
+    "d3-geo": "^3.1.1",
+    "tailwindcss": "^4.1.17",
+    "topojson-client": "^3.1.0"
   }
 }

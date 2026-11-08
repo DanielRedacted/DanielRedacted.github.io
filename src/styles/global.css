@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   danielredacted.net: the FIELD typographic system (light-only).
-   Ported from ./design-system: B612 type, aerospace-orange accent, dot-grid
-   backdrop, translucent blur cards, and the redacted censor-bar wordmark.
-   Redaction stays the persona's signature move. Military-domain components
-   (status pills, field-report card, corner brackets) are deliberately left out.
+   danielromo.org: the FIELD typographic system (light-only).
+   Ported from ./design-system: B612 type, aerospace-blue accent, dot-grid
+   backdrop, translucent blur cards, and the black-block wordmark.
+   Military-domain components (status pills, field-report card, corner
+   brackets) are deliberately left out.
    ============================================================================ */
 
 @font-face{font-family:"B612";src:url("/fonts/B612-Regular.ttf") format("truetype");
@@ -30,7 +30,7 @@
   --field-grey:#616259; --gunmetal:#4A4C46; --slate-char:#3B3E3D;
   --ink:#21221F;    --night:#151614;
   --khaki:#9E876B;  --coyote:#8D7359; --sand:#CBB49A; --loam:#443B32;
-  --orange:#FF4F00; --orange-bright:#FF6A26; --orange-deep:#D94300;
+  --blue:#0057FF; --blue-bright:#2E74FF; --blue-deep:#0042C4;
   --nasa-blue:#0B3D91; --nasa-red:#FC3D21; --ap-cyan:#00B0FF; --obsidian:#7C3AED;
 
   /* typography */
@@ -45,23 +45,27 @@
   /* spacing / form */
   --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem; --sp-5:1.5rem;
   --sp-6:2rem;   --sp-7:3rem;  --sp-8:4rem;
+  --header-h:60px;
   --radius:3px; --radius-lg:5px; --border-w:1px;
+  --pad-x:clamp(var(--sp-5),5vw,var(--sp-8));   /* shared gutter: topnav, hero, footer, .col */
+  --col:60rem; --col-wide:76rem;                /* content column; wide is for the garage stage */
   --shadow:0 1px 3px rgba(0,0,0,.08); --shadow-none:none;
 
   /* semantic tokens (light) */
   --bg:#fafafa; --bg-wash:#fafafa;
   --surface:#FFFFFF; --surface-2:#F5F5F5; --surface-sunk:#EBEBEB;
-  --border:#E5E7EB; --border-strong:#D1D5DB;
+  --border:#E5E7EB; --border-strong:#D1D5DB; --dot:rgba(0,0,0,.09);
   --text:#1D1D1B; --text-dim:#4A4A4A; --text-mute:#6E6E6E; --text-inverse:#FFFFFF;
-  --accent:var(--orange); --accent-ink:#B23A00;   /* accent-ink = darkened orange, AA text */
-  --accent-hover:var(--orange-bright); --accent-press:var(--orange-deep);
-  --on-accent:#1B0E00; --accent-ghost:rgba(255,79,0,.12);
+  --accent:var(--blue); --accent-ink:#0043C7;   /* accent-ink = darkened blue, AA text (8:1 on white) */
+  --accent-hover:var(--blue-bright); --accent-press:var(--blue-deep);
+  /* white, not near-black: blue is dark enough that reversed text is the readable pair (5.5:1) */
+  --on-accent:#FFFFFF; --accent-ghost:rgba(0,87,255,.12);
   --env:var(--field-grey); --env-ghost:rgba(97,98,89,.12);
   --focus:var(--ap-cyan); --ring:0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
   color-scheme:light;
 }
 
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth; overscroll-behavior-y: none}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important}}
 
 body{margin:0;background:var(--bg);color:var(--text);
@@ -70,9 +74,9 @@ body{margin:0;background:var(--bg);color:var(--text);
 
 /* dot-grid backdrop, ported from AP0110.org (dark dots, 16px grid) */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:radial-gradient(circle, rgba(0,0,0,.09) 1px, transparent 1px);
+  background-image:radial-gradient(circle, var(--dot) 1px, transparent 1px);
   background-size:16px 16px}
-header,main,footer{position:relative;z-index:1}   /* content sits above the backdrop */
+header,main,footer,.hero{position:relative;z-index:1}   /* content sits above the backdrop */
 
 a{color:var(--accent-ink)}
 h1,h2,h3{font-family:var(--font-display);line-height:var(--leading-tight);
@@ -82,20 +86,53 @@ strong,b{color:var(--text)}
 .label{font-family:var(--font-mono);font-size:var(--step--1);
   letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-mute)}
 
-/* ---- redaction ----------------------------------------------------------
-   The persona's signature: `.redacted` obscures an identifier (transparent
-   ink block). `.wordmark` is the readable censor-bar variant used for the
-   name in the header and hero. `.redacted.hover:hover`/`.visible` reveal. */
-.redacted{background:var(--ink);color:transparent;padding:0 .5ch;border-radius:0}
-.redacted.visible,.redacted.hover:hover{color:var(--paper)}
-.wordmark{background:var(--ink);color:var(--paper);font-family:var(--font-display);
+/* ---- wordmark ------------------------------------------------------------
+   `.wordmark` is the name treatment used for the site logo in the header
+   (a logo, not a censor bar; the redaction motif is retired). Reversed out:
+   ink on a paper block, no outline. */
+.wordmark{background:var(--paper);color:var(--ink);font-family:var(--font-display);
   font-weight:700;letter-spacing:.02em;padding:.04em .4em;border-radius:0}
 
 /* ---- header + wordmark --------------------------------------------------- */
-header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);
-  backdrop-filter:blur(8px);border-bottom:var(--border-w) solid var(--border)}
-.bar{display:flex;align-items:center;height:60px}
+/* static, not sticky: the header sits at the top of the page and scrolls away
+   with it. Positioned only so it paints above the homepage cloud banner. */
+header{position:relative;z-index:10;background:var(--bg);
+  border-bottom:var(--border-w) solid var(--border)}
+/* the homepage renders no header at all (Base.astro), so the cloud banner
+   there runs from the very top of the page */
+.bar{display:flex;align-items:center;height:var(--header-h);padding-inline:var(--pad-x)}
+/* homepage cloud banner: two header-heights tall, full-bleed, no fade overlay.
+   The strip is seamless left-to-right, so it tiles and drifts forever.
+   ponytail: tile width is hard-coded — 13977x130 source scaled to the 120px
+   banner height (13977 * 120/130). Re-derive it if the image or --header-h
+   changes, or the loop will visibly jump. */
+/* content-box so the rule sits under the full two-header-height strip rather
+   than eating a pixel of cloud */
+.cloud-banner{position:absolute;inset:0 0 auto;height:calc(2*var(--header-h));z-index:0;
+  overflow:hidden;box-sizing:content-box;border-bottom:1px solid var(--dot)}
+/* the tiled strip, one tile wider than the banner so the wrap is invisible.
+   transform (not background-position) so the steps are subpixel: at 5px/s a
+   pixel-snapped background visibly stutters. */
+.cloud-banner::before{content:"";position:absolute;inset:0;width:calc(100% + 12903px);
+  background:url("/images/clouds.jpg") var(--cloud-x,0) 0/auto 100% repeat-x;
+  animation:cloud-drift 4800s linear infinite}
+@keyframes cloud-drift{to{transform:translate3d(-12903px,0,0)}}
+@media (prefers-reduced-motion:reduce){.cloud-banner::before{animation:none}}
 .sigil{display:inline-flex;align-items:center;text-decoration:none}
+/* header nav: mono labels in the same paper block as the wordmark,
+   right-aligned; the current page is the filled reverse of that block */
+.topnav{margin-left:auto;display:flex;align-items:center;
+  gap:clamp(var(--sp-3),2vw,var(--sp-4))}
+.topnav a{text-decoration:none;color:var(--text);background:var(--paper);
+  padding:.25em .55em}
+.topnav a:hover{color:var(--accent-ink)}
+.topnav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+
+/* ---- content column ------------------------------------------------------
+   One knob for every page's body width. The gutter is the same --pad-x the
+   full-width header, hero and footer use, so edges line up at any size. */
+.col{margin-inline:auto;width:100%;max-width:var(--col);padding-inline:var(--pad-x)}
+.col-wide{max-width:var(--col-wide)}
 
 /* ---- section rhythm + heads ---------------------------------------------- */
 section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
@@ -106,13 +143,42 @@ section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
   text-align:right}
 .sec-head .idx b{color:var(--accent-ink);font-weight:700}   /* accent index number */
 
-/* ---- hero ---------------------------------------------------------------- */
-.hero{border-top:0;padding:var(--sp-8) 0 var(--sp-7)}
-.hero .eyebrow{margin:0 0 var(--sp-4);color:var(--accent-ink);letter-spacing:.2em}
-.hero-body{display:flex;align-items:center;gap:var(--sp-5);margin-top:var(--sp-5);flex-wrap:wrap}
-.avatar{width:96px;height:96px;flex:none;object-fit:cover;
-  border:var(--border-w) solid var(--border-strong);border-radius:50%}
-.tagline{margin:0;max-width:52ch;color:var(--text-dim);font-size:var(--step-1)}
+/* ---- hero: body-column width (it carries .col), identity left ------------- */
+/* padding-top = two header-heights: with no header on the homepage the hero
+   starts at the page top, so its content edge lands exactly on the cloud
+   banner's bottom; the avatar's negative margin lifts it back into the banner */
+.hero{border-top:0;padding:calc(2*var(--header-h)) var(--pad-x) var(--sp-7)}
+.hero h1{font-size:var(--step-3);margin-top:var(--sp-4)}
+/* the block hugs the name here: no left inset, so the D sits on the column edge */
+.hero h1 .wordmark{display:inline-block;padding-left:0}
+/* one track while the globe is hidden; the globe's own 300px track (and the
+   rules below it) come back with the .hero-globe div in index.astro */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);
+  gap:var(--sp-7);align-items:center}
+.hero-globe{justify-self:end;width:100%}
+/* Desktop: the identity block on the left owns the row height. The canvas is
+   taken out of flow so its square box can't grow the row, then stretched to
+   fill the cell; the globe itself is drawn to min(width,height), so it ends up
+   exactly as tall as the content beside it (capped by the cell's 300px). */
+@media (min-width:761px){
+  /* margin-top skips the avatar's in-flow height (104px border box - 52px lift)
+     minus a quarter avatar-height (26px), so the stretched box runs from a
+     quarter-avatar above the avatar's bottom edge to the bottom of the badges */
+  .hero-globe{position:relative;align-self:stretch;margin-top:26px}
+  .hero-globe canvas{position:absolute;inset:0;height:100%}
+}
+@media (max-width:760px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-globe{justify-self:center;width:min(300px,100%)}
+}
+/* profile-banner treatment: the avatar straddles the banner's bottom edge —
+   margin-top = -(96 + 2*4px border)/2 — with a page-background ring cutting it
+   out of the clouds. Change the 96px avatar and the -52px move together. */
+.avatar{display:block;width:96px;height:96px;object-fit:cover;
+  border:4px solid var(--bg);border-radius:50%;margin-top:-52px}
+.hero .eyebrow{margin:var(--sp-4) 0 0;color:var(--accent-ink);letter-spacing:.2em}
+/* no measure cap: the hero column (.col) is the only thing setting the line length */
+.tagline{margin:var(--sp-3) 0 0;color:var(--text-dim);font-size:var(--step-1)}
 .hero .btn-row{margin-top:var(--sp-6)}
 .alma-maters{display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-5);margin-top:var(--sp-3)}
 .alma-maters img{height:32px;width:auto}
@@ -122,6 +188,58 @@ section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
 .socials a{display:inline-flex;padding:.4rem;color:var(--text-mute);transition:color .15s}
 .socials a:hover{color:var(--accent-ink)}
 .socials svg{width:22px;height:22px}
+
+/* merit badges: icon-only circular chips, credential name in the tooltip */
+.certs{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
+.cert{display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;padding:0;border-radius:50%;cursor:pointer;
+  background:color-mix(in srgb,var(--surface) 72%,transparent);
+  border:var(--border-w) solid var(--border);color:var(--text-mute);
+  transition:color .15s,border-color .15s}
+.cert:hover{color:var(--accent-ink);border-color:var(--border-strong)}
+.cert:focus-visible{outline:none;box-shadow:var(--ring)}
+.cert svg,.cert .mask-glyph{width:18px;height:18px;flex:none}
+/* a glyph far taller than it is wide meets the box at half width, so it reads small
+   beside the square ones; .tall trades the spare room in the 40px circle for ink */
+.cert svg.tall{width:26px;height:26px}
+.cert-glyph.tall{width:26px;height:26px;margin:-3px 0}
+/* black-on-transparent bitmap marks ride in as a mask, so they take currentColor
+   and the hover/picked states exactly like the inline glyphs do */
+.mask-glyph{display:block;background:currentColor;
+  -webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+
+/* certifications modal: same shell as the /compute field log */
+.certlog{inset:0;margin:auto;height:fit-content;
+  font-family:var(--font-mono);color:var(--text);
+  background-color:var(--bg);
+  background-image:radial-gradient(circle, var(--dot) 1px, transparent 1px);
+  background-size:16px 16px;
+  border:var(--border-w) solid var(--border-strong);border-radius:var(--radius);
+  padding:var(--sp-5);width:min(460px,calc(100vw - 2 * var(--sp-5)));
+  max-height:min(76vh,76dvh);overflow-y:auto}
+.certlog::backdrop{background:rgba(21,22,20,.45)}
+.log-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4)}
+.log-close{background:none;border:0;padding:.3rem;cursor:pointer;color:var(--text-mute)}
+.log-close:hover{color:var(--accent-ink)}
+.log-close:focus-visible{outline:none;box-shadow:var(--ring)}
+.log-close svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round}
+.cert-list{list-style:none;margin:var(--sp-4) 0 0;padding:0}
+.cert-list li{display:flex;align-items:center;gap:1.2ch;padding:.6rem 0;
+  border-bottom:1px dotted var(--border)}
+.cert-list li:last-child{border-bottom:0}
+/* the badge that opened the modal */
+.cert-list li.is-picked{background:var(--accent-ghost);
+  box-shadow:-.7ch 0 0 var(--accent-ghost),.7ch 0 0 var(--accent-ghost)}
+.cert-list li.is-picked .cert-glyph{color:var(--accent-ink)}
+.cert-glyph{width:20px;height:20px;flex:none;color:var(--text-mute)}
+.cert-meta{display:flex;flex-direction:column;gap:.15rem;min-width:0;flex:1}
+.cert-meta b,.cert-meta a{color:var(--text);font-size:var(--step--1);font-weight:700}
+.cert-meta a{text-decoration:underline;text-underline-offset:2px;
+  text-decoration-color:var(--border-strong);transition:color .15s}
+.cert-meta a:hover{color:var(--accent-ink);text-decoration-color:currentColor}
+.cert-meta span{color:var(--text-mute);font-size:var(--step--2);
+  letter-spacing:.06em;text-transform:uppercase}
 
 /* ---- buttons: mono, fixed height, outline that fills on hover ------------ */
 .btn-row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
@@ -137,9 +255,11 @@ section{padding:var(--sp-7) 0;border-top:var(--border-w) solid var(--border)}
 .btn-ghost:hover{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 
 /* ---- cards: translucent so the dot-grid ghosts through ------------------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-5)}
-/* auto-fill keeps the empty tracks, so a lone past-project card stays card-width */
-.grid-past{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+/* two columns max at any width: wider than 2 makes the cards read as tiles */
+.section-banner{display:block;width:100%;height:auto;margin-bottom:var(--sp-5)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-5)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+.stack{display:grid;gap:var(--sp-3);align-content:start}   /* two cards sharing one grid cell */
 .panel{background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(4px);
   border:var(--border-w) solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-5)}
 .card{display:block;text-decoration:none;color:inherit;transition:border-color .15s}
@@ -147,7 +267,9 @@ a.card:hover{border-color:var(--border-strong)}   /* cards with nothing to link 
 .card h3{font-size:var(--step-1);text-transform:uppercase;letter-spacing:.02em;
   display:flex;align-items:center;flex-wrap:wrap}   /* logo sits centered on the title, not on the baseline */
 .card-logo{height:1.2em;width:auto;margin-right:.5ch}
-.card-wordmark{height:1.8em;width:auto;max-width:100%}
+.card-wordmark{height:1.8em;width:auto;max-width:100%;margin-right:.5ch}
+.card-badge{margin-left:auto;flex:none;height:1.2em;width:auto}   /* sits opposite the card title */
+.card-year{margin-left:auto;display:inline-flex;align-items:center;gap:.3ch;flex:none}   /* sits opposite the card title; a nested .card-badge rides along instead of getting its own auto-margin */
 .card p{margin:.6rem 0 0;color:var(--text-dim)}
 .friends{gap:var(--sp-5)}
 .friends a{padding:.4rem}
@@ -158,11 +280,18 @@ a.card:hover{border-color:var(--border-strong)}   /* cards with nothing to link 
 .friend-with-word{display:inline-flex;align-items:center;gap:.5ch}
 .friend-word{font-size:var(--step-0);letter-spacing:.02em;color:var(--text)}
 .friend-word--roboto{font-family:"Roboto",sans-serif;font-weight:500}
+/* min-content wraps at the longest word, so the name stacks one word per line
+   without a magic width, and three lines land near the 28px logo height */
+.friend-word--stack{width:min-content;line-height:1.1;font-size:var(--step--2)}
 .friend-word--eb-garamond{font-family:"EB Garamond",serif;font-weight:700;font-style:italic}
 
 /* ---- footer -------------------------------------------------------------- */
 .foot{display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);
-  padding:var(--sp-6) 0 var(--sp-8);border-top:var(--border-w) solid var(--border);
+  padding:var(--sp-4) var(--pad-x);border-top:var(--border-w) solid var(--border);
   font-family:var(--font-mono);font-size:.72rem;color:var(--text-mute);
   letter-spacing:.06em;text-transform:uppercase}
 .foot-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;width:100%}
+/* footer links keep the footer's mute until pointed at: findable, not promoted */
+.foot a{color:inherit;text-decoration:underline;text-underline-offset:2px;
+  text-decoration-color:var(--border-strong);transition:color .15s}
+.foot a:hover{color:var(--accent-ink)}

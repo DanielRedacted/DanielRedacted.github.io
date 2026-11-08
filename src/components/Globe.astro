@@ -1,0 +1,236 @@
+---
+// Rotating orthographic globe of the places I've been, drawn from real state and
+// country outlines (vector geometry, no imagery). The canvas is decoration: the
+// list beside it is the content, so it still reads with JS off or a screenreader on.
+import { home, states, countries, points, soon } from '../data/places.js';
+
+const visited = [...states, ...countries, ...points].map((p) => p.label);
+const upcoming = soon.map((p) => p.label);
+---
+
+<!-- The canvas is the whole component; the aria-label carries the place list
+     for screenreaders since no visible list accompanies it in the hero. -->
+<canvas
+  id="globe"
+  role="img"
+  aria-label={`Rotating globe highlighting ${home.label}, my home, and ${visited.join(', ')}, plus ${upcoming.join(' and ')} coming soon.`}
+></canvas>
+
+<style>
+  /* no background, no border: the page's dot grid shows straight through */
+  #globe {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 1;
+    margin-inline: auto;
+    background: none;
+    border: 0;
+    touch-action: none;          /* drag to spin owns the gesture */
+    cursor: grab;
+  }
+  #globe:active { cursor: grabbing; }
+</style>
+
+<script>
+  import { home, states, countries, soon } from '../data/places.js';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('#globe');
+  if (canvas) start(canvas);
+
+  async function start(canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Nothing loads until the globe is actually on screen: d3-geo and the two
+    // atlases are ~250 KB the home page shouldn't pay for above the fold.
+    await new Promise<void>((resolve) => {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); resolve(); }
+      }, { rootMargin: '200px' });
+      io.observe(canvas);
+    });
+
+    const [d3, topo, world, us] = await Promise.all([
+      import('d3-geo'),
+      import('topojson-client'),
+      fetch('/data/countries-110m.json').then((r) => r.json()),
+      fetch('/data/states-10m.json').then((r) => r.json()),
+    ]);
+
+    const allCountries = topo.feature(world, world.objects.countries).features;
+    const allStates = topo.feature(us, us.objects.states).features;
+    const pick = (features, names) => {
+      const want = new Set(names);
+      return features.filter((f) => want.has(f.properties.name));
+    };
+
+    // Below ~400 km2 an outline is sub-pixel at any sane globe size (D.C. is
+    // 177), so those features are skipped rather than drawn as a smudge. They
+    // keep their place in the lists, they just have no mark on the sphere.
+    // ponytail: fixed threshold, make it screen-area based if the globe ever zooms.
+    const TINY = 1e-5;
+    const drawable = (features) => features.filter((f) => d3.geoArea(f) >= TINY);
+
+    // soon rides along with the rest: listed apart, drawn identically. Its
+    // state-flagged entries resolve against the US atlas, not the world one.
+    const soonStates = soon.filter((s) => s.state);
+    const soonCountries = soon.filter((s) => !s.state);
+    const beenStates = drawable(pick(allStates, [...states, ...soonStates].map((s) => s.name)));
+    const beenCountries = drawable(pick(allCountries, [...countries, ...soonCountries].map((c) => c.name)));
+    const homeStates = pick(allStates, [home.name]);
+
+    // Read the FIELD primitives, not the semantic aliases: a custom property whose
+    // value is another var() isn't reliably resolved by getComputedStyle.
+    const cs = getComputedStyle(document.documentElement);
+    const tok = (n: string) => cs.getPropertyValue(n).trim();
+    const C = {
+      base: tok('--border-strong'),
+      grat: tok('--border'),
+      been: tok('--field-grey'),
+      beenFill: tok('--env-ghost'),
+      home: tok('--blue'),
+      homeFill: tok('--accent-ghost'),
+      beam: tok('--blue'),
+    };
+
+    // Travel beam: one hop at a time, each leaving from wherever the last
+    // landed, starting at home. Only a short section of the great circle is
+    // ever drawn, so it reads as someone crossing the arc rather than a route
+    // map. Rotation is untouched: this only adds a layer to the same frame.
+    // Index 0 is home; `state` marks the US so domestic legs can be filtered,
+    // and `f` keeps the polygon so the place he just landed on can be outlined.
+    // Only places with a drawable outline are hop targets: landing somewhere
+    // that has no mark would be a pause with nothing to light up.
+    const homeFeature = pick(allStates, [home.name])[0];
+    const hop = (f, state: boolean) => ({ p: d3.geoCentroid(f), state, f });
+    const HOPS = [
+      hop(homeFeature, true),
+      ...beenStates.map((f) => hop(f, true)),
+      ...beenCountries.map((f) => hop(f, false)),
+    ];
+
+    // Constant angular pace, so a long crossing takes longer than a short one
+    // instead of every hop filling the same slot.
+    const SPEED = 0.002, MIN_MS = 450, PAUSE_MS = 500, TAIL = 0.16, SEGMENTS = 12;
+    const dur = (a: number, b: number) =>
+      Math.max(MIN_MS, d3.geoDistance(HOPS[a].p, HOPS[b].p) / SPEED);
+    // No state-to-state legs: he routes through home, so one end must be
+    // California for a domestic hop to be drawn at all.
+    const legal = (a: number, b: number) =>
+      a !== b && (a === 0 || b === 0 || !(HOPS[a].state && HOPS[b].state));
+    const nextHop = (cur: number) => {
+      let n = cur;
+      while (!legal(cur, n)) n = Math.floor(Math.random() * HOPS.length);
+      return n;
+    };
+    let fromI = 0, toI = nextHop(0), hopStart = 0, hopMs = dur(fromI, toI);
+    let arc = d3.geoInterpolate(HOPS[fromI].p, HOPS[toI].p);
+    let arcT: number | null = null;                  // null between hops
+
+    const proj = d3.geoOrthographic().precision(0.4);
+    const path = d3.geoPath(proj, ctx);
+    const graticule = d3.geoGraticule10();
+    const rot: [number, number] = [-100, 12];   // starts over the west coast, no intro sweep
+
+    function resize() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      proj.translate([w / 2, h / 2]).scale(Math.min(w, h) / 2 - 2);
+    }
+
+    const layer = (features, fill: string | null, stroke: string, width = 0.6, alpha = 1) => {
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      path({ type: 'FeatureCollection', features });
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      ctx.strokeStyle = stroke; ctx.lineWidth = width; ctx.stroke();
+      ctx.globalAlpha = 1;
+    };
+
+    function draw() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      proj.rotate([rot[0], rot[1]]);
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.beginPath(); path(graticule);
+      ctx.strokeStyle = C.grat; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.7; ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      layer(allCountries, null, C.base, 0.6);
+      layer(allStates, null, C.base, 0.4, 0.7);
+      layer(beenCountries, C.beenFill, C.been, 0.8);
+      layer(beenStates, C.beenFill, C.been, 0.8);
+      layer(homeStates, C.homeFill, C.home, 1);
+
+      // Between hops the beam is gone and he is on the ground: outline whatever
+      // he just landed on, until the next arc leaves.
+      if (arcT === null) {
+        layer([HOPS[toI].f], null, C.beam, 1.4);
+        return;
+      }
+      // Sub-segments fade toward the tail; geoPath resamples each one along the
+      // projection, so two endpoints per segment still curve with the sphere.
+      const head = arcT, tail = Math.max(0, head - TAIL);
+      ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.strokeStyle = C.beam;
+      for (let i = 0; i < SEGMENTS; i++) {
+        const a = tail + ((head - tail) * i) / SEGMENTS;
+        const b = tail + ((head - tail) * (i + 1)) / SEGMENTS;
+        ctx.globalAlpha = (i + 1) / SEGMENTS;
+        ctx.beginPath();
+        path({ type: 'LineString', coordinates: [arc(a), arc(b)] });
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.lineCap = 'butt';
+    }
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let dragging = false, px = 0, py = 0, last = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true; px = e.clientX; py = e.clientY;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const k = 90 / proj.scale();                      // degrees per pixel at the equator
+      rot[0] += (e.clientX - px) * k;
+      rot[1] = Math.max(-80, Math.min(80, rot[1] - (e.clientY - py) * k));
+      px = e.clientX; py = e.clientY;
+      if (reduced) draw();                              // no rAF loop running to pick it up
+    });
+    for (const end of ['pointerup', 'pointercancel'] as const) {
+      canvas.addEventListener(end, () => { dragging = false; });
+    }
+
+    new ResizeObserver(() => { resize(); draw(); }).observe(canvas);
+    resize();
+
+    if (reduced) {
+      draw();
+      return;
+    }
+    requestAnimationFrame(function frame(t) {
+      const dt = last ? t - last : 0;
+      last = t;
+      if (!dragging) rot[0] = ((rot[0] + dt * 0.005 + 180) % 360) - 180;   // ~72s per turn
+
+      if (!hopStart) hopStart = t;
+      let elapsed = t - hopStart;
+      if (elapsed > hopMs + PAUSE_MS) {           // land, rest, then leave from here
+        fromI = toI; toI = nextHop(fromI);
+        arc = d3.geoInterpolate(HOPS[fromI].p, HOPS[toI].p);
+        hopMs = dur(fromI, toI);
+        hopStart = t;
+        elapsed = 0;    // restart the clock in the same frame, else this frame
+      }                 // still reads as "landed" and outlines the new target
+      arcT = elapsed < hopMs ? elapsed / hopMs : null;
+
+      draw();
+      requestAnimationFrame(frame);
+    });
+  }
+</script>

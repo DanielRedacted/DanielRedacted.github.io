@@ -1,0 +1,184 @@
+---
+// The interactive shelf: category filter chips, sort chips, and the mono
+// ledger of all 28 books. Used by the homepage #library section and /library.
+// Row links go to the per-book field-note pages.
+import { books, categories, sortYear } from '../data/books.js';
+
+const counts = Object.fromEntries(
+  categories.map((c) => [c, books.filter((b) => b.category === c).length]),
+);
+---
+
+<div class="chip-row" data-role="filter" role="group" aria-label="Filter by category">
+  <button type="button" class="chip" aria-pressed="true" data-cat="all">ALL · {books.length}</button>
+  {
+    categories.map((c) => (
+      <button type="button" class="chip" aria-pressed="false" data-cat={c}>
+        {c.toUpperCase()} · {counts[c]}
+      </button>
+    ))
+  }
+</div>
+
+<div class="sort-row">
+  <span class="label">SORT</span>
+  <div class="chip-row" data-role="sort" role="group" aria-label="Sort books">
+    <button type="button" class="chip" aria-pressed="true" data-sort="shelf">SHELF</button>
+    <button type="button" class="chip" aria-pressed="false" data-sort="year">YEAR</button>
+    <button type="button" class="chip" aria-pressed="false" data-sort="title">A-Z</button>
+  </div>
+</div>
+
+<ul class="book-list">
+  {
+    books.map((b, i) => (
+      <li data-cat={b.category} data-year={sortYear(b) ?? ''} data-title={b.title.toLowerCase()}>
+        <a href={`/library/${b.slug}/`}>
+          <b class="no">{String(i + 1).padStart(2, '0')}</b>
+          <span class="meta">
+            <span class="ttl">{b.title}</span>
+            {(b.author || b.year) && (
+              <span class="sub">{[b.author, b.year].filter(Boolean).join(' · ')}</span>
+            )}
+          </span>
+          {b.pd && <span class="tag">PUBLIC DOMAIN</span>}
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  /* chips: the garage .feat-chip recipe, mono text instead of icons */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35em 0.8em;
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-sunk);
+    color: var(--text-mute);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+  .chip:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+  .chip[aria-pressed='true'] {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .chip:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+  }
+
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+  }
+
+  /* ledger: the .cert-list row recipe, sans glyph column */
+  .book-list {
+    list-style: none;
+    margin: var(--sp-5) 0 0;
+    padding: 0;
+  }
+  .book-list li[hidden] {
+    display: none;
+  }
+  .book-list a {
+    display: flex;
+    align-items: baseline;
+    gap: 1.2ch;
+    padding: 0.6rem 0;
+    border-bottom: 1px dotted var(--border);
+    text-decoration: none;
+    color: inherit;
+  }
+  .book-list li:last-child a {
+    border-bottom: 0;
+  }
+  .book-list .no {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--accent-ink);
+  }
+  .book-list .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .book-list .ttl {
+    font-weight: 700;
+    font-size: var(--step-0);
+    transition: color 0.15s;
+  }
+  .book-list a:hover .ttl {
+    color: var(--accent-ink);
+  }
+  .book-list .sub {
+    color: var(--text-mute);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .book-list .tag {
+    margin-left: auto;
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.1em;
+    color: var(--accent-ink);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0.1em 0.6em;
+  }
+</style>
+
+<script>
+  // Filter: single-select, clicking the active chip falls back to ALL.
+  // Sort: single-select, reorders the <li> nodes in place (SHELF restores the
+  // server-rendered order, which is grouped by category). Without JS every row
+  // stays visible in shelf order, so both chip rows are just inert labels.
+  const filterChips = [...document.querySelectorAll<HTMLButtonElement>('[data-role="filter"] .chip')];
+  const sortChips = [...document.querySelectorAll<HTMLButtonElement>('[data-role="sort"] .chip')];
+  const list = document.querySelector<HTMLUListElement>('.book-list')!;
+  const rows = [...document.querySelectorAll<HTMLLIElement>('.book-list li')];
+  const shelfOrder = rows.slice();
+
+  filterChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const cat = chip.getAttribute('aria-pressed') === 'true' ? 'all' : chip.dataset.cat!;
+      filterChips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.cat === cat)));
+      rows.forEach((r) => (r.hidden = cat !== 'all' && r.dataset.cat !== cat));
+    });
+  });
+
+  sortChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      sortChips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      const mode = chip.dataset.sort;
+      const sorted =
+        mode === 'year'
+          ? rows.slice().sort((a, b) => (Number(a.dataset.year) || Infinity) - (Number(b.dataset.year) || Infinity))
+          : mode === 'title'
+            ? rows.slice().sort((a, b) => a.dataset.title!.localeCompare(b.dataset.title!))
+            : shelfOrder;
+      sorted.forEach((r) => list.appendChild(r));
+    });
+  });
+</script>

@@ -2,8 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import AltPair from '../components/AltPair.astro';
+import Icon from '../components/Icon.astro';
 import { models, toolGroups, hardware, runtime, network, alternatives } from '../data/tools.js';
 import { contours, coast } from '../data/terrain.js';
+import { meshContours, meshIndexStep } from '../data/mesh-terrain.js';
+import { satContours, satIndexStep } from '../data/sat-terrain.js';
 
 // Look marks up by label rather than by position: tools.js is generated, and inserting an
 // entry used to silently rebind the wrong logo here. A typo now fails the build instead.
@@ -23,27 +26,352 @@ const pair = (openLabel) => {
 // TTN's marketing site has no fetchable brand SVG. Text-only badges, same chip styling.
 const cwop = { label: 'CWOP', url: 'https://www.wxqa.com/' };
 const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.org' };
+
+// Neither icon CDN carries a mark for any of these (simple-icons 404s on coturn,
+// headscale, powerdns), so they take the same text-only chips: Mark.astro skips
+// the <svg> when item.svg is absent.
+const coturn = { label: 'coturn', url: 'https://github.com/coturn/coturn' };
+const headscale = { label: 'Headscale', url: 'https://headscale.net' };
+const knot = { label: 'Knot DNS', url: 'https://www.knot-dns.cz' };
+const powerdns = { label: 'PowerDNS', url: 'https://www.powerdns.com' };
+const bind = { label: 'BIND 9', url: 'https://www.isc.org/bind/' };
+const unbound = { label: 'Unbound', url: 'https://nlnetlabs.nl/projects/unbound/' };
+const chrony = { label: 'chrony', url: 'https://chrony-project.org' };
+const gpsd = { label: 'gpsd', url: 'https://gpsd.io' };
+const readsb = { label: 'readsb', url: 'https://github.com/wiedehopf/readsb' };
+const aiscatcher = { label: 'AIS-catcher', url: 'https://github.com/jvde-github/AIS-catcher' };
+
+// The contents nav, the chapter.section numbers and every section heading come
+// off this one list, so the three cannot drift apart. Ids are permanent: they
+// are the page's anchors and outside links point at them, so a section keeps
+// its id when its title changes.
+const chapters = [
+  {
+    title: 'Radio, satellite, broadcast',
+    sections: [
+      { id: 'mesh-radio', title: 'mesh radio', sub: 'private and public, no carrier' },
+      { id: 'amateur-relay', title: 'amateur radio relay', sub: 'open, in the clear' },
+      { id: 'satellite-downlink', title: 'satellite downlinks', sub: 'receive only' },
+      { id: 'ota-tv', title: 'over-the-air TV', sub: 'broadcast, unmetered' },
+      { id: 'beacons', title: 'beacon receivers', sub: 'aircraft and vessels' },
+      { id: 'gnss', title: 'time and position', sub: 'a clock from satellites' },
+    ],
+  },
+  {
+    title: 'Sensing',
+    sections: [
+      { id: 'weather-station', title: 'weather station', sub: 'sensors and telemetry' },
+      { id: 'smart-security', title: 'cameras', sub: 'recording and local inference' },
+    ],
+  },
+  {
+    title: 'Compute, models, storage',
+    sections: [
+      { id: 'ai-compute', title: 'AI compute', sub: 'the machine and its power' },
+      { id: 'nas', title: 'NAS', sub: 'storage on the network' },
+      { id: 'open-weights', title: 'open weight models', sub: 'what it serves' },
+    ],
+  },
+  {
+    title: 'Private paths in and out',
+    sections: [
+      { id: 'vpn', title: 'VPN', sub: 'the way in and out' },
+      { id: 'tor', title: 'Tor', sub: 'anonymity and hidden services' },
+      { id: 'stun-server', title: 'STUN server', sub: 'a path through NAT' },
+      { id: 'dynamic-dns', title: 'DNS', sub: "your name, and everyone else's" },
+    ],
+  },
+  {
+    title: 'Sharing',
+    sections: [
+      { id: 'community-research', title: 'community research', sub: 'the surplus, and who gets it' },
+    ],
+  },
+];
+const byId = {};
+chapters.forEach((c, ci) =>
+  c.sections.forEach((s, si) => {
+    byId[s.id] = { ...s, n: `${ci + 1}.${si + 1}`, chapter: si === 0 ? `${ci + 1} · ${c.title}` : '' };
+  }),
+);
+// Same contract as mark(): an unknown id fails the build instead of rendering an
+// empty heading. The chapter eyebrow rides along on the first section of each
+// chapter, so no chapter markup is hand-placed in the body.
+// ponytail: an HTML string through set:html, not a component. A component would
+// render these elements outside this file and lose Astro's scoped-style stamp,
+// so `.marks > p` and `section[id]` would quietly stop matching.
+const head = (id) => {
+  const s = byId[id];
+  if (!s) throw new Error(`unknown section: ${id}`);
+  return (
+    (s.chapter ? `<p class="label chapter">${s.chapter}</p>` : '') +
+    `<div class="sec-head"><h2>${s.title}</h2><span class="idx"><b>${s.n}</b> · ${s.sub}</span></div>`
+  );
+};
+
+// Field-log sample data. Public tier withholds identities, counts, and timing:
+// that detailed data is gated behind the node's API. Species are what the
+// classifier plausibly hears around a coastal Southern California node; * marks
+// the backyard aviary residents. AIR shows make/model, resolved locally by
+// matching the beacon's hex against the registry DB every receiver bundles
+// (standard practice); the hex/callsign identity itself stays API-tier. SEA
+// type and length come straight from the AIS static data report, which really
+// does broadcast them; ORBIT stays generic because satellite identity is
+// inferred from frequency and orbit, not carried in the downlink.
+const birds = [
+  'Zebra Finch *',
+  'Society Finch *',
+  "Anna's Hummingbird",
+  'American Crow',
+  'Western Gull',
+  'California Scrub-Jay',
+  'Mourning Dove',
+  'California Gnatcatcher',
+  'House Finch',
+  'California Towhee',
+  'Northern Mockingbird',
+  'Song Sparrow',
+  'Black Phoebe',
+  'Lesser Goldfinch',
+  "Bewick's Wren",
+  'Wrentit',
+  'Acorn Woodpecker',
+  'Killdeer',
+];
+const contacts = {
+  AIR: [
+    'Boeing 737-800',
+    'Airbus A321neo',
+    'Boeing 777-300ER',
+    'Cessna 172 Skyhawk',
+    'Cirrus SR22',
+    'Gulfstream G550',
+    'Pilatus PC-12',
+    'Robinson R44',
+    'Lockheed C-130 Hercules',
+  ],
+  SEA: ['Coaster · 89m', 'Fishing vessel · 24m', 'Sailing vessel · 14m'],
+  ORBIT: ['Weather satellite', 'Amateur radio satellite', 'Space station'],
+};
+
+// mesh-radio diagram nodes, one source for the SVG and the traffic script.
+// contact = my network (solar, sun badge, darker glyph); the rest are other
+// radios in the community. adjacency is derived from RF range.
+const meshNodes = [
+  { x: 210, y: 250, contact: true },
+  { x: 490, y: 215, contact: true },
+  { x: 760, y: 295, mine: true },
+  { x: 880, y: 440 },
+  { x: 40, y: 140, contact: true },
+  { x: 330, y: 45 },
+  { x: 640, y: 75, contact: true },
+  { x: 480, y: 330 },
+  { x: 55, y: 420 },
+  { x: 330, y: 420 },
+  { x: 640, y: 455, contact: true },
+  { x: 915, y: 165, contact: true },
+  { x: 965, y: 340 },
+];
+
+// the same mesh, sparser, on the field map: my node, 5 contacts and 3
+// strangers. the two indirect contacts chain off the same direct one, so the
+// far end of my own network sits a full three hops out. some stranger pairs
+// are out of range of each other too, and cross my network's relays to talk.
+// positions are on land (checked against the terrain contours).
+const mapMeshNodes = [
+  { x: 640, y: 420, mine: true },
+  { x: 500, y: 560, contact: true, tag: '!a4f2' },  // direct
+  { x: 430, y: 380, contact: true, tag: '!e09b' },  // direct
+  { x: 900, y: 330, contact: true, tag: '!b81d' },  // direct
+  { x: 1080, y: 500, contact: true, tag: '!5c60' }, // 2 hops, via !b81d
+  { x: 1265, y: 675, contact: true, tag: '!2f94' }, // 3 hops, via !5c60
+  { x: 880, y: 560, tag: '!77c1' },
+  { x: 950, y: 720, tag: '!3d5a' },
+  { x: 180, y: 390, tag: '!d073' },
+];
+
+// every pair in RF range is linked on the public channel; pairs inside my
+// network additionally share the private one, drawn instead (it sits on top)
+const linksFor = (nodes, range) =>
+  nodes.flatMap((a, i) =>
+    nodes.slice(i + 1)
+      .filter((b) => Math.hypot(a.x - b.x, a.y - b.y) <= range)
+      .map((b) => ({
+        x1: a.x, y1: a.y, x2: b.x, y2: b.y,
+        priv: !!(a.contact || a.mine) && !!(b.contact || b.mine),
+      })),
+  );
+const meshLinks = linksFor(meshNodes, 290);
+const mapMeshLinks = linksFor(mapMeshNodes, 300);
+
+// satellite-downlink diagram (03). A continental frame, unlike anything else on
+// this page: gen-sat-terrain.mjs draws 30 degrees of latitude, so one viewBox
+// unit is ~5.96 km and real pass geometry can be drawn rather than implied.
+// Checked before shipping: the horizon ring is 402u, and of the four passes one
+// crosses 176 km from the node (77 degrees elevation), two are middling at 22
+// and 15 degrees, and the westernmost stays 3094 km out and never comes into
+// range at all.
+const SAT_KM_PER_UNIT = (30 * 111.32) / 560; // generator LAT_SPAN over viewBox height
+const SAT_HORIZON_KM = 2400; // ~7 degree elevation mask for an 850 km orbit
+// one radius does double duty, which is the mechanism: the ground distance over
+// which the node can hear a satellite is the same distance over which that
+// satellite's broadcast reaches the ground
+const satRingR = SAT_HORIZON_KM / SAT_KM_PER_UNIT;
+const satNode = { x: 620, y: 235 };
+// Four passes of one sun-synchronous orbit, walking west each time around, which
+// is how a polar orbiter eventually sees the whole planet. They are parallel by
+// construction rather than by choice: an ascending track would have to cross the
+// descending ones, and crossing means imaging the same ground twice, which is
+// the one thing this drawing must not do. So all four share a direction and the
+// spacing is derived below, not chosen.
+const SAT_DIR = { x: -140, y: 640 };
+const satDirLen = Math.hypot(SAT_DIR.x, SAT_DIR.y);
+const satU = { x: SAT_DIR.x / satDirLen, y: SAT_DIR.y / satDirLen };
+const satN = { x: satU.y, y: -satU.x }; // across the track
+// the frame's whole extent across the tracks, cut into four equal strips: the
+// swaths then tile it exactly, no overlap and no bare ground. this is what fixes
+// the swath width, which is why it is ~1635 km and not a particular instrument's
+// number. a real orbit walks further than this between passes; the spacing here
+// is drawn to tile the frame, and the prose claims nothing narrower.
+const satFramePerp = [[0, 0], [1000, 0], [0, 560], [1000, 560]].map(([x, y]) => x * satN.x + y * satN.y);
+const satPerpMin = Math.min(...satFramePerp);
+const satSwathW = (Math.max(...satFramePerp) - satPerpMin) / 4;
+const SAT_SWATH_KM = satSwathW * SAT_KM_PER_UNIT;
+// park = where each satellite sits in the static frame under reduced motion.
+// staggered so the frozen mosaic shows four different ages at once.
+const satTracks = [0.15, 0.6, 0.4, 0.85].map((park, k) => {
+  const c = satPerpMin + (3.5 - k) * satSwathW; // east to west, in pass order
+  const endAt = (y) => {
+    const a = (y - c * satN.y) / satU.y;
+    return { x: c * satN.x + a * satU.x, y };
+  };
+  const p1 = endAt(-40);
+  const p2 = endAt(600);
+  return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, park };
+});
+const satParks = satTracks.map((t) => ({
+  x: t.x1 + (t.x2 - t.x1) * t.park,
+  y: t.y1 + (t.y2 - t.y1) * t.park,
+}));
+// The imager sweeps its swath the whole way around, and that sweep is what
+// paints the terrain: the map has no ground on it until a pass lays some down.
+// Each strip then ages continuously from the moment it is finished until its own
+// orbit comes back to redraw it, so at any instant the four strips are at four
+// different ages and the map reads as ground that keeps having to be re-acquired.
+// What the node actually *received* stays a separate and stricter claim: the
+// receive flash is gated on the ring, so the westernmost pass lays down terrain
+// without the node ever flashing, which is the honest difference between what
+// flew over and what landed.
+const satGeom = satTracks.map((t) => {
+  const len = Math.hypot(t.x2 - t.x1, t.y2 - t.y1);
+  return {
+    len,
+    angleDeg: (Math.atan2(t.y2 - t.y1, t.x2 - t.x1) * 180) / Math.PI,
+    // how much swath each satellite has laid down by the time it reaches its
+    // parked spot, so the static frame is a mosaic caught mid-build
+    staticW: t.park * len,
+  };
+});
+// Coordinate furniture: a 5 degree graticule, and the one layer on this surface
+// that never moves. The frame is 30 degrees of latitude over 560 units, so a
+// parallel every 5 degrees is one every 93.3 units, and the generator makes
+// longitude km-true at the frame's centre latitude, so meridians at that same
+// unit spacing are a constant longitude interval as well. Which interval, and
+// which parallels these are, go unstated: the frame's coordinates are withheld
+// from the committed data, so the lines carry no labels and land on no round
+// numbers. The spacing is real; the position is not disclosed.
+const SAT_GRAT_DEG = 5;
+const satGratStep = (SAT_GRAT_DEG / 30) * 560;
+const satGratX = Array.from({ length: Math.ceil(1000 / satGratStep) - 1 }, (_, i) => (i + 1) * satGratStep);
+const satGratY = Array.from({ length: Math.ceil(560 / satGratStep) - 1 }, (_, i) => (i + 1) * satGratStep);
+
 ---
 
 <Base
-  title="my private/community node · Daniel ████"
+  title="my private/community node · Daniel Romo"
   description="A design document for a self-hosted node: the radio links, sensors, local power, AI compute, and the reasoning behind each piece."
 >
+  <div class="hero-wrap">
+  <div class="hud-identity">
+    <p class="label eyebrow">FIELD DIAGRAM · COMMUNITY NODE</p>
+    <h1>My Private/Community Node</h1>
+  </div>
   <section class="fieldmap" aria-label="Live field diagram of the node and its surroundings">
     <svg class="map" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
+        <!-- Daniel's Node.svg (public/images/Node.svg) inlined with currentColor
+             strokes so the receive-pulse can recolor it; an <image> ref could not -->
+        <g id="node-icon" transform="translate(3.025, 3.1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path class="signal" d="M4.9,16.1 C1,12.2 1,5.8 4.9,1.9" />
+          <path class="signal" d="M7.8,4.7 C5.848,6.722 5.519,9.812 7,12.2" />
+          <path d="M16,19.926 C16,21.03 15.105,21.926 14,21.926 C12.895,21.926 12,21.03 12,19.926 C12,18.821 12.895,17.926 14,17.926 C15.105,17.926 16,18.821 16,19.926 z" />
+          <path class="signal" d="M16.2,4.8 C18.2,6.8 18.46,9.91 17,12.27" />
+          <path class="signal" d="M19.1,1.9 C20.972,3.768 22.024,6.305 22.024,8.95 C22.114,11.018 21.236,12.834 20.217,14.566" />
+          <path d="M6.8,18.926 L12,18.926" />
+          <path d="M12,17.926 L12,6.926" />
+          <path d="M12.2,15.542 L17.2,15.542" />
+          <path d="M17.2,15.542 L17.2,18.926" />
+          <path d="M8.456,18.926 L8.456,21.926" />
+        </g>
         <!-- lucide radio-tower, plane: same hand-inlined pattern as index.astro (ISC) -->
         <g id="tower" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
-          <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
+          <path class="signal" d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" />
+          <path class="signal" d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" />
           <circle cx="12" cy="9" r="2" />
-          <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
-          <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
+          <path class="signal" d="M16.2 4.8c2 2 2.26 5.11.8 7.47" />
+          <path class="signal" d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1" />
           <path d="M9.5 18h5" />
           <path d="m8 22 4-11 4 11" />
         </g>
         <g id="plane-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+        </g>
+        <!-- lucide radio: known mesh nodes. wave arcs carry .signal so --sig can
+             gate them per instance (map: always on; diagram: only while keyed) -->
+        <g id="mesh-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="signal" d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+          <path class="signal" d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+          <path class="signal" d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+          <path class="signal" d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+          <circle cx="12" cy="12" r="2" />
+        </g>
+        <!-- lucide ship: AIS surface contacts -->
+        <g id="ship-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 10.189V14" />
+          <path d="M12 2v3" />
+          <path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6" />
+          <path d="M19.38 20A11.6 11.6 0 0 0 21 14l-8.188-3.639a2 2 0 0 0-1.624 0L3 14a11.6 11.6 0 0 0 2.81 7.76" />
+          <path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+        </g>
+        <!-- lucide bird: an acoustic detection at the node (see the field log) -->
+        <g id="bird-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 7h.01" />
+          <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+          <path d="m20 7 2 .5-2 .5" />
+          <path d="M10 18v3" />
+          <path d="M14 17.75V21" />
+          <path d="M7 18a6 6 0 0 0 3.84-10.61" />
+        </g>
+        <!-- lucide sun: solar-powered marker, shared with the mesh diagram (ISC) -->
+        <g id="sun-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" /><path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" /><path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+        </g>
+        <!-- lucide key-round: exchange-endpoint marker, shared likewise (ISC) -->
+        <g id="key-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" />
+          <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+        </g>
+        <!-- lucide satellite: LEO passes -->
+        <g id="sat-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m13.5 6.5-3.148-3.148a1.205 1.205 0 0 0-1.704 0L6.352 5.648a1.205 1.205 0 0 0 0 1.704L9.5 10.5" />
+          <path d="M16.5 7.5 19 5" />
+          <path d="m17.5 10.5 3.148 3.148a1.205 1.205 0 0 1 0 1.704l-2.296 2.296a1.205 1.205 0 0 1-1.704 0L13.5 14.5" />
+          <path d="M9 21a6 6 0 0 0-6-6" />
+          <path d="M9.352 10.648a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l4.296-4.296a1.205 1.205 0 0 0 0-1.704l-2.296-2.296a1.205 1.205 0 0 0-1.704 0z" />
         </g>
       </defs>
 
@@ -55,7 +383,7 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
         <line x1="0" y1="250" x2="1600" y2="250" />
         <line x1="0" y1="500" x2="1600" y2="500" />
         <line x1="0" y1="750" x2="1600" y2="750" />
-        <!-- graticule crossings carry redacted coordinates, the persona's censor bar in map form -->
+        <!-- graticule crossings carry blank coordinate ticks: the node's location stays unstated -->
         <g class="tick"><rect x="574" y="482" width="36" height="13" /><text x="616" y="493">N</text></g>
         <g class="tick"><rect x="968" y="248" width="36" height="13" /><text x="1010" y="259">W</text></g>
       </g>
@@ -71,387 +399,1160 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
           </>
         ))}
       </g>
-      <text class="sea-label" x="1260" y="820">OPEN WATER</text>
+      <text class="sea-label" x="150" y="800">OPEN WATER</text>
 
-      <!-- outbound signal front from the node -->
-      <circle class="wave" cx="640" cy="420" r="1200" />
+      <!-- standing mesh topology, same channel coding as the diagram below -->
+      {mapMeshLinks.map((l) => (
+        <line class={l.priv ? 'priv-link' : 'pub-link'} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
+      ))}
 
-      <!-- peer towers: ping on receiving the front (--recv), node flashes on their reply -->
-      <g class="peer" style="--recv: 1.5s">
-        <circle class="ping" cx="760" cy="700" r="34" />
+      <!-- outbound fronts from the node: one fired per received beacon, pooled so
+           overlapping replies coexist -->
+      {Array.from({ length: 5 }).map(() => <circle class="wave" cx="640" cy="420" r="1200" />)}
+
+      <!-- beacon ring pool: the script parks one at an emitter's current position, so
+           the epicenter stays put while the vehicle moves on -->
+      {Array.from({ length: 8 }).map(() => <circle class="ring" cx="0" cy="0" r="0" />)}
+
+      <!-- other radio stations on the air: each darkens and raises its wave
+           marks while it transmits (staggered by --pd) -->
+      <g class="peer" style="--pd: 0s">
         <svg x="745" y="685" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
-        <text class="tag" x="784" y="705">RLY-01</text>
+        <text class="tag" x="784" y="705">STN-01</text>
       </g>
-      <g class="peer" style="--recv: 2s">
-        <circle class="ping" cx="320" cy="180" r="34" />
-        <svg x="305" y="165" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
-        <text class="tag" x="344" y="185">RLY-02</text>
+      <g class="peer" style="--pd: 3s">
+        <svg x="300" y="470" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="339" y="490">STN-02</text>
       </g>
-      <g class="peer" style="--recv: 2.7s">
-        <circle class="ping" cx="1150" cy="260" r="34" />
-        <svg x="1135" y="245" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
-        <text class="tag" x="1174" y="265">RLY-03</text>
+      <g class="peer" style="--pd: 6.2s">
+        <svg x="1300" y="250" width="30" height="30" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
+        <text class="tag" x="1339" y="270">STN-03</text>
       </g>
 
-      <!-- the node -->
+      <!-- known mesh nodes, same system as the mesh-radio diagram below: sun
+           badge on my contacts, no always-on wave arcs. tagged here because the
+           map labels every contact it draws; the diagram stays label-free -->
+      {mapMeshNodes.map((n, i) => !n.mine && (
+        <g class:list={['mesh', n.contact && 'contact']}>
+          <svg data-mesh={i} x={n.x - 10} y={n.y - 10} width="20" height="20" viewBox="0 0 24 24" class="glyph"><use href="#mesh-icon" /></svg>
+          {n.contact && (
+            <svg x={n.x + 12} y={n.y - 24} width="12" height="12" viewBox="0 0 24 24" class="sun"><use href="#sun-icon" /></svg>
+          )}
+          <text class="tag" x={n.x + 16} y={n.y + 5}>{n.tag}</text>
+        </g>
+      ))}
+
+      <!-- mesh traffic layer: the packet in transit and the endpoint key badges.
+           no pulse pool here, expanding circles are the beacons' vocabulary -->
+      <circle class="packet" cx="0" cy="0" r="4.5" />
+      <svg class="key" x="0" y="0" width="14" height="14" viewBox="0 0 24 24"><use href="#key-icon" /></svg>
+      <svg class="key" x="0" y="0" width="14" height="14" viewBox="0 0 24 24"><use href="#key-icon" /></svg>
+
+      <!-- the node; clicking it jumps to the component diagram (tabindex -1: the svg
+           is aria-hidden, and the same navigation exists in page flow right below) -->
       <g class="node">
-        <svg x="612" y="392" width="56" height="56" viewBox="0 0 24 24" class="glyph"><use href="#tower" /></svg>
-        <text class="tag" x="616" y="472">NODE</text>
-        <rect class="tag-redact" x="664" y="461" width="26" height="12" />
+        <a href="#node" tabindex="-1">
+          <svg id="node-glyph" data-mesh="0" x="608" y="388" width="64" height="64" viewBox="0 0 30.056 30.026" class="glyph"><use href="#node-icon" /></svg>
+          <text class="tag" x="616" y="472">MY NODE</text>
+        </a>
+        <!-- the mic hears a bird now and then; sits over the node the way the
+             station indicators used to, centered above the glyph -->
+        <svg class="bird" x="633" y="365" width="14" height="14" viewBox="0 0 24 24"><use href="#bird-icon" /></svg>
+      </g>
+
+      <!-- LEO ground tracks: a satellite covers ~7.7 km/s, so at this frame's scale a
+           pass streaks through in seconds, a few minutes apart. Track lines stay put,
+           the way a real sat tracker draws them. Meteor-M N2-3/N2-4 descend near-polar
+           (sun-synchronous) with a slight westward lean; the ISS crosses on its
+           51.6deg-inclination diagonal. -->
+      <line class="sat-track" x1="986" y1="-40" x2="814" y2="1040" />
+      <line class="sat-track" x1="60" y1="1040" x2="1540" y2="-40" />
+      <g transform="translate(986 -40)">
+        <g class="sat sat-a">
+          <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" class="glyph" data-every="2"><use href="#sat-icon" /></svg>
+          <text class="tag" x="18" y="-10">METEOR-M N2-_ 137.9MHZ</text>
+        </g>
+      </g>
+      <g transform="translate(60 1040)">
+        <g class="sat sat-b">
+          <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" class="glyph" data-every="2"><use href="#sat-icon" /></svg>
+          <text class="tag" x="18" y="-10">NO-__ 145.825MHZ</text>
+        </g>
+      </g>
+
+      <!-- AIS surface contacts: real ship speeds at this scale are a slow drift
+           (12 kt is about 45 min across the bay), so they crawl, like a real overlay -->
+      <g transform="translate(140 600)">
+        <g class="vessel vessel-a">
+          <g class="frame" transform="rotate(43)">
+            <line class="trail" x1="-60" y1="0" x2="-16" y2="0" />
+          </g>
+          <svg x="-11" y="-11" width="22" height="22" viewBox="0 0 24 24" class="glyph" data-every="10"><use href="#ship-icon" /></svg>
+          <text class="tag" x="16" y="-10">368***790 12KT</text>
+        </g>
+      </g>
+      <g transform="translate(430 780)">
+        <g class="vessel vessel-b">
+          <g class="frame" transform="rotate(-138)">
+            <line class="trail" x1="-60" y1="0" x2="-16" y2="0" />
+          </g>
+          <svg x="-11" y="-11" width="22" height="22" viewBox="0 0 24 24" class="glyph" data-every="10"><use href="#ship-icon" /></svg>
+          <text class="tag" x="16" y="-10">367***080 9KT</text>
+        </g>
       </g>
 
       <!-- occasional overflights, ADS-B style -->
-      <g class="flight flight-a">
-        <g class="frame" transform="rotate(-21)">
-          <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
-          <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" />
+      <g transform="translate(-160 880)">
+        <g class="flight flight-a">
+          <g class="frame" transform="rotate(-21)">
+            <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
+            <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" data-every="5" />
+          </g>
+          <text class="tag" x="20" y="-12">N4__TC FL340</text>
         </g>
-        <text class="tag" x="20" y="-12">N481TC FL340</text>
       </g>
-      <g class="flight flight-b">
-        <g class="frame" transform="rotate(167)">
-          <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
-          <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" />
+      <g transform="translate(1760 340)">
+        <g class="flight flight-b">
+          <g class="frame" transform="rotate(167)">
+            <line class="trail" x1="-150" y1="0" x2="-26" y2="0" />
+            <use href="#plane-icon" transform="rotate(45) scale(1.15) translate(-12 -12)" data-every="5" />
+          </g>
+          <text class="tag" x="20" y="-12">A2C7__ FL265</text>
         </g>
-        <text class="tag" x="20" y="-12">A2C7E9 FL265</text>
       </g>
     </svg>
 
-    <div class="hud hud-identity">
-      <p class="label eyebrow">FIELD DIAGRAM · COMMUNITY NODE</p>
-      <h1>My Private/Community Node</h1>
+    <div class="hud hud-metrics">
+      <div class="metric hide-sm"><span class="label">Solar eff</span><span class="m-val" id="m-solar">64%</span></div>
+      <div class="metric"><span class="label">Batt</span><span class="m-val" id="m-batt">78% CHG</span></div>
+      <div class="metric hide-sm"><span class="label">Cluster temp</span><span class="m-val" id="m-temp">47.2°C</span></div>
+      <div class="metric"><span class="label">Wx</span><span class="m-val" id="m-wx">MARINE LAYER · 8KT NW</span></div>
+      <div class="metric hide-sm"><span class="label">Mesh</span><span class="m-val" id="m-mesh">7 HEARD</span></div>
+      <button type="button" class="metric" id="birds-btn" aria-haspopup="dialog">
+        <span class="label">Birds 24h</span><span class="m-val">{birds.length} SPP</span>
+      </button>
     </div>
-
-    <dl class="hud hud-metrics">
-      <div class="metric hide-sm"><dt class="label">Solar eff</dt><dd id="m-solar">64%</dd></div>
-      <div class="metric"><dt class="label">Batt</dt><dd id="m-batt">78% CHG</dd></div>
-      <div class="metric hide-sm"><dt class="label">Cluster temp</dt><dd id="m-temp">47.2°C</dd></div>
-      <div class="metric"><dt class="label">Wx</dt><dd id="m-wx">MARINE LAYER · 8KT NW</dd></div>
-      <div class="metric hide-sm"><dt class="label">Mesh</dt><dd id="m-mesh">7 HEARD</dd></div>
-    </dl>
 
     <div class="hud hud-compass" aria-hidden="true">
       <span class="north">
         <svg viewBox="0 0 24 24"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
         N
       </span>
-      <span class="scale"><span class="scale-bar"></span><span class="redacted">10</span> KM</span>
+      <span class="scale"><span class="scale-bar"></span>5 KM</span>
     </div>
 
-    <a class="hud hud-more" href="#doc" aria-label="Continue to the design document">
+    <a class="hud hud-more" href="#node" aria-label="Continue to the node component diagram">
       <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
     </a>
   </section>
+  </div>
 
-  <main id="doc" class="mx-auto w-full max-w-3xl px-6 pb-16">
-    <article class="prose-page">
-      <p>
-        This is a design document for a node I built and run myself. The word node is doing some
-        work in that sentence. What sits here is a small cluster, a few radios, a weather
-        station, and the power to keep them going when the grid does not. I want to explain why
-        each piece is there and why it is the piece I picked.
-      </p>
-      <p>
-        The reason any of it exists is that I spend my working days building infrastructure
-        people can own and run themselves rather than rent, which some people have started
-        calling Web 4.0 and others call the Independent Internet. There is an older term for a
-        piece of it: Digital Public Infrastructure, the compute and network and data layers a
-        society holds in common instead of routing through a handful of companies. Concentrating
-        those layers in a few data centers is the specific failure that decentralization exists
-        to answer. Compute is where the concentration is worst at the moment. Whoever owns the
-        machine decides what runs on it, and who stops being able to run anything when the terms
-        change.
-      </p>
-      <p>
-        Compute is a resource in the same sense bandwidth and electricity are resources.
-        Self-hosting is how you guarantee your own supply, since nobody can price you out of a
-        machine you already own, and it happens to be the arrangement that also lets you hand
-        the surplus to people around you. This is my node. It stays up because I am the one who
-        fixes it.
-      </p>
-    </article>
+  <dialog class="fieldlog" aria-label="Field log, last 24 hours">
+    <div class="log-head">
+      <p class="label">FIELD LOG · LAST 24H</p>
+      <button type="button" class="log-close" aria-label="Close log">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+      </button>
+    </div>
+    <p class="label log-sec">BIRDS HEARD · ACOUSTIC ID</p>
+    <ul class="log-list">
+      {birds.map((name) => <li><span>{name}</span></li>)}
+    </ul>
+    <p class="label log-note">* BACKYARD AVIARY RESIDENTS, HEARD DAILY</p>
+    <p class="label log-sec">CONTACTS LOGGED · RF · TYPES ONLY</p>
+    {Object.entries(contacts).map(([domain, rows]) => (
+      <>
+        <p class="label log-sub">{domain}</p>
+        <ul class="log-list">
+          {rows.map((type) => <li><span>{type}</span></li>)}
+        </ul>
+      </>
+    ))}
+    <p class="label log-note">REAL-TIME AND DETAILED DATA VIA THE NODE'S API · NETWORK ACCESS IS CURRENTLY INVITE-ONLY</p>
+  </dialog>
 
-    <section class="marks">
-      <div class="sec-head"><h2>mesh radio</h2><span class="idx"><b>01</b> · long range, no carrier</span></div>
-      <p>
-        The radio is built around a single trade: give up bandwidth, get back range and power
-        efficiency. A packet carries bytes rather than megabytes and travels slowly, and in
-        return it covers ground measured in miles on very little power, arriving at receivers
-        able to pull it out from under the noise floor. It runs in unlicensed spectrum, so there
-        is no SIM and no account anywhere.
-      </p>
-      <p>
-        Firmware is what turns that radio into a network. Every node repeats for every other
-        node, so there is no tower in the middle and therefore no operator, nobody positioned to
-        bill or throttle or switch anyone off. Coverage stops being a map a company publishes
-        and becomes a consequence of where people have put nodes, which means adding one
-        enlarges the network for everybody already on it. Day to day it is a link that does not
-        care whether the cell network is up or the ISP is having a bad afternoon.
-      </p>
-      <p>
-        The node repeats other people's traffic whether or not I can read it and whether or not
-        I know who sent it. Everything is encrypted end to end, so carrying a message never
-        meant seeing one. Anybody in range running their own node is already on the network,
-        since a mesh has no admission step for anyone to grant. Sharing here was settled by the
-        protocol rather than by me.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('Meshtastic')} />
-      </div>
-    </section>
+  <main id="doc" class="pb-16">
+    <nav class="components" aria-label="Article contents">
+      <svg class="components-glyph" viewBox="0 0 30.056 30.026" aria-hidden="true"><use href="#node-icon" /></svg>
+      <p class="label eyebrow">THE NODE · CONTENTS</p>
+      {chapters.map((c, ci) => (
+        <>
+          <p class="label chapter">{ci + 1} · {c.title}</p>
+          {c.sections.map((s) => (
+            <a href={`#${s.id}`}><b>{byId[s.id].n}</b>{s.title}</a>
+          ))}
+        </>
+      ))}
+    </nav>
 
-    <section class="marks">
-      <div class="sec-head"><h2>weather station</h2><span class="idx"><b>02</b> · sensors and telemetry</span></div>
-      <p>
-        The station reads the ordinary things and reports them over that same independent path
-        rather than into a manufacturer's app. Sensor traffic is small and infrequent, which is
-        precisely what long-range low-power radio is good at, so a volunteer-built network of
-        that kind carries part of it.
-      </p>
-      <p>
-        The readings land in open, nonprofit data commons that any station can feed and anyone
-        can query. That is the whole reason for choosing them over a vendor dashboard. A commons
-        cannot be repriced, gated, or shut down because a product line got cancelled, and the
-        data ends up useful to somebody other than me, which is never true of a private
-        dashboard.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('openSenseMap')} />
-        <Mark item={cwop} />
-        <Mark item={ttn} />
-      </div>
-    </section>
+    <div class="doc-body">
+      <article class="prose-page" id="node">
+        <p class="lead">
+          Radio, sensors, compute, storage, and the network paths into them can all be owned
+          outright and run on local power. Infrastructure built that way keeps working when a
+          carrier, a cloud provider, or the electrical grid does not, and the capacity it is not
+          using can be given to somebody else.
+        </p>
+        <p>
+          Of the layers a homestead needs, information is the hardest to get right. Food, water,
+          and energy have mature, well-documented solutions. Secure, modern, resilient
+          infrastructure for carrying, storing, and reasoning over information does not.
+        </p>
 
-    <section class="marks">
-      <div class="sec-head"><h2>amateur radio relay</h2><span class="idx"><b>03</b> · licensed, in progress</span></div>
-      <p>
-        A licensed relay station is in progress. It is a slower thing to add than the rest of
-        this, since it runs on a callsign and an examination rather than a purchase.
-      </p>
-      <p>
-        It covers a case the mesh does not. Unlicensed spectrum keeps the barrier to entry at
-        zero, which is most of why the mesh works at all, but it also caps transmit power and
-        limits what you may legally do with the link. A licensed service raises those ceilings
-        and hands you obligations in exchange: identify yourself, no encryption, nothing
-        commercial. Running both is the point. One is a network anybody can join without asking
-        permission, the other reaches considerably further and exists for the conditions where
-        the first one runs out.
-      </p>
-    </section>
+        <div class="grid layers" role="group" aria-label="The four layers of a homestead">
+          <div class="panel layer">
+            <h3>Food</h3>
+            <ul>
+              <li><Icon name="fish" />Blue tilapia stock</li>
+              <li><Icon name="sprout" />Plants fed on fish waste</li>
+            </ul>
+          </div>
+          <div class="panel layer">
+            <h3>Water</h3>
+            <ul>
+              <li><Icon name="droplet" />Well to the aquifer</li>
+              <li><Icon name="cloud-rain" />Rainwater collection</li>
+              <li><Icon name="cloud-drizzle" />Atmospheric water generation</li>
+              <li><Icon name="filter" />Filtration and purification</li>
+            </ul>
+          </div>
+          <div class="panel layer">
+            <h3>Energy</h3>
+            <ul>
+              <li><Icon name="sun" />Solar, wind, hydro</li>
+              <li><Icon name="flame" />Biogas and biodiesel</li>
+              <li><Icon name="battery-charging" />Battery storage</li>
+            </ul>
+          </div>
+          <div class="panel layer">
+            <h3>Information</h3>
+            <ul>
+              <li><Icon name="radio-tower" />Radio, satellite, broadcast</li>
+              <li><Icon name="cctv" />Sensing and cameras</li>
+              <li><Icon name="cpu" />Compute, models, storage</li>
+              <li><Icon name="shield" />Private paths in and out</li>
+            </ul>
+          </div>
+        </div>
 
-    <section class="marks">
-      <div class="sec-head"><h2>resilience</h2><span class="idx"><b>04</b> · power as a layer</span></div>
-      <p>
-        Everything else here assumes electricity, and that assumption is worth looking at
-        directly. A node running on a utility connection and nothing else has moved its
-        dependency rather than removed it. You have traded a cloud provider's terms for a
-        utility's. The utility is more reliable and no more yours.
-      </p>
-      <p>
-        So the design treats power as part of the system instead of an input to it. Generation
-        and storage are things a node can own the same way it owns a disk. Sun and wind are
-        worth having because they are inputs nobody bills for and nobody can switch off from an
-        office somewhere. Storage is what makes them usable, since the sun is not up when you
-        need it and the wind keeps its own schedule.
-      </p>
-      <p>
-        None of this makes the node self-sufficient in any absolute sense and I would not claim
-        it does. What it changes is the depth of a failure. An outage becomes an inconvenience
-        somewhere in the middle of the stack rather than an event that takes the whole thing
-        off the air.
-      </p>
-    </section>
+        <p>
+          One principle runs through every technology here. Whoever owns a machine decides what
+          runs on it and who keeps access when the terms change. Renting the machine hands that
+          decision to somebody else.
+        </p>
 
-    <section class="marks">
-      <div class="sec-head"><h2>AI compute</h2><span class="idx"><b>05</b> · the machine</span></div>
-      <p>
-        Ownership is the design constraint the cluster is built around. A rented machine can be
-        suspended, repriced, or reclaimed on someone else's schedule, and none of those events
-        have anything to do with whether the work on it is going well. Hardware I can walk over
-        to and put a hand on removes that whole class of surprise. A smaller board handles the
-        jobs that have no business occupying a graphics card, the housekeeping and the sensor
-        plumbing.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('NVIDIA')} />
-        <Mark item={mark('AMD')} />
-        <Mark item={mark('Raspberry Pi')} />
-      </div>
-      <p>
-        Silicon and software stack are one subsystem here rather than two, because owning the
-        machine buys very little if what runs on it is a black box. An operating system and a
-        serving stack you can read are what let you find out what actually happens between a
-        request and an answer, fix it when it breaks, and keep it running after the people who
-        wrote it have moved on to something else. Nobody has to trust my description of the
-        setup. The code is right there.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('Linux')} />
-        <Mark item={mark('Docker')} />
-        <Mark item={mark('vLLM')} />
-        <Mark item={mark('AP0110')} />
-      </div>
-    </section>
+        <div class="node-arts">
+          <img
+            class="node-art"
+            src="/images/MyNode.png"
+            alt="Line drawing of the node: a trailer-mounted mast carrying mesh antennas, a GNSS dome, a weather sensor array, and a directional grid antenna, above solar panels and the equipment box"
+          />
+          <img
+            class="node-art"
+            src="/images/MyCompute.png"
+            alt="Line drawing of the compute rack: a full-height cabinet holding stacked vented server chassis, a panel of network ports, and rows of hot-swap power supply modules above its feet"
+          />
+        </div>
+      </article>
 
-    <section class="marks">
-      <div class="sec-head"><h2>open weight models</h2><span class="idx"><b>06</b> · what it serves</span></div>
-      <p>
-        A model is a very large table of numbers. Training is the expensive part, months of
-        compute spent adjusting billions of those numbers until the table does something useful,
-        and what comes out the other end is a file. Everything the model knows is in there, and
-        running it is arithmetic over those numbers. An open weight model is one where the file
-        is published for anyone to download. A closed one stays on a company's servers, with an
-        opening you may send questions through.
-      </p>
-      <p>
-        Open weights and open source are not the same thing, and the two get blurred constantly.
-        Publishing weights says nothing about publishing the training data, the code, or the
-        method, and most releases keep all of that back. Licenses vary enough to be worth
-        reading. What you get is the artifact, which turns out to be the part that decides how
-        research goes. A model behind an interface someone else operates is a moving target: it
-        can be updated or retired underneath you, and a published result can stop reproducing
-        without a line of your code changing. A checkpoint on your own disk holds still. It can
-        be pinned, cited by hash, and handed to somebody who wants to rerun the experiment in
-        three years. Custody of the data follows from the same property, because a question you
-        never send anywhere is a question that never left, and for work under an ethics approval
-        that distinction is not a preference.
-      </p>
-      <p>
-        The last property is durability. Hosted models are deprecated on their provider's
-        schedule, while a file already on your disk cannot be recalled. The catch is that
-        weights arrive with none of the machinery to run them, which is what the cluster and the
-        power underneath it are for. A model you own and cannot serve is a file taking up space.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('Hugging Face')} />
-        <Mark item={mark('Llama')} />
-        <Mark item={mark('Qwen')} />
-        <Mark item={mark('DeepSeek')} />
-        <Mark item={mark('Mistral')} />
-        <Mark item={mark('Gemma')} />
-        <Mark item={mark('OpenMed')} />
-      </div>
-    </section>
+      <section class="marks" id="mesh-radio">
+        <Fragment set:html={head('mesh-radio')} />
+        <p class="lead">
+          Mesh radio carries text messages between inexpensive radios with no SIM card, no
+          account, and no monthly bill. Every radio added to a mesh extends the range of every
+          radio already on it.
+        </p>
+        <!-- the same visual language as the field diagram above: mono tags, dashed
+             range rings, the map's mesh/node glyphs reused via <use> (same DOM).
+             two layers per transmission, the idiom mesh simulators use: an expanding
+             wave (the broadcast, RF has no direction) plus a packet dot riding the
+             front along the route (the message's logical path). the traffic script
+             below runs back-to-back exchanges (contacts to contacts, strangers to
+             strangers, either relaying for the other), map-style: pooled one-shot
+             pulses, rx flashes, wave arcs keyed only while transmitting. a node
+             pulses only when it transmits or rebroadcasts, never on receive alone.
+             static-legible under reduced motion (the script never starts). -->
+        <figure class="diagram meshdiagram">
+          <div class="scroller">
+            <svg
+              viewBox="0 0 1000 560"
+              role="img"
+              aria-label="Diagram of the local mesh over contour terrain: my node plus my contacts' solar nodes, marked with sun badges, among other community radios. Long-dashed accent lines link my network on the private shared-key channel; dotted grey lines link every other pair of radios in range on the public default channel. A dashed ring shows my node's radio range: contacts beyond it reach me through nodes between us. Animated packets flow continuously, contacts messaging contacts and strangers messaging strangers, any radio relaying either; a key badge marks the sender and receiver of the exchange in flight, the two nodes able to read it. Each hop is an expanding radio wave, and a node shows its wave marks and pulses only while transmitting or relaying."
+            >
+              <!-- real SRTM contours for a random inland frame (gen-mesh-terrain.mjs);
+                   deliberately not the field map's terrain -->
+              <g class="contours">
+                {meshContours.map((c) => <path d={c.d} class:list={[c.level % meshIndexStep === 0 && 'index']} />)}
+              </g>
 
-    <section class="marks">
-      <div class="sec-head"><h2>remote access</h2><span class="idx"><b>07</b> · the way in</span></div>
-      <p>
-        Getting to the cluster from outside is its own design problem. A network is one more
-        thing that can be metered or cut, and a carrier is one more party standing between me
-        and the machine, so the way in runs over encrypted overlays rather than anything exposed
-        directly to the open internet. Keeping several overlays running at once is deliberate.
-        They fail in different ways, they are trusted by different people, and the one that is
-        quickest to configure is not always the one I want sitting between a laptop in a hotel
-        and a machine at home.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('Tailscale')} />
-        <Mark item={mark('WireGuard')} />
-        <Mark item={mark('OpenVPN')} />
-        <Mark item={mark('AP0110')} />
-      </div>
-    </section>
+              <!-- my node's RF range: the contacts outside this ring reach me only
+                   through the nodes between us -->
+              <circle class="range mine" cx="760" cy="295" r="290" />
 
-    <section class="marks">
-      <div class="sec-head"><h2>source control</h2><span class="idx"><b>08</b> · where the work lives</span></div>
-      <p>
-        A result reproduces from three things: the weights, the data, and the code that put them
-        together. Pinning a checkpoint and citing it by hash settles the first of those. If the
-        pipeline that consumed it lives on a platform able to lock an account or take a
-        repository down, what you have is partial in a way that tends not to surface until
-        somebody actually tries to rerun the work.
-      </p>
-      <p>
-        Keeping that history next to the compute is the obvious answer, and self-hosted forges
-        are mature enough now that it is a configuration decision rather than a project. There
-        is a practical version of the argument with no philosophy in it at all: institutional
-        accounts are temporary. Students lose them at graduation and researchers lose them on
-        moving, and work that lived on the account leaves with the account.
-      </p>
-      <p>
-        Nothing here runs a forge yet, so this section is reasoning rather than description.
-        When it happens, the thing worth weighing is governance rather than features, because
-        the mature options are near-identical software under different owners. The one worth
-        picking exists because its predecessor's stewardship moved into a company and the
-        maintainers forked instead of following it. That history matters when the whole point is
-        not having to trust a future owner.
-      </p>
-      <div class="mark-row">
-        <AltPair pair={pair('Forgejo')} openTitle="the self-hosted alternative" />
-      </div>
-    </section>
+              <!-- the standing topology: every in-range pair linked, private on top -->
+              {meshLinks.map((l) => (
+                <line class={l.priv ? 'priv-link' : 'pub-link'} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
+              ))}
 
-    <section class="marks">
-      <div class="sec-head"><h2>community research</h2><span class="idx"><b>09</b> · what it is for</span></div>
-      <p>
-        Most of what the node gets used for falls into three kinds of work. The kind matters
-        more than which company wrote the software, since that is what decides whether any of
-        it helps with the problem in front of you.
-      </p>
-      <p>
-        Chat and search interfaces are for exploring an idea, triaging a stack of papers, or
-        checking a hypothesis without writing retrieval code for every question. The part that
-        matters for research is grounding. An answer tied to a specific set of sources is
-        something you can follow back and cite, while an answer drawn from a model's general
-        training is something you have to verify by hand before you dare use it.
-      </p>
-      <div class="mark-row">
-        <AltPair pair={pair('Open WebUI')} />
-        <AltPair pair={pair('SearXNG')} />
-        <AltPair pair={pair('Onyx')} />
-        <Mark item={mark('Cherry Studio')} />
-      </div>
-      <p>
-        Agentic coding tools matter to a lab that has to build or maintain a pipeline without an
-        engineering team to hand it to. The agent reads the codebase, makes a change, runs the
-        tests, and goes round again, which is the loop a person would work through anyway.
-        Because the agent sits on top of a model rather than being welded to one, it can be
-        pointed at whichever model suits the job in front of it.
-      </p>
-      <div class="mark-row">
-        <AltPair pair={pair('Cline')} />
-        <AltPair pair={pair('OpenHands')} />
-        <AltPair pair={pair('Goose')} />
-        <Mark item={mark('opencode')} />
-        <Mark item={mark('Kilo Code')} />
-      </div>
-      <p>
-        When no existing tool matches the workflow, the pieces for building one are much the
-        same every time: a notebook to prototype in, a framework for wiring a retrieval or agent
-        pipeline together, and a plain interface so the result can be handed to somebody who
-        does not read code.
-        Automation turns a script that ran once into something that runs on a schedule.
-        Observability is how you work out which step in a long chain of model calls produced a
-        wrong answer, which is otherwise close to guesswork.
-      </p>
-      <div class="mark-row">
-        <Mark item={mark('Jupyter')} />
-        <Mark item={mark('LangChain')} />
-        <Mark item={mark('LlamaIndex')} />
-        <Mark item={mark('Haystack')} />
-        <Mark item={mark('Gradio')} />
-        <Mark item={mark('Streamlit')} />
-        <Mark item={mark('Dify')} />
-        <AltPair pair={pair('n8n')} />
-        <AltPair pair={pair('Langfuse')} />
-      </div>
-      <p>
-        Students and researchers in my community work on the node too. I did not build it for
-        them and I would rather be accurate about that. I built it for my own work, found there
-        was capacity sitting idle, and decided hardware helping nobody was the worse outcome.
-        Sharing turned out to be a property of owning the thing rather than a reason to own it.
-      </p>
-      <p>
-        At the scale of a state that arrangement has a name and a literature behind it. At this
-        scale it is one node in one house, a couple of radios, and more capacity than one person
-        can use. The argument is the same size either way. Whoever owns the compute decides what
-        gets built on it, and I would rather that decision sit with the people doing the work.
-      </p>
-    </section>
+              <!-- transmission pulse pool: the script parks one at whichever node is
+                   keying up; it expands to that radio's RF range and dies there -->
+              {Array.from({ length: 3 }).map(() => <circle class="pulse" cx="0" cy="0" r="290" />)}
+
+              <!-- the packet in transit, driven along each route by the script -->
+              <circle class="packet" cx="0" cy="0" r="4.5" />
+
+              {meshNodes.map((n, i) => (
+                <g class:list={['mn', n.contact && 'contact', n.mine && 'm-mine']}>
+                  {n.mine ? (
+                    <svg data-mesh={i} x={n.x - 26} y={n.y - 26} width="52" height="52" viewBox="0 0 30.056 30.026" class="glyph"><use href="#node-icon" /></svg>
+                  ) : (
+                    <svg data-mesh={i} x={n.x - 12} y={n.y - 12} width="24" height="24" viewBox="0 0 24 24" class="glyph"><use href="#mesh-icon" /></svg>
+                  )}
+                  {n.contact && (
+                    <svg x={n.x + 14} y={n.y - 28} width="12" height="12" viewBox="0 0 24 24" class="sun"><use href="#sun-icon" /></svg>
+                  )}
+                </g>
+              ))}
+
+              <!-- key badges: the script parks these on the sender and receiver
+                   for the duration of each exchange -->
+              <svg class="key" x="0" y="0" width="13" height="13" viewBox="0 0 24 24"><use href="#key-icon" /></svg>
+              <svg class="key" x="0" y="0" width="13" height="13" viewBox="0 0 24 24"><use href="#key-icon" /></svg>
+
+              <g class="legend">
+                <svg x="40" y="494" width="12" height="12" viewBox="0 0 24 24" class="sun"><use href="#sun-icon" /></svg>
+                <text class="tag sub" x="60" y="505">SOLAR CONTACT NODE</text>
+                <svg x="40" y="519" width="12" height="12" viewBox="0 0 24 24" class="key" style="opacity: 1"><use href="#key-icon" /></svg>
+                <text class="tag sub" x="60" y="530">SENDER + RECEIVER KEY</text>
+                <line class="priv-link" x1="250" y1="500" x2="274" y2="500" />
+                <text class="tag sub" x="292" y="505">PRIVATE CHANNEL · SHARED KEY</text>
+                <line class="pub-link" x1="250" y1="525" x2="274" y2="525" />
+                <text class="tag sub" x="292" y="530">PUBLIC CHANNEL · OPEN TO ANYONE</text>
+              </g>
+            </svg>
+          </div>
+        </figure>
+
+        <h3>How it works</h3>
+        <p>
+          Spectrum is the range of radio frequencies a transmitter may use. Some of it is set
+          aside for anyone to use without a license, and mesh radios work there, at power levels
+          low enough that a small solar panel and a battery keep one running. Open-source
+          firmware does the rest.
+        </p>
+        <p>
+          Range comes from rebroadcast. Each radio repeats every message it has not heard before,
+          up to a set number of hops, so two radios too far apart to hear each other are carried
+          by the radios in between. No radio holds a map of the network. A radio that can hear
+          both sides is enough.
+        </p>
+        <p>
+          Messages travel encrypted. A private group shares one key for its own channel, and a
+          message addressed to one person is encrypted with that person's own key, so a radio
+          passing it along forwards something it cannot read. The same radio also carries the
+          public channel and relays for strangers on it.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          This is the link that survives everything else. Where the radios in a chain run on
+          their own solar power, the messages keep moving after the electrical grid, the cell
+          network, and the internet have all stopped.
+        </p>
+      </section>
+
+      <section class="marks" id="amateur-relay">
+        <Fragment set:html={head('amateur-relay')} />
+        <p class="lead">
+          An amateur radio repeater turns a handheld radio that reaches a few blocks into one
+          that reaches a whole city. Operating on the amateur bands requires a license, and the
+          license carries obligations set by regulation.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          A repeater sits on high ground or a tall mast. It listens on one frequency and
+          retransmits what it hears on another at the same instant. Two handhelds talking
+          directly reach a few miles in the open and much less between buildings. Through a
+          repeater, a handheld reaches every radio the mast reaches, including while its operator
+          is moving.
+        </p>
+        <p>
+          The amateur bands allow far more power than unlicensed spectrum, plus voice and a wide
+          range of data modes. Three rules come with that. Stations identify themselves on the
+          air, transmissions stay unencrypted, and the service is not for commercial traffic.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Most repeaters are open to any licensed operator in range, who gets exactly the same
+          coverage as the machine's owner. That coverage is already standing when the grid and
+          the carrier networks are not, and it reaches far past anything a handheld manages
+          alone.
+        </p>
+      </section>
+
+      <section class="marks" id="satellite-downlink">
+        <Fragment set:html={head('satellite-downlink')} />
+        <p class="lead">
+          Weather satellites broadcast imagery and warnings continuously to anyone with an
+          antenna. Listening is passive, so no company, agency, or provider can close the path.
+        </p>
+        <!-- the mesh diagram's vocabulary and the map's glyph defs at a completely
+             different scale: 30 degrees of latitude instead of a quarter of one, because
+             this drawing is about pass geometry and a 2400 km reception horizon
+             has to fit on the page for that to be honest. the ring is drawn once
+             and means two things at once, which is the mechanism: how far the node
+             can hear, and how far each satellite's broadcast reaches. so the test
+             for "did this sweep land" is just whether the satellite was inside the
+             ring when it keyed, no special casing.
+             the terrain is the substance of it. contours and a faint ground wash
+             start fully masked and are painted in under each swath as it is swept,
+             so the map is built up pass by pass rather than handed over complete.
+             the four tracks are parallel and spaced to tile the frame exactly: no
+             overlap, no bare ground, because two passes covering the same ground
+             would be drawing a coverage claim that is not true. each strip then
+             ages continuously from the moment it is finished until its own orbit
+             returns to redraw it, so the four are always at four different ages
+             and the ground reads as something that has to keep being re-acquired.
+             note the deliberate split: the swath paints wherever the imager swept,
+             while the node's receive flash stays gated on the ring. the westernmost
+             track never comes into range, so it lays down terrain without the node
+             ever flashing. that gap between what flew over and what actually landed
+             is the point of the section.
+             the graticule is the counterweight to all that motion: a 5 degree grid
+             outside the mask, so the coordinate frame holds still while the ground
+             inside it is acquired, ages and is acquired again. it is unlabeled and
+             lands on no round numbers, because the frame's coordinates are
+             withheld from the terrain data and the drawing does not get to imply
+             what the generator refuses to state.
+             no key and no picture inset: every mark here is either decodable from
+             its own motion or already established by the field map above, and the
+             prose alongside carries the rest.
+             receive-only is drawn by omission: --sig is never set on this surface,
+             so the node's antenna arcs, the page's established transmit mark,
+             physically cannot appear. no pulses from the node, no packet, no keys.
+             static-legible under reduced motion (the script never starts): all
+             four satellites sit parked along their tracks at different points, each
+             with the ground it has swept so far behind it, and one carrier is
+             frozen mid-expansion. -->
+        <figure class="diagram satdiagram">
+          <div class="scroller">
+            <svg
+              viewBox="0 0 1000 560"
+              role="img"
+              aria-label="Diagram of the node's satellite downlinks over a continental frame. A dashed ring around my node marks the reception horizon, about 2,400 kilometers of ground distance, which is also the radius of the ground footprint each passing satellite broadcasts into. Four parallel near-polar ground tracks cross the frame, one orbit walked west each time around, spaced so their imaging swaths tile the frame exactly with no overlap and no gap. A fixed, unlabeled grid of latitude and longitude lines covers the frame and never changes, so the coordinates stay put while the ground inside them comes and goes. The map starts with no terrain at all. Satellites take turns gliding along their tracks, broadcasting continuously as grey expanding rings, and each one paints in a strip of pale ground and elevation contours behind it as it sweeps. A finished strip then fades slowly and evenly for the whole interval until its own orbit comes back to lay it down again, so the four strips sit at four different ages and the ground is never simply there. What the node actually receives is a stricter thing, gated by the ring: while a satellite is inside it the node darkens on each arriving broadcast front. One pass crosses almost overhead, two are middling, and the westernmost stays out of range for its entire transit, so it paints its strip of ground without the node ever flashing. The node never carries a transmit mark, because it only listens."
+            >
+              <!-- the swath each imager is laying down: one rect per track, grown
+                   by the script as its satellite advances. white reveals, so the
+                   terrain below exists only where a pass has swept it. a strip is
+                   marked .stale one pass before its own orbit returns, which fades
+                   it out in time to be repainted. -->
+              <mask id="sat-scan-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="560">
+                <rect x="0" y="0" width="1000" height="560" fill="black" />
+                {satGeom.map((g, i) => (
+                  <rect
+                    data-swath={i}
+                    transform={`translate(${satTracks[i].x1} ${satTracks[i].y1}) rotate(${g.angleDeg})`}
+                    x="0"
+                    y={-satSwathW / 2}
+                    width={g.staticW}
+                    height={satSwathW}
+                    fill="white"
+                  />
+                ))}
+              </mask>
+
+              <!-- real SRTM contours for a random continental frame
+                   (gen-sat-terrain.mjs); its own location, not the other two.
+                   the wash rides inside the same masked group, so the tint and the
+                   contours appear and age together off one mask. -->
+              <g mask="url(#sat-scan-mask)">
+                <rect class="scan-wash" x="0" y="0" width="1000" height="560" />
+                <g class="contours">
+                  {satContours.map((c) => <path d={c.d} class:list={[c.level % satIndexStep === 0 && 'index']} />)}
+                </g>
+              </g>
+
+              <!-- the graticule sits outside the mask on purpose. it is the frame
+                   you read the drawing in, not something a pass produced, so it
+                   stays put while the ground under it comes and goes: whatever the
+                   satellites have or have not brought down, the coordinates hold
+                   still. drawn over the terrain, under everything else. -->
+              <g class="graticule">
+                {satGratX.map((x) => <line x1={x} y1="0" x2={x} y2="560" />)}
+                {satGratY.map((y) => <line x1="0" y1={y} x2="1000" y2={y} />)}
+              </g>
+
+              <!-- the reception horizon. clips top and bottom of the frame on
+                   purpose: at this scale the real thing is bigger than the view -->
+              <circle class="range" cx={satNode.x} cy={satNode.y} r={satRingR} />
+
+              <!-- ground tracks stay put whether or not a satellite is on them,
+                   the way a pass predictor draws them -->
+              {satTracks.map((t) => <line class="track" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />)}
+
+              <!-- carrier pool: the script parks one at the satellite's current
+                   position and fires it out to the footprint radius -->
+              {Array.from({ length: 4 }).map(() => <circle class="carrier" cx="0" cy="0" r={satRingR} />)}
+              <!-- one carrier frozen partway to the node, so the static frame still
+                   shows a broadcast in flight. the script hides it on start. -->
+              <circle class="carrier-static" cx={satParks[0].x} cy={satParks[0].y} r="100" />
+
+              <svg
+                data-sat="node"
+                x={satNode.x - 26}
+                y={satNode.y - 26}
+                width="52"
+                height="52"
+                viewBox="0 0 30.056 30.026"
+                class="glyph node-glyph"><use href="#node-icon" /></svg>
+
+              {satParks.map((p, i) => (
+                <svg
+                  data-sat={i}
+                  x={p.x - 13}
+                  y={p.y - 13}
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  class="glyph sat-glyph"><use href="#sat-icon" /></svg>
+              ))}
+
+            </svg>
+          </div>
+        </figure>
+
+        <h3>How it works</h3>
+        <p>
+          Two kinds of satellite are worth hearing. Polar orbiters circle the planet from pole to
+          pole while it turns underneath them, so each one eventually passes over everywhere. A
+          receiver on the ground decodes each pass into a strip of imagery. Geostationary
+          satellites hold one spot above the equator and broadcast the same view continuously,
+          carrying imagery alongside forecasts and warnings written as text.
+        </p>
+        <p>
+          Three kinds of image arrive. Visible light shows cloud the way an eye would see it.
+          Infrared measures temperature and works at night. Water vapor shows moisture in the air
+          that has not yet become weather.
+        </p>
+        <p>
+          Imagery is unreadable without a map underneath it. Map data kept on local disk instead
+          of fetched from a service puts reference material under the same ownership as
+          everything else here. Ground readings from a weather station complete it: the imagery
+          shows what was coming, the sensors record what arrived.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          A receiver asks for nothing. It has no account to suspend and sends no request that
+          could be refused, so weather and emergency information keep arriving when every
+          terrestrial network in the area is down.
+        </p>
+      </section>
+
+      <section class="marks" id="ota-tv">
+        <Fragment set:html={head('ota-tv')} />
+        <p class="lead">
+          Broadcast television is free and unmetered, and an antenna with a tuner receives news
+          and emergency alerts with no internet connection and no account anywhere.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          A transmitter radiates one signal to every receiver in range at once. Nothing counts
+          viewers and nothing records who watched, because no receiver ever sends anything back.
+          A tuner on the local network turns those channels into streams the whole household can
+          watch, and an open-source recorder saves programs to the storage pool on a schedule
+          read from the broadcast guide.
+        </p>
+        <h3>Two standards on the air</h3>
+        <p>
+          The older United States standard broadcasts in the clear, and any tuner built for it
+          decodes the signal. The newer one, ATSC 3.0, adds higher-resolution video, emergency
+          alerting that can target a specific area, an internet return channel for stations that
+          want one, and datacasting, which carries ordinary files over the broadcast instead of
+          video.
+        </p>
+        <p>
+          Some ATSC 3.0 stations encrypt what they send. Decoding those requires a receiver
+          carrying a licensed decryption path, which not every device has. A signal broadcast in
+          the clear is decodable by any receiver built for the standard, for as long as the
+          transmitter keeps running.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          It sits beside the satellite downlinks for the same reason. Both are paths where
+          information arrives without being requested, and both keep working when the connection
+          a household normally depends on does not.
+        </p>
+      </section>
+
+      <section class="marks" id="beacons">
+        <Fragment set:html={head('beacons')} />
+        <p class="lead">
+          Aircraft and ships broadcast their identity and position continuously, unencrypted, as
+          a condition of operating. A small receiver logs every one of them in range, with no
+          service, subscription, or license involved.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Aircraft transmit position, altitude, speed, and an identifier on one frequency
+          reserved for the purpose. Ships transmit position and course on two marine channels,
+          along with a static report giving the vessel's type and length. Neither signal is
+          encrypted, because both exist so that other traffic and shore stations can see who is
+          nearby.
+        </p>
+        <p>
+          One inexpensive software-defined receiver, the same class of hardware that hears the
+          weather satellites, decodes either. Open-source decoders turn the raw signal into a
+          live map. An aircraft's make and model is not in the broadcast at all: it comes from
+          matching the transmitted identifier against a registry held on local disk.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          It gives a live picture of the traffic around a site with nothing in the path that can
+          be metered or withdrawn. A log of it is useful to publish, and publishing types while
+          withholding identifiers keeps it that way without following any particular aircraft or
+          vessel.
+        </p>
+      </section>
+
+      <section class="marks" id="gnss">
+        <Fragment set:html={head('gnss')} />
+        <p class="lead">
+          A satellite navigation receiver supplies exact time and a fixed position from space, so
+          nothing on site has to ask the internet what time it is.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Navigation satellites carry atomic clocks and broadcast the time continuously. A
+          receiver on the ground hears several at once and works out both where it is and what
+          time it is. Alongside the data, the receiver emits one electrical pulse at the start of
+          every second. Timekeeping software uses the message to learn which second it is and the
+          pulse to mark exactly when that second begins, which holds the local clock to within
+          microseconds of the satellites.
+        </p>
+        <p>
+          That clock then serves every other machine on the local network, so the whole site
+          agrees on the time without a single packet leaving it. Several separate satellite
+          systems are in orbit, and a receiver that listens to more than one keeps working when
+          any single system is unavailable.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Time is a dependency almost nothing declares. Encrypted connections check certificate
+          validity against the clock, log entries and sensor readings are only comparable if
+          their timestamps agree, and predicting when a satellite will next be overhead is
+          arithmetic on the current time. A site with its own clock keeps all of that during an
+          outage. The position fix is the second half: it is what aims an antenna and what turns
+          a pass prediction into a time to be listening.
+        </p>
+      </section>
+
+      <section class="marks" id="weather-station">
+        <Fragment set:html={head('weather-station')} />
+        <p class="lead">
+          A weather station measures the conditions at one exact place and reports them to open
+          data commons instead of to a manufacturer's app.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Sensors read temperature, humidity, air pressure, and wind. Each reading is a few bytes
+          sent every several minutes, which is exactly what long-range low-power radio is built
+          to carry, so the mesh or a community-run sensor network moves the traffic without any
+          wired connection to the instruments.
+        </p>
+        <p>
+          The receiving platforms are commons: any station may feed them and anyone may query
+          them. Nobody can reprice a commons, put it behind a login, or shut it down when a
+          product line is discontinued, and the readings are useful to people other than whoever
+          installed the sensors.
+        </p>
+        <h3>Listening as measurement</h3>
+        <p>
+          An all-weather microphone and a classifier running on local hardware identify bird
+          species by their calls, which turns a fixed location into a continuous biodiversity
+          survey. The list of species heard can be published openly while the detailed record,
+          with times, counts, and the sensor readings from the same moment, stays behind access
+          control. Section {byId['community-research'].n} covers who gets to query that.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          A forecast covers a region. A station covers a site, and the difference between the two
+          is what a person standing there actually experiences. Years of readings from one place
+          also answer questions its operator never thought to ask, so the record earns its
+          keeping long after the day it was written.
+        </p>
+        <div class="mark-row">
+          <Mark item={mark('openSenseMap')} />
+          <Mark item={cwop} />
+          <Mark item={ttn} />
+        </div>
+      </section>
+
+      <section class="marks" id="smart-security">
+        <Fragment set:html={head('smart-security')} />
+        <p class="lead">
+          Cameras recorded and analyzed on local hardware keep footage of a property on the
+          property, and keep working when the connection does not.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Network cameras publish a continuous video stream that any recorder on the same network
+          can read, using open protocols for both the video and the discovery of the cameras
+          themselves. A recorder writes the streams to the storage pool in segments.
+        </p>
+        <p>
+          Running a detection model over the frames is what makes those recordings searchable. An
+          alert fires when a person, a vehicle, or an animal is actually in frame. Plain motion
+          detection fires on any pixel that changes, which in wind and rain means all night. A
+          small dedicated inference accelerator handles the detection so the graphics cards stay
+          free for other work.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          The consumer version of this uploads everything to a manufacturer and charges a monthly
+          fee for access to your own recordings, so the cameras stop being useful the moment the
+          connection or the company does. Keeping the cameras, the recorder, and the model on one
+          local network puts retention in the owner's hands and means no footage leaves without a
+          deliberate decision to send it.
+        </p>
+        <p>
+          Detections handled locally compose with everything else here. An alert can go out over
+          the mesh to a handheld with no cell service in range, and it can be read next to what
+          the weather station and the microphone recorded at that same moment.
+        </p>
+      </section>
+
+      <section class="marks" id="ai-compute">
+        <Fragment set:html={head('ai-compute')} />
+        <p class="lead">
+          A machine you own cannot be suspended, repriced, or reclaimed on somebody else's
+          schedule. Powering it from your own generation extends that to the electricity it runs
+          on.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Graphics cards do the heavy arithmetic that running a model requires. A small
+          single-board computer handles the housekeeping and the sensor plumbing, which needs
+          very little power and no graphics card at all.
+        </p>
+        <div class="mark-row">
+          <Mark item={mark('NVIDIA')} />
+          <Mark item={mark('AMD')} />
+          <Mark item={mark('Raspberry Pi')} />
+        </div>
+        <p>
+          The software counts as much as the hardware. An operating system and a serving stack
+          whose source can be read let an operator follow a request all the way to its answer,
+          fix what breaks, and keep the system running after the people who wrote it have moved
+          on. Behavior that can be read does not have to be taken on trust.
+        </p>
+        <div class="mark-row">
+          <Mark item={mark('Linux')} />
+          <Mark item={mark('Docker')} />
+          <Mark item={mark('vLLM')} />
+        </div>
+        <h3>Power</h3>
+        <p>
+          Owning a machine that draws from a single utility connection trades a cloud provider's
+          terms for a utility's. Generation and storage therefore belong inside the system, owned
+          the way a disk is owned. Solar, wind, and hydro each supply power nobody bills for and
+          nobody can switch off remotely. Generators running on biogas or biodiesel cover the
+          days none of the three deliver. A battery bank holds the surplus for the hours when the
+          sun is down and the wind is still.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Owning both the machine and its power changes how deep a failure goes. A grid outage
+          becomes a change somewhere in the middle of the stack instead of an event that takes
+          everything off the air, and the compute above it carries on answering.
+        </p>
+      </section>
+
+      <section class="marks" id="nas">
+        <Fragment set:html={head('nas')} />
+        <p class="lead">
+          Network attached storage puts every disk behind one file service, so all the machines
+          on the network work against a single pool that checks its own data for corruption.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          A NAS is a machine whose only job is disks. Several drives are combined into one array,
+          a filesystem spans the whole thing, and standard protocols hand it to clients: one for
+          desktops, one for Unix hosts, and an object storage interface for software that expects
+          to talk to storage the way cloud services do.
+        </p>
+        <p>
+          Redundancy means the pool keeps serving through the loss of a drive and rebuilds onto a
+          replacement. Redundancy is not backup. A file deleted on a redundant array is deleted
+          on every disk in it at once. Snapshots, and copies kept somewhere else, are what
+          recover a mistake or a site that has burned down.
+        </p>
+        <h3>Integrity</h3>
+        <p>
+          For a record meant to be read years from now, correctness matters more than capacity.
+          Disks occasionally return data that differs from what was written, without reporting an
+          error. A checksumming filesystem stores a fingerprint of every block it writes and
+          checks it on every read, so corruption is caught instead of served. A periodic pass
+          over the whole pool rebuilds any bad block from a good copy and writes it back. That is
+          the difference between a disk and an archive.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Everything else here produces data that has to land somewhere. Model files
+          are large and must not change once chosen. Sensor readings and species identifications
+          accumulate continuously. Camera recordings arrive around the clock. One checked pool
+          holds all of it, and it is the one thing here worth backing up.
+        </p>
+      </section>
+
+      <section class="marks" id="open-weights">
+        <Fragment set:html={head('open-weights')} />
+        <p class="lead">
+          Open weight models are published as files anyone can download and run on their own
+          hardware. A model chosen today still answers the same way years from now, because
+          nobody else can change it or take it back.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          A model is a very large table of numbers. Training adjusts those numbers over months of
+          computation, and what comes out is a file. Running the model is arithmetic over that
+          file. A closed model stays on a company's servers, reachable only through an interface
+          that accepts questions and returns answers.
+        </p>
+        <p>
+          Open weights are not the same as open source. The Open Source Initiative's definition
+          of open source AI also asks for the training code and enough information about the
+          training data to rebuild an equivalent system. Most weight releases publish neither,
+          and their licenses differ enough that reading them matters.
+        </p>
+        <h3>What the file makes possible</h3>
+        <p>
+          Three properties follow from having the file. A hosted model can be updated or retired
+          at any time, and a published result can stop reproducing with no change at the
+          researcher's end, while a file on local disk holds still and can be cited exactly and
+          rerun later. A question asked of a local model never leaves the machine, and work
+          carried out under an ethics approval often requires exactly that. A downloaded file
+          also cannot be recalled by anyone.
+        </p>
+        <p>
+          Weights arrive without the machinery to run them. Owned compute and the power beneath
+          it are that machinery.
+        </p>
+        <h3>What it does here</h3>
+        <p>
+          A model running locally takes on work that would otherwise wait for a person. It
+          watches the radio links and reports behavior that looks wrong. It does the listening
+          behind the species list. It combines station measurements with the most recent
+          satellite pass into a forecast for one specific site, which no regional forecast
+          attempts.
+        </p>
+        <p>
+          It can also appear as a contact on the mesh, so anyone in radio range messages it the
+          way they would message a person, with no cell service and no billed link anywhere in
+          the path. Compute of this kind stays in one place, and radio is what carries its
+          answers out to where the people are.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          The compute in section {byId['ai-compute'].n} is only as durable as what it runs. A
+          published file is the one form of model that stays available on the operator's terms
+          rather than the publisher's.
+        </p>
+        <div class="mark-row">
+          <Mark item={mark('Hugging Face')} />
+          <Mark item={mark('Llama')} />
+          <Mark item={mark('Qwen')} />
+          <Mark item={mark('DeepSeek')} />
+          <Mark item={mark('Mistral')} />
+          <Mark item={mark('Gemma')} />
+          <Mark item={mark('OpenMed')} />
+          <Mark item={mark('Meshtastic')} />
+        </div>
+      </section>
+
+      <section class="marks" id="vpn">
+        <Fragment set:html={head('vpn')} />
+        <p class="lead">
+          A virtual private network carries traffic inside an encrypted tunnel between two
+          machines, so every network in between sees the tunnel and not what it holds. It is how
+          a machine at home is reached from outside without opening a single port to the
+          internet.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          The two ends prove their identity to each other, agree on keys, and then wrap every
+          packet inside another packet addressed to the far end. Anything carrying that traffic
+          sees only the outer packet.
+        </p>
+        <p>
+          The same mechanism does two jobs. It reaches a private machine from anywhere without
+          exposing anything to the open internet. And it moves the point where traffic enters the
+          public internet, so the local network and the access provider see encrypted packets to
+          one address instead of a record of everywhere the machine went. The modern protocols
+          are small enough to read from end to end, so claims about how a tunnel behaves can be
+          checked rather than believed.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Running the far end on owned hardware means the tunnel terminates on a machine with a
+          known configuration and no logging policy to take on faith. Traffic leaves under an
+          address that belongs to the operator. That makes a tunnel an instrument of
+          confidentiality and control. Anonymity is a different property, and the next section is
+          about the tool for it.
+        </p>
+        <div class="mark-row">
+          <Mark item={headscale} />
+          <Mark item={mark('WireGuard')} />
+          <Mark item={mark('OpenVPN')} />
+        </div>
+      </section>
+
+      <section class="marks" id="tor">
+        <Fragment set:html={head('tor')} />
+        <p class="lead">
+          Tor sends traffic through three relays run by three different parties, so no single one
+          of them knows both who is connecting and where the connection is going. Its onion
+          services also make a machine reachable with no public address at all.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          The software wraps each packet in three layers of encryption and sends it along a path
+          it picked itself. The first relay knows the sender's address but not the destination.
+          The middle relay knows neither. The last relay knows the destination but not the
+          sender. Each one removes a single layer and can read nothing except where to send the
+          packet next.
+        </p>
+        <p>
+          Anonymity here comes from traffic crossing many operators who do not pool what they
+          see, so the network gets stronger as more independent people run relays.
+        </p>
+        <h3>Onion services</h3>
+        <p>
+          A service published at an onion address is reached through the network itself. It needs
+          no public address, no forwarded port, and no entry in the naming system. That works
+          from behind the kind of shared address described in section
+          {' '}{byId['dynamic-dns'].n}, and it works without asking any provider for permission.
+          The address is derived from the service's own key, so arriving at the right address and
+          verifying it are the same act.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          A machine with bandwidth to spare can carry traffic for the network as a relay or a
+          bridge. That is the ordinary way to add capacity to it, and it is capacity the whole
+          network shares.
+        </p>
+      </section>
+
+      <section class="marks" id="stun-server">
+        <Fragment set:html={head('stun-server')} />
+        <p class="lead">
+          A STUN server tells a machine behind a home router what its address looks like from
+          the outside. That is the first step in connecting two machines that are both behind
+          routers, and hosting one removes the last outside party from the arrangement.
+        </p>
+        <h3>How it works</h3>
+        <p>
+          Home routers rewrite addresses. A machine behind one sees only a private address, while
+          the packets it sends leave under a public address and port number the router picked.
+          The machine has no way to learn what those are on its own.
+        </p>
+        <p>
+          A STUN server answers exactly that question. A machine sends it a packet, and the reply
+          reports the address and port the server saw the packet arrive from. Once two machines
+          have each learned their own, they trade the details over any channel and then send to
+          each other at the same moment, so each router treats the incoming packet as an answer
+          to its own outbound one. This is called hole punching, and it is how two machines build
+          a direct connection instead of routing everything through somebody's relay.
+        </p>
+        <p>
+          Some routers assign ports unpredictably and hole punching fails against them. A TURN
+          server relays the traffic in those cases, and one open-source server commonly provides
+          both roles.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Networks built on this pattern normally point at servers belonging to whoever wrote the
+          software, which is one company holding the introductions for every connection. Hosting
+          the coordinating server and its relay puts the whole path on owned hardware, from
+          learning an address through to relaying when learning one is not enough.
+        </p>
+        <div class="mark-row">
+          <Mark item={coturn} />
+          <Mark item={headscale} />
+        </div>
+      </section>
+
+      <section class="marks" id="dynamic-dns">
+        <Fragment set:html={head('dynamic-dns')} />
+        <p class="lead">
+          The naming system turns names into addresses, and both halves of it can be run at
+          home. One keeps your own name pointed at an address that keeps changing. The other
+          looks up everyone else's names directly, so no outside company sees what the household
+          is reaching for.
+        </p>
+        <h3>Naming your own address</h3>
+        <p>
+          Residential connections take their public address from a pool and can be handed a
+          different one after any reconnection. A fixed name solves that, as long as something
+          updates the name whenever the address moves. The update method is standardized and
+          authenticated with a shared key, so a short script can rewrite a single record on the
+          server that holds the name. Every widely used name server accepts updates this way.
+        </p>
+        <p>
+          The server holding the name has to sit at an address that does not move, which the home
+          connection does not. It therefore runs elsewhere: a second site, a peer hosting the
+          record reciprocally, or a small rented machine. Handing one subdomain to it keeps the
+          main domain at the registrar while the changing records stay under owned control.
+        </p>
+        <p>
+          A name is not a path. Many residential, cellular, and satellite providers put a large
+          number of customers behind one shared public address, and no incoming connection can
+          reach any single customer through it. The name resolves correctly to an address nobody
+          can connect to. Reachability comes instead from the tunnels, onion services, and relays
+          above, all of which open their connections outward, and the name then points at that
+          endpoint rather than at the home connection.
+        </p>
+        <h3>Resolving everyone else's</h3>
+        <p>
+          The other half runs in the opposite direction. Every connection any device makes starts
+          by looking up a name, and by default that lookup goes to a resolver belonging to an
+          internet provider or a large company, which sees every site the household visits.
+        </p>
+        <p>
+          A resolver running at home asks the root servers, then the servers for the top-level
+          domain, then the servers holding the name itself. It also verifies the cryptographic
+          signatures published alongside a growing share of records, which is how a forged answer
+          is detected. Filtering lists apply at this layer too, so unwanted domains are refused
+          for every device on the network at once.
+        </p>
+        <h3>Why it belongs</h3>
+        <p>
+          Names are the first thing every connection touches, in both directions. Running both
+          halves keeps the household's lookups inside the house and keeps its own name under its
+          operator's control.
+        </p>
+        <div class="mark-row">
+          <Mark item={knot} />
+          <Mark item={powerdns} />
+          <Mark item={bind} />
+          <Mark item={unbound} />
+        </div>
+      </section>
+
+      <section class="marks" id="community-research">
+        <Fragment set:html={head('community-research')} />
+        <p class="lead">
+          Owned infrastructure comes with surplus, and surplus is what can be given away. That
+          headroom is what students and researchers nearby get to work on.
+        </p>
+        <h3>Where the surplus comes from</h3>
+        <p>
+          Renting sizes a resource to exactly what is paid for. Owning means buying whole units:
+          more processors than tonight's job needs, more disk than this year's data fills, more
+          power than the load draws at noon. A rented seat is metered to one person and cannot be
+          handed to anybody, so an operator paying for exactly their own usage has nothing to
+          offer even when they would like to. An owned machine has capacity sitting idle between
+          jobs, and pointing it at somebody else's work costs its owner none of their own.
+        </p>
+        <h3>What the compute is used for</h3>
+        <p>
+          Research work here falls into three kinds. The kind of work decides whether a tool
+          helps, which matters more than which company built it.
+        </p>
+        <p>
+          Chat and search interfaces explore an idea, sort through a stack of papers, or check a
+          hypothesis without writing retrieval code for every question. Grounding is what makes
+          them useful for research. An answer tied to named sources can be followed and cited. An
+          answer drawn from general training has to be verified by hand.
+        </p>
+        <div class="mark-row">
+          <AltPair pair={pair('Open WebUI')} />
+          <AltPair pair={pair('SearXNG')} />
+          <AltPair pair={pair('Onyx')} />
+          <Mark item={mark('Cherry Studio')} />
+        </div>
+        <p>
+          Agentic coding tools let a lab build and maintain a pipeline without an engineering
+          team. The agent reads the code, makes a change, runs the tests, and goes round again,
+          which is the loop a person works through. These tools sit on top of a model instead of
+          being tied to one, so they can be pointed at whichever model suits the job.
+        </p>
+        <div class="mark-row">
+          <AltPair pair={pair('Cline')} />
+          <AltPair pair={pair('OpenHands')} />
+          <AltPair pair={pair('Goose')} />
+          <Mark item={mark('opencode')} />
+          <Mark item={mark('Kilo Code')} />
+        </div>
+        <p>
+          When no existing tool fits, the same pieces recur for building one: a notebook to
+          prototype in, a framework for wiring up a retrieval or agent pipeline, and a simple
+          interface for handing the result to somebody who does not read code. Scheduling turns a
+          one-off script into a job that runs on its own. Tracing shows which step in a chain of
+          model calls produced a wrong answer.
+        </p>
+        <div class="mark-row">
+          <Mark item={mark('Jupyter')} />
+          <Mark item={mark('LangChain')} />
+          <Mark item={mark('LlamaIndex')} />
+          <Mark item={mark('Haystack')} />
+          <Mark item={mark('Gradio')} />
+          <Mark item={mark('Streamlit')} />
+          <Mark item={mark('Dify')} />
+          <AltPair pair={pair('n8n')} />
+          <AltPair pair={pair('Langfuse')} />
+        </div>
+        <h3>The record, and who can query it</h3>
+        <p>
+          The data these instruments collect is abundant in the same way as the compute. An
+          interface over everything they sense turns a log kept for one person into something
+          many people can query, and the collecting was happening anyway. One site is a small
+          sample. A site that has been listening for years, alongside others doing the same,
+          answers questions its operator would never think to ask. A public page shows the
+          summary, and the interface answers the detail beneath it.
+        </p>
+        <ul class="log-list api-list">
+          <li><span>Station readings</span><b>temperature, humidity, pressure, wind</b></li>
+          <li><span>Acoustic identifications</span><b>species, time, confidence</b></li>
+          <li><span>Local forecasts</span><b>derived locally</b></li>
+          <li><span>Satellite imagery</span><b>visible, infrared, water vapor</b></li>
+          <li><span>Contact log</span><b>aircraft, vessels, passes overhead</b></li>
+        </ul>
+        <p>
+          Access begins by invitation, which is how an operator introduces people to the
+          instrument properly.
+        </p>
+        <h3>Keeping the code with the data</h3>
+        <p>
+          A result reproduces from three things: the data, the model, and the code that combined
+          them. Choosing a model file settles only the second. If the code lives on a platform
+          that can lock an account or remove a repository, the record has a hole in it that shows
+          up only when somebody tries to rerun the work years later. Institutional accounts are
+          temporary in any case. Students lose them at graduation, researchers lose them on
+          moving, and work held inside an account leaves with it.
+        </p>
+        <p>
+          Self-hosted code forges are mature, so keeping the history next to the compute is a
+          configuration decision. Choosing between them is a question of governance. Forgejo
+          exists because Gitea's trademarks and operations were transferred to a private company
+          in 2022, and the maintainers forked the project under a nonprofit rather than follow
+          it.
+        </p>
+        <div class="mark-row">
+          <AltPair pair={pair('Forgejo')} openTitle="the self-hosted alternative" />
+        </div>
+        <h3>Why it belongs</h3>
+        <p>
+          Whoever owns the compute decides what gets built on it. An owner with room to spare can
+          hand that decision to the people doing the work, which is the whole reason to build the
+          surplus in the first place.
+        </p>
+      </section>
+    </div>
   </main>
 
   <script>
     // Ambient readouts for the field diagram. Values drift inside realistic bands.
+    import { solarPct, batt as battAt } from '../data/solarday.js';
+
     const el = (id: string) => document.getElementById(id)!;
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
     const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
@@ -460,37 +1561,436 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
     const WX_DIRS = ['N', 'NNW', 'NW', 'WNW', 'W', 'SW'];
     const randWx = () => ({ state: pick(WX_STATES), kt: 4 + Math.floor(Math.random() * 10), dir: pick(WX_DIRS) });
 
-    let batt = 58 + Math.random() * 30;
     let temp = 43 + Math.random() * 10;
-    let mesh = 6 + Math.floor(Math.random() * 3);
+    let mesh = 7 + Math.floor(Math.random() * 3);
     let wx = randWx();
 
-    // Fraction of rated PV output for the current hour, dark outside 06:30-19:30.
+    // Solar and battery come off the shared day model, the same one the
+    // resilience diagram draws in full; the readout drift is added here so the
+    // drawn curves stay clean.
+    const hourNow = () => new Date().getHours() + new Date().getMinutes() / 60;
+
     const solar = () => {
-      const h = new Date().getHours() + new Date().getMinutes() / 60;
-      if (h < 6.5 || h > 19.5) return 0;
-      return Math.max(0, Math.round(Math.sin(((h - 6.5) / 13) * Math.PI) * 88 + (Math.random() * 6 - 3)));
+      const s = solarPct(hourNow());
+      return s === 0 ? 0 : Math.max(0, Math.round(s + (Math.random() * 6 - 3)));
+    };
+
+    const batt = () => {
+      const b = battAt(hourNow());
+      return b.mode === 'FLOAT' ? { pct: b.pct - Math.random(), mode: b.mode } : b;
     };
 
     const render = (s: number) => {
+      const b = batt();
       el('m-solar').textContent = `${s}%`;
-      el('m-batt').textContent = `${Math.round(batt)}% ${s > 35 ? 'CHG' : 'DISCHG'}`;
+      el('m-batt').textContent = `${Math.round(b.pct)}% ${b.mode}`;
       el('m-temp').textContent = `${temp.toFixed(1)}°C`;
       el('m-wx').textContent = `${wx.state} · ${wx.kt}KT ${wx.dir}`;
       el('m-mesh').textContent = `${mesh} HEARD`;
     };
 
     const tick = () => {
-      const s = solar();
-      batt = clamp(batt + (s > 35 ? 0.06 : -0.05) + (Math.random() - 0.5) * 0.1, 34, 100);
       temp = clamp(temp + (Math.random() - 0.5) * 0.9, 37, 68);
-      if (Math.random() < 0.07) mesh = clamp(mesh + (Math.random() < 0.5 ? -1 : 1), 5, 9);
+      if (Math.random() < 0.07) mesh = clamp(mesh + (Math.random() < 0.5 ? -1 : 1), 7, 10);
       if (Math.random() < 0.04) wx = randWx();
-      render(s);
+      render(solar());
     };
 
     render(solar());
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(tick, 2500);
+
+    // Beacon emissions. Each emitter fires at its protocol's real report interval
+    // (data-every, seconds): ADS-B ident 5s, AIS class A underway 10s, satellite
+    // downlink carrier 2s. A ring is parked at the emitter's position at the moment
+    // of emission (it does not travel with the vehicle), expands to the window edges
+    // in 6s, and the node color-pulses when the front covers the node's distance.
+    const map = document.querySelector<SVGSVGElement>('.map')!;
+    const nodeGlyph = el('node-glyph');
+    const waves = [...document.querySelectorAll<SVGCircleElement>('.wave')];
+    const rings = [...document.querySelectorAll<SVGCircleElement>('.ring')];
+    let ringIdx = 0;
+    let waveIdx = 0;
+    let txTimer: ReturnType<typeof setTimeout>;
+
+    const mapCoords = (elm: Element) => {
+      const r = elm.getBoundingClientRect();
+      const m = map.getBoundingClientRect();
+      const s = Math.max(m.width / 1600, m.height / 1000);
+      return [
+        (r.left + r.width / 2 - m.left - (m.width - 1600 * s) / 2) / s,
+        (r.top + r.height / 2 - m.top - (m.height - 1000 * s) / 2) / s,
+      ];
+    };
+
+    const emit = (x: number, y: number) => {
+      const reach = Math.max(
+        Math.hypot(x, y), Math.hypot(1600 - x, y),
+        Math.hypot(x, 1000 - y), Math.hypot(1600 - x, 1000 - y),
+      );
+      const ring = rings[ringIdx++ % rings.length];
+      ring.setAttribute('cx', x.toFixed(1));
+      ring.setAttribute('cy', y.toFixed(1));
+      ring.setAttribute('r', Math.ceil(reach).toString());
+      ring.classList.remove('live');
+      void ring.getBoundingClientRect(); // restart the one-shot animation
+      ring.classList.add('live');
+      const travelMs = (Math.hypot(x - 640, y - 420) / (reach / 6)) * 1000;
+      setTimeout(() => {
+        nodeGlyph.classList.add('rx');
+        setTimeout(() => nodeGlyph.classList.remove('rx'), 450);
+        // reply beacon, one per receipt; pooled so concurrent replies overlap
+        const wave = waves[waveIdx++ % waves.length];
+        wave.classList.remove('live');
+        void wave.getBoundingClientRect();
+        wave.classList.add('live');
+        // antenna waves key up briefly per reply, the same ~2s burst as the
+        // stations; receipts arrive every few seconds, so a longer window would
+        // chain into looking permanently on
+        nodeGlyph.classList.add('tx');
+        clearTimeout(txTimer);
+        txTimer = setTimeout(() => nodeGlyph.classList.remove('tx'), 2000);
+      }, travelMs);
+    };
+
+    // field log modal: native dialog handles focus trap and Escape
+    const dlg = document.querySelector<HTMLDialogElement>('.fieldlog')!;
+    el('birds-btn').addEventListener('click', () => dlg.showModal());
+    dlg.querySelector('.log-close')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close(); // backdrop click
+    });
+
+    const emitters = [...document.querySelectorAll<SVGElement>('[data-every]')].map((elm, i) => ({
+      elm,
+      every: Number(elm.dataset.every) * 1000,
+      next: performance.now() + 1500 + i * 2200,
+    }));
+
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // one contact keys up right away, so the map isn't silent on load. Planes
+      // and satellites use a negative animation-delay to park mid-cycle (so a
+      // reduced-motion freeze doesn't strand them mid-map), and that parked spot
+      // is usually off the 1600x1000 viewBox by design; only fire from whichever
+      // contacts are actually on the map right now.
+      const onMap = emitters
+        .map((e) => ({ e, xy: mapCoords(e.elm) }))
+        .filter(({ xy: [x, y] }) => x > 0 && x < 1600 && y > 0 && y < 1000);
+      if (onMap.length) {
+        const { e, xy } = onMap[Math.floor(Math.random() * onMap.length)];
+        emit(...xy);
+        e.next = performance.now() + e.every;
+      }
+
+      setInterval(tick, 2500);
+      setInterval(() => {
+        const now = performance.now();
+        for (const e of emitters) {
+          if (now < e.next) continue;
+          e.next = now + e.every;
+          const [x, y] = mapCoords(e.elm);
+          if (x > 0 && x < 1600 && y > 0 && y < 1000) emit(x, y);
+        }
+      }, 500);
+
+      // a click on the map keys up a beacon from that spot, same as any contact
+      document.querySelector('.fieldmap')!.addEventListener('click', (e) => {
+        if ((e.target as Element).closest('a, button')) return;
+        const m = map.getBoundingClientRect();
+        const s = Math.max(m.width / 1600, m.height / 1000);
+        const x = (e.clientX - m.left - (m.width - 1600 * s) / 2) / s;
+        const y = (e.clientY - m.top - (m.height - 1000 * s) / 2) / s;
+        if (x > 0 && x < 1600 && y > 0 && y < 1000) emit(x, y);
+      });
+    }
+
+    // ---- TOC scroll-spy ---------------------------------------------------
+    // ponytail: IntersectionObserver rather than a scroll handler; the band is a
+    // reading zone near the top of the viewport, so the row that lights is the
+    // section being read rather than the one merely on screen.
+    const tocLinks = [...document.querySelectorAll<HTMLAnchorElement>('.components a[href^="#"]')];
+    const tocById = new Map(tocLinks.map((a) => [a.getAttribute('href')!.slice(1), a]));
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const hit = tocById.get(e.target.id);
+          for (const a of tocLinks) {
+            a.classList.toggle('active', a === hit);
+            if (a === hit) a.setAttribute('aria-current', 'true');
+            else a.removeAttribute('aria-current');
+          }
+        }
+      },
+      { rootMargin: '-10% 0px -70% 0px' },
+    );
+    for (const id of tocById.keys()) {
+      const s = document.getElementById(id);
+      if (s) spy.observe(s);
+    }
+  </script>
+
+  <script define:vars={{ meshNodes, mapMeshNodes, satNode, satTracks, satGeom, satRingR, SAT_KM_PER_UNIT }}>
+    // Mesh traffic engine, driving both the mesh-radio diagram and the field
+    // map. A random start node keys up, the packet rides each wave front hop by
+    // hop along the most direct route (Dijkstra over link distance), every
+    // neighbor flashes when the front crosses it, only the next relay keys up
+    // again (managed flooding: the rest heard it covered and stay quiet), and
+    // the destination just flashes. Contacts message contacts on the private
+    // channel, preferring my network's relays; strangers message strangers on
+    // the public one, relaying through anyone. Receiving is silent;
+    // transmitting is not.
+    //
+    // On the map the expanding-circle layer is switched off: circles there are
+    // the beacon vocabulary (.wave / .ring), so mesh transmissions show only as
+    // keyed wave arcs, the packet, flashes and key badges. Everything else is
+    // shared, so the two scenes stay one system.
+    const meshTraffic = (root, nodes, { range, circles, gapMin, gapJitter }) => {
+      if (!root) return;
+      const msPerUnit = 950 / range; // front speed: full range in 0.95s, matches mesh-ping
+      const glyphs = nodes.map((_, i) => root.querySelector(`.glyph[data-mesh="${i}"]`));
+      const pulses = circles ? [...root.querySelectorAll('.pulse')] : [];
+      const packet = root.querySelector('.packet');
+      const keys = [...root.querySelectorAll('.key')];
+      if (glyphs.some((g) => !g) || !packet || keys.length < 2) return;
+      let pulseIdx = 0;
+
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+      const mine = (n) => !!(n.contact || n.mine);
+      const nbrs = nodes.map((a) =>
+        nodes.flatMap((b, j) => (a !== b && dist(a, b) <= range ? [j] : [])),
+      );
+
+      // Dijkstra over link distance: the most direct route across the mesh.
+      // private traffic prefers my network's relays (restricted pass first);
+      // if no all-contact path exists it falls back to anyone, since any node
+      // repeats packets it cannot read
+      const route = (src, dst, priv) => {
+        const N = nodes.length;
+        const cost = new Array(N).fill(Infinity);
+        const prev = new Array(N).fill(-1);
+        const done = new Array(N).fill(false);
+        cost[src] = 0;
+        for (;;) {
+          let i = -1;
+          for (let j = 0; j < N; j++) if (!done[j] && (i < 0 || cost[j] < cost[i])) i = j;
+          if (i < 0 || cost[i] === Infinity) return null;
+          if (i === dst) break;
+          done[i] = true;
+          for (const j of nbrs[i]) {
+            if (priv && !mine(nodes[j])) continue;
+            const c = cost[i] + dist(nodes[i], nodes[j]);
+            if (c < cost[j]) { cost[j] = c; prev[j] = i; }
+          }
+        }
+        const path = [dst];
+        while (path[0] !== src) path.unshift(prev[path[0]]);
+        return path;
+      };
+
+      // pub follows the packet's channel, not the node: my network relaying a
+      // stranger packet stays grey. cleared with rx so a later beacon flash on
+      // the map's node glyph doesn't inherit this exchange's channel
+      const flash = (i, delay, pub) =>
+        setTimeout(() => {
+          glyphs[i].classList.toggle('pub', pub);
+          glyphs[i].classList.add('rx');
+          setTimeout(() => glyphs[i].classList.remove('rx', 'pub'), 450);
+        }, delay);
+
+      const txTimers = [];
+      const keyUp = (i, priv) => {
+        if (pulses.length) {
+          const c = pulses[pulseIdx++ % pulses.length];
+          c.setAttribute('cx', nodes[i].x);
+          c.setAttribute('cy', nodes[i].y);
+          // accent only when my network transmits its own private traffic
+          c.classList.toggle('pub', !(priv && mine(nodes[i])));
+          c.classList.remove('live');
+          void c.getBoundingClientRect(); // restart the one-shot animation
+          c.classList.add('live');
+        }
+        // the glyph's wave arcs show only for the transmit window
+        glyphs[i].classList.add('tx');
+        clearTimeout(txTimers[i]);
+        txTimers[i] = setTimeout(() => glyphs[i].classList.remove('tx'), 950);
+      };
+
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      const glide = (a, b, ms) =>
+        new Promise((done) => {
+          const t0 = performance.now();
+          const step = (t) => {
+            const k = Math.min(1, (t - t0) / ms);
+            packet.setAttribute('cx', a.x + (b.x - a.x) * k);
+            packet.setAttribute('cy', a.y + (b.y - a.y) * k);
+            k < 1 ? requestAnimationFrame(step) : done();
+          };
+          requestAnimationFrame(step);
+        });
+
+      (async () => {
+        for (;;) {
+          // contacts talk to contacts, strangers to strangers; relays are anyone
+          const src = Math.floor(Math.random() * nodes.length);
+          const peers = nodes.flatMap((n, j) => (j !== src && mine(n) === mine(nodes[src]) ? [j] : []));
+          if (!peers.length) { await sleep(gapMin); continue; }
+          const dst = peers[Math.floor(Math.random() * peers.length)];
+          const priv = mine(nodes[src]);
+          const path = route(src, dst, priv) ?? route(src, dst, false);
+          if (!path) { await sleep(gapMin); continue; }
+          packet.style.fill = priv ? 'var(--accent)' : 'var(--text-mute)';
+          packet.setAttribute('cx', nodes[src].x);
+          packet.setAttribute('cy', nodes[src].y);
+          packet.classList.add('live');
+          // key badges mark sender and receiver for the exchange's duration
+          [src, dst].forEach((n, k) => {
+            keys[k].setAttribute('x', nodes[n].x - 30);
+            keys[k].setAttribute('y', nodes[n].y - 30);
+            keys[k].classList.toggle('pub', !priv);
+            keys[k].classList.add('live');
+          });
+          for (let k = 0; k < path.length - 1; k++) {
+            const a = nodes[path[k]];
+            keyUp(path[k], priv); // transmit / rebroadcast
+            flash(path[k], 0, !priv);
+            // every radio in range hears the broadcast as the front crosses it
+            for (const j of nbrs[path[k]]) flash(j, dist(a, nodes[j]) * msPerUnit, !priv);
+            await glide(a, nodes[path[k + 1]], dist(a, nodes[path[k + 1]]) * msPerUnit);
+          }
+          packet.classList.remove('live'); // destination receives: flash only, no transmit
+          keys.forEach((k) => k.classList.remove('live'));
+          await sleep(gapMin + Math.random() * gapJitter);
+        }
+      })();
+    };
+
+    // Satellite downlink engine (03). One pass at a time: a satellite glides its
+    // whole track at orbital speed over COMPRESSION, broadcasting the entire
+    // way, because that is what these things do whether or not anyone is
+    // listening. A pooled carrier is parked wherever it currently is and fired
+    // out to the footprint radius; the front reaches the node only if the node
+    // was inside that footprint, after a delay taken from the drawn distance.
+    // Scan lines land for as long as the satellite is in range, scaled so the
+    // longest pass in the roster is exactly the one that fills the picture,
+    // which leaves the grazing pass short without anything special-casing it.
+    // Nothing in here ever transmits: no keyUp, no --sig, no pulse from the node.
+    const satPass = (root, node, tracks, geom, ringR, kmPerUnit) => {
+      if (!root) return;
+      const sats = tracks.map((_, i) => root.querySelector(`.glyph[data-sat="${i}"]`));
+      const swaths = tracks.map((_, i) => root.querySelector(`[data-swath="${i}"]`));
+      const nodeGlyph = root.querySelector('.glyph[data-sat="node"]');
+      const carriers = [...root.querySelectorAll('.carrier')];
+      const still = root.querySelector('.carrier-static');
+      if (sats.some((s) => !s) || swaths.some((s) => !s)) return;
+      if (!nodeGlyph || !carriers.length) return;
+
+      const COMPRESSION = 60; // a second on screen is a minute overhead
+      const SAT_KMS = 7.7; // LEO ground speed
+      const FRONT_MS = 2000; // a carrier covers the footprint radius in this long.
+      // paired with sat-carrier's 2s in the style block; change the two together.
+      // it is a legibility speed, not compressed light: real propagation across
+      // this frame is microseconds. what geometry decides is which fronts reach
+      // the node at all, and in what order.
+      const CARRIER_EVERY_MS = 1000; // the broadcast is continuous; this is only
+      // how often we draw a front of it
+      const PASS_GAP_MS = 3000; // between passes. compressed harder than the pass
+      // itself, so the diagram is not mostly an empty sky
+      const RX_MS = 450; // same receive flash the mesh diagram uses
+      const speed = (SAT_KMS * COMPRESSION) / kmPerUnit; // viewBox units per second
+
+      const at = (f, k) => ({ x: k.x1 + (k.x2 - k.x1) * f, y: k.y1 + (k.y2 - k.y1) * f });
+      const place = (g, p) => {
+        g.setAttribute('x', p.x - 13);
+        g.setAttribute('y', p.y - 13);
+      };
+      let carrierIdx = 0;
+      let rxTimer;
+      const fire = (p) => {
+        const c = carriers[carrierIdx++ % carriers.length];
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', p.y);
+        c.classList.remove('live');
+        void c.getBoundingClientRect(); // restart the one-shot animation
+        c.classList.add('live');
+        const d = Math.hypot(p.x - node.x, p.y - node.y);
+        if (d > ringR) return; // out of footprint: the front dies before it arrives
+        setTimeout(() => {
+          // an open broadcast is a public payload, so the node darkens within the
+          // greys and never borrows accent, exactly as it does relaying a
+          // stranger's packet on the mesh
+          nodeGlyph.classList.add('rx', 'pub');
+          clearTimeout(rxTimer);
+          rxTimer = setTimeout(() => nodeGlyph.classList.remove('rx', 'pub'), RX_MS);
+        }, (d / ringR) * FRONT_MS);
+      };
+
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      const run = (i) =>
+        new Promise((done) => {
+          const k = tracks[i];
+          const { len } = geom[i];
+          const ms = (len / speed) * 1000;
+          const t0 = performance.now();
+          let nextCarrier = 0;
+          const step = (now) => {
+            const elapsed = now - t0;
+            const f = Math.min(1, elapsed / ms);
+            const p = at(f, k);
+            place(sats[i], p);
+            if (elapsed >= nextCarrier) {
+              fire(p);
+              nextCarrier = elapsed + CARRIER_EVERY_MS; // self-correcting: a
+              // backgrounded tab resumes without firing a burst
+            }
+            // the swath grows behind the satellite for the whole pass: the
+            // imager sweeps continuously, whether or not this node is in a
+            // position to hear the result. what the node actually got is the
+            // stricter claim, and fire() keeps it gated on the ring.
+            swaths[i].setAttribute('width', f * len);
+            f < 1 ? requestAnimationFrame(step) : done();
+          };
+          requestAnimationFrame(step);
+        });
+
+      (async () => {
+        // the template ships a static frame for reduced motion: all four
+        // satellites parked with the ground each has swept behind it, and a
+        // carrier caught mid-expansion. moving means clearing all of it first.
+        sats.forEach((s) => s.classList.add('off'));
+        still?.classList.add('off');
+        swaths.forEach((s) => {
+          s.setAttribute('width', 0);
+          s.classList.remove('stale');
+        });
+        for (let i = 0; ; i = (i + 1) % tracks.length) {
+          // this orbit is back over the same ground, so its old strip is wiped
+          // and laid down again from nothing
+          swaths[i].setAttribute('width', 0);
+          swaths[i].classList.remove('stale');
+          place(sats[i], at(0, tracks[i]));
+          sats[i].classList.remove('off');
+          await run(i);
+          sats[i].classList.add('off');
+          // the strip starts ageing the instant it is complete and fades evenly
+          // for the whole interval until this same orbit returns to redraw it,
+          // so at any moment the four strips are at four different ages
+          swaths[i].classList.add('stale');
+          await sleep(PASS_GAP_MS);
+        }
+      })();
+    };
+
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      meshTraffic(document.querySelector('.meshdiagram'), meshNodes, {
+        range: 290, circles: true, gapMin: 500, gapJitter: 0,
+      });
+      // ambient on the map: one exchange every 2-4s, alongside the beacons
+      meshTraffic(document.querySelector('.fieldmap'), mapMeshNodes, {
+        range: 300, circles: false, gapMin: 2000, gapJitter: 2000,
+      });
+      satPass(document.querySelector('.satdiagram'), satNode, satTracks, satGeom, satRingR, SAT_KM_PER_UNIT);
+    }
   </script>
 
   <style>
@@ -500,9 +2000,13 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
     .fieldmap {
       position: relative;
       z-index: 1;
+      cursor: crosshair;
       height: calc(100vh - 60px);
       height: calc(100dvh - 60px);
       border-top: 0;
+      /* the site's section rule puts the rule on top; the map's neighbour also
+         opts out of that, so close the map off with its own bottom edge */
+      border-bottom: var(--border-w) solid var(--border);
       padding: 0;
       overflow: hidden;
       background-color: var(--bg);
@@ -519,8 +2023,7 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       stroke: var(--border);
       stroke-width: 1;
     }
-    .tick rect,
-    .tag-redact {
+    .tick rect {
       fill: var(--ink);
     }
     .tick text,
@@ -570,12 +2073,14 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       transform-box: fill-box;
       transform-origin: center;
       opacity: 0;
-      animation: wave 8s linear infinite;
+    }
+    .wave.live {
+      animation: wave 6s linear;
     }
     @keyframes wave {
       0% { transform: scale(0.02); opacity: 0.75; }
-      70% { opacity: 0.1; }
-      75%, 100% { transform: scale(1); opacity: 0; }
+      90% { opacity: 0.1; }
+      100% { transform: scale(1); opacity: 0; }
     }
     .glyph {
       color: var(--text-mute);
@@ -583,37 +2088,100 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
     }
     .node .glyph {
       color: var(--text);
-      animation: nodeflash 8s linear infinite;
+      transition: color 0.15s;
     }
-    @keyframes nodeflash {
-      0%, 35%, 40%, 48%, 53%, 65%, 70%, 100% { color: var(--text); }
-      37.5%, 50%, 67.5% { color: var(--accent); }
+    /* set by the script the moment a beacon front reaches the node */
+    .node .glyph.rx {
+      color: var(--accent);
     }
-    .peer .ping {
+    /* beacon rings: fixed epicenter, expand to the window edges over 6s (one-shot,
+       restarted by the script each emission) */
+    .ring {
       fill: none;
-      stroke: var(--text-dim);
-      stroke-width: 1.2;
+      stroke: var(--stone);
+      stroke-width: 1.25;
       vector-effect: non-scaling-stroke;
       transform-box: fill-box;
       transform-origin: center;
       opacity: 0;
-      animation: ping 8s linear infinite;
-      animation-delay: var(--recv);
     }
-    @keyframes ping {
-      0% { transform: scale(0.25); opacity: 0.8; }
-      10%, 100% { transform: scale(1); opacity: 0; }
+    .ring.live {
+      animation: ringout 6s linear;
     }
+    @keyframes ringout {
+      0% { transform: scale(0.02); opacity: 0.4; }
+      85% { opacity: 0.05; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    /* map mesh nodes follow the diagram's system: contacts darker, arcs only
+       while transmitting (no --sig here), sun badge marks my network */
+    .mesh .glyph {
+      color: var(--ash);
+      transition: color 0.15s;
+    }
+    .mesh.contact .glyph {
+      color: var(--field-grey);
+    }
+    .mesh .sun {
+      color: var(--text-mute);
+      overflow: visible;
+    }
+    .mesh .tag {
+      opacity: 0.8;
+    }
+    /* an acoustic bird ID at the node: same hard on/off idiom as the stations,
+       on a long cycle so it reads as occasional rather than a blinker */
+    .bird {
+      color: var(--text-mute);
+      opacity: 0;
+      animation: birdcall 26s linear infinite;
+    }
+    @keyframes birdcall {
+      0%, 8% { opacity: 1; }
+      8.5%, 100% { opacity: 0; }
+    }
+    /* hard on/off, no fade: a station darkens and raises its wave marks for the
+       ~2s it is keyed up per 9s cycle, staggered by --pd */
     .peer .glyph {
-      animation: peerflash 8s linear infinite;
-      animation-delay: var(--recv);
+      animation: peerkey 9s linear infinite;
+      animation-delay: var(--pd);
     }
-    @keyframes peerflash {
-      0% { color: var(--accent-ink); }
-      6%, 100% { color: var(--text-mute); }
+    @keyframes peerkey {
+      0%, 22% { color: var(--text); --sig: 1; }
+      22.5%, 100% { color: var(--text-mute); --sig: 0; }
+    }
+    /* .signal = the radiating-wave strokes in the node and tower defs. Selectors
+       can't reach inside <use> shadow clones, but custom properties inherit
+       through them, so --sig gates visibility per instance: stations during
+       their keyed-up window (peerkey above), the node during the ~2s keyed
+       burst of each reply (.tx, set by the script). Hidden otherwise. */
+    #tower .signal,
+    #node-icon .signal,
+    #mesh-icon .signal {
+      opacity: var(--sig, 0);
+    }
+    .node .glyph.tx {
+      --sig: 1;
+    }
+    /* mesh traffic on the map, same coding as the diagram: strangers flash dark,
+       my contacts accent, and anything carrying a public packet stays grey.
+       the .fieldmap rule is last and more specific, so it also greys my node
+       when it relays stranger traffic without touching the beacon rx flash */
+    .mesh .glyph.tx {
+      --sig: 1;
+    }
+    .mesh .glyph.rx {
+      color: var(--text);
+    }
+    .mesh.contact .glyph.rx {
+      color: var(--accent);
+    }
+    .fieldmap .glyph.rx.pub {
+      color: var(--slate-char);
     }
 
-    .flight .trail {
+    .flight .trail,
+    .vessel .trail {
       stroke: var(--text-mute);
       stroke-width: 1.5;
       stroke-dasharray: 2 7;
@@ -622,21 +2190,63 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
     .flight use {
       color: var(--text-dim);
     }
+    .vessel .glyph {
+      color: var(--text-dim);
+    }
+    /* moving groups animate relative to a static base translate on their parent,
+       so a reduced-motion freeze parks planes off-screen and boats on station */
     .flight-a {
       animation: flight-a 150s linear infinite;
       animation-delay: -145s;
     }
     @keyframes flight-a {
-      0% { transform: translate(-160px, 880px); }
-      40%, 100% { transform: translate(1760px, 140px); }
+      0% { transform: translate(0, 0); }
+      40%, 100% { transform: translate(1920px, -740px); }
     }
     .flight-b {
       animation: flight-b 180s linear infinite;
       animation-delay: -60s;
     }
     @keyframes flight-b {
-      0% { transform: translate(1760px, 340px); }
-      33%, 100% { transform: translate(-200px, 780px); }
+      0% { transform: translate(0, 0); }
+      33%, 100% { transform: translate(-1960px, 440px); }
+    }
+    .sat-track {
+      stroke: var(--border-strong);
+      stroke-width: 1;
+      stroke-dasharray: 1 8;
+      opacity: 0.7;
+    }
+    .sat .glyph {
+      color: var(--text-dim);
+    }
+    .sat-a {
+      animation: sat-a 300s linear infinite;
+      animation-delay: -290s;
+    }
+    @keyframes sat-a {
+      0% { transform: translate(0, 0); }
+      1.8%, 100% { transform: translate(-172px, 1080px); }
+    }
+    .sat-b {
+      animation: sat-b 420s linear infinite;
+      animation-delay: -200s;
+    }
+    @keyframes sat-b {
+      0% { transform: translate(0, 0); }
+      2.1%, 100% { transform: translate(1480px, -1080px); }
+    }
+    .vessel-a {
+      animation: vessel-a 2800s linear infinite;
+    }
+    @keyframes vessel-a {
+      to { transform: translate(340px, 320px); }
+    }
+    .vessel-b {
+      animation: vessel-b 3300s linear infinite;
+    }
+    @keyframes vessel-b {
+      to { transform: translate(-310px, -280px); }
     }
 
     /* ---- HUD -------------------------------------------------------------- */
@@ -644,13 +2254,30 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       position: absolute;
       z-index: 2;
     }
+    /* the identity block lives in .hero-wrap (map section only) and sticks to the
+       window top while the map scrolls; the wrapper's bottom edge then
+       pushes it up, so it lands at the top of the node TOC section and leaves
+       with it instead of pinning past it */
+    .hero-wrap {
+      position: relative;
+    }
     .hud-identity {
-      top: var(--sp-5);
-      left: var(--sp-5);
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      height: 0;
+      padding-left: var(--sp-5);
       max-width: min(560px, 75vw);
+      /* flex stops the eyebrow's top margin collapsing through this 0-height box:
+         the content hangs sp-5 below the box in BOTH resting states, pinned under
+         the site header and landed at the top of the node section. Padding on the
+         box itself would put the inset above the box's bottom edge, which is the
+         edge the push-out stops at, landing the text flush with the section top. */
+      display: flex;
+      flex-direction: column;
     }
     .hud-identity .eyebrow {
-      margin: 0 0 var(--sp-2);
+      margin: var(--sp-5) 0 var(--sp-2);
       color: var(--accent-ink);
       letter-spacing: 0.2em;
     }
@@ -690,14 +2317,124 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       border-right: 1.5px solid var(--text-mute);
     }
     .metric .label {
+      display: block;
       font-size: var(--step--2);
     }
-    .metric dd {
-      margin: 0;
+    .metric .m-val {
+      display: block;
       font-family: var(--font-mono);
       font-weight: 700;
       font-size: var(--step-0);
       color: var(--text);
+    }
+    button.metric {
+      background: none;
+      border: 0;
+      padding: 0;
+      text-align: right;
+      cursor: pointer;
+    }
+    button.metric:hover .m-val {
+      color: var(--accent-ink);
+    }
+    button.metric:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+
+    /* ---- field log modal --------------------------------------------------- */
+    .fieldlog {
+      /* pin to the viewport, centered: Tailwind's preflight zeroes every margin
+         (killing UA auto-centering), and fixed keeps it put while the page scrolls */
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      height: fit-content;
+      font-family: var(--font-mono);
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, rgba(0, 0, 0, 0.09) 1px, transparent 1px);
+      background-size: 16px 16px;
+      border: var(--border-w) solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: var(--sp-5);
+      width: min(420px, calc(100vw - 2 * var(--sp-5)));
+      max-height: min(76vh, 76dvh);
+      overflow-y: auto;
+    }
+    .fieldlog::backdrop {
+      background: rgba(21, 22, 20, 0.45);
+    }
+    .log-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-4);
+    }
+    .log-close {
+      background: none;
+      border: 0;
+      padding: 0.3rem;
+      cursor: pointer;
+      color: var(--text-mute);
+    }
+    .log-close:hover {
+      color: var(--accent-ink);
+    }
+    .log-close:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    .log-close svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    .log-sec {
+      margin: var(--sp-5) 0 var(--sp-2);
+      color: var(--accent-ink);
+    }
+    .log-sub {
+      margin: var(--sp-3) 0 var(--sp-1);
+      font-size: var(--step--2);
+    }
+    .log-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .log-list li {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 2ch;
+      padding: 0.22em 0;
+      font-size: var(--step--1);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      border-bottom: 1px dotted var(--border);
+    }
+    .log-list li:last-child {
+      border-bottom: 0;
+    }
+    .log-list b {
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .log-note {
+      margin: var(--sp-3) 0 0;
+      font-size: var(--step--2);
+    }
+    /* the article's API listing borrows the field log's row treatment, so the
+       data the page shows and the data it describes read as the same thing */
+    .api-list {
+      margin: var(--sp-4) 0 0;
+      max-width: 62ch;
     }
     .hud-compass {
       bottom: var(--sp-5);
@@ -727,11 +2464,13 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
     .scale {
       display: inline-flex;
       align-items: center;
-      gap: 0.6ch;
+      gap: 0.8ch;
     }
+    /* 5 km = 136 viewBox units; under xMidYMid slice the on-screen scale factor is
+       max(100vw/1600, 100vh/1000), so this width stays exact at any window size */
     .scale-bar {
       display: inline-block;
-      width: 64px;
+      width: max(8.5vw, 13.6vh);
       height: 6px;
       border: 1.5px solid var(--text-mute);
       border-top: none;
@@ -753,6 +2492,121 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(6px); }
     }
+    .node a {
+      cursor: pointer;
+    }
+    .node a:hover .tag {
+      fill: var(--accent-ink);
+    }
+
+    /* ---- the two drawings, closing the preamble ---------------------------- */
+    .node-arts {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(var(--sp-6), 7vw, 7rem);
+      margin-top: var(--sp-7);
+    }
+    .node-art {
+      /* width-driven here, unlike the full-height section they used to fill */
+      width: min(38%, 340px);
+      height: auto;
+      min-width: 0;
+      object-fit: contain;
+    }
+
+    /* ---- article layout: docs-style sticky TOC beside the prose ------------- */
+    /* full window width: no .col cap, just the shared gutter. Line length is
+       still governed per element (paragraphs cap at 62ch, diagrams at 860px),
+       so widening the page widens the layout and not the prose. */
+    #doc {
+      display: grid;
+      /* Three tracks, two of them used. The TOC track takes at least its own
+         content width, so its rows never wrap, and the third track is an empty
+         rail of the same width: the article then sits between two rails the way
+         a docs site balances a contents column against an "on this page" one.
+         Only two children exist, so the rail stays blank. */
+      --doc-rail: 13rem;
+      grid-template-columns:
+        minmax(max-content, var(--doc-rail))
+        minmax(0, 1fr)
+        var(--doc-rail);
+      column-gap: clamp(var(--sp-6), 5vw, var(--sp-8));
+      align-items: start;
+      padding: var(--sp-7) var(--pad-x) 0;
+    }
+    /* the diagrams are wider than the text column; min-width lets the grid track
+       shrink so they scroll inside .scroller instead of stretching the page */
+    .doc-body {
+      min-width: 0;
+    }
+    .components {
+      position: sticky;
+      top: var(--sp-5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+      /* 16 rows plus 5 chapter labels outgrow a laptop viewport, so the rail
+         scrolls inside itself rather than being clipped by the sticky box */
+      max-height: calc(100vh - 2 * var(--sp-5));
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .components a.active {
+      color: var(--text);
+    }
+    .components-glyph {
+      width: 44px;
+      height: 44px;
+      color: var(--text);
+      --sig: 1; /* static diagram context: show the antenna waves */
+      margin-bottom: var(--sp-2);
+    }
+    .components .eyebrow {
+      margin: 0 0 var(--sp-3);
+      color: var(--accent-ink);
+      letter-spacing: 0.2em;
+    }
+    .components a {
+      display: flex;
+      align-items: baseline;
+      gap: 1.5ch;
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      font-size: var(--step-0);
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .components a:hover {
+      color: var(--accent-ink);
+    }
+    .components a:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+    .components b {
+      color: var(--accent-ink);
+    }
+    /* anchor targets stop clear of the 60px sticky header */
+    section[id],
+    .prose-page[id] {
+      scroll-margin-top: 60px;
+    }
+
+    /* one column under the global 760px breakpoint: the TOC stacks above the
+       article the way a docs site collapses its sidebar */
+    @media (max-width: 760px) {
+      #doc {
+        display: block;
+      }
+      .components {
+        position: static;
+        margin-bottom: var(--sp-6);
+        max-height: none;
+        overflow: visible;
+      }
+    }
 
     @media (max-width: 640px) {
       .hide-sm {
@@ -769,18 +2623,318 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       .hud-compass {
         display: none;
       }
+      .node-arts {
+        flex-direction: column;
+        gap: var(--sp-6);
+      }
+      .node-art {
+        width: min(58vw, 300px);
+      }
     }
 
-    /* the global reduced-motion rule kills transitions only; freeze the diagram too */
+    /* the global reduced-motion rule kills transitions only; freeze the diagrams too */
     @media (prefers-reduced-motion: reduce) {
       .fieldmap *,
-      .fieldmap {
+      .fieldmap,
+      .diagram * {
         animation: none !important;
       }
     }
 
+    /* ---- section diagrams --------------------------------------------------
+       Shared chrome for every exhibit diagram: HUD corner brackets on the
+       figure, no title, no caption, no border, drawing running to the corners.
+       Per-diagram vocabulary follows in its own block. */
+    .diagram {
+      position: relative;
+      margin: var(--sp-5) 0 0;
+      max-width: 860px;
+    }
+    .diagram::before,
+    .diagram::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      opacity: 0.7;
+    }
+    .diagram::before {
+      top: 0;
+      left: 0;
+      border-top: 1.5px solid var(--text-mute);
+      border-left: 1.5px solid var(--text-mute);
+    }
+    .diagram::after {
+      bottom: 0;
+      right: 0;
+      border-bottom: 1.5px solid var(--text-mute);
+      border-right: 1.5px solid var(--text-mute);
+    }
+    /* brackets stay on the figure; only the drawing scrolls on narrow windows */
+    .diagram .scroller {
+      overflow-x: auto;
+    }
+    .diagram svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 600px;
+    }
+    .diagram .tag.sub {
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    /* ---- mesh-radio diagram ------------------------------------------------
+       fieldmap vocabulary at article scale: mono tags, dashed range rings, the
+       map's glyph defs reused. */
+    .meshdiagram .range {
+      fill: none;
+      stroke: var(--border-strong);
+      stroke-width: 1;
+      stroke-dasharray: 2 6;
+    }
+    .meshdiagram .range.mine {
+      stroke: var(--stone);
+      stroke-width: 1.3;
+    }
+    /* both channels dashed: private long-dashed accent, public dotted grey.
+       shared with the field map's mesh layer */
+    .meshdiagram .priv-link,
+    .map .priv-link {
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 6 6;
+      opacity: 0.6;
+    }
+    .meshdiagram .pub-link,
+    .map .pub-link {
+      stroke: var(--text-mute);
+      stroke-width: 1.5;
+      stroke-dasharray: 2 7;
+      opacity: 0.6;
+    }
+    /* background terrain reads as texture, not content */
+    .meshdiagram .contours {
+      opacity: 0.45;
+    }
+    .meshdiagram .sun {
+      color: var(--text-mute);
+      overflow: visible;
+    }
+    /* endpoint key badges, shown while an exchange is in flight */
+    .meshdiagram .key,
+    .map .key {
+      color: var(--accent-ink);
+      opacity: 0;
+      overflow: visible;
+    }
+    .meshdiagram .key.live,
+    .map .key.live {
+      opacity: 1;
+    }
+    .meshdiagram .key.pub,
+    .map .key.pub {
+      color: var(--text-mute);
+    }
+    /* community radios light, my contacts darker + sun badge, my node darkest */
+    .meshdiagram .glyph {
+      color: var(--ash);
+      transition: color 0.15s;
+    }
+    .meshdiagram .contact .glyph {
+      color: var(--field-grey);
+    }
+    .meshdiagram .m-mine .glyph {
+      color: var(--text);
+    }
+    /* set by the traffic script while a wave front is crossing the node.
+       accent is reserved for my network handling its own private traffic;
+       strangers, and my nodes relaying stranger packets, just darken */
+    .meshdiagram .glyph.rx {
+      color: var(--text);
+    }
+    .meshdiagram .contact .glyph.rx,
+    .meshdiagram .m-mine .glyph.rx {
+      color: var(--accent);
+    }
+    .meshdiagram .glyph.rx.pub {
+      color: var(--slate-char); /* grey, never accent, even on my network */
+    }
+    /* keyed up: wave arcs show only while the node is actually transmitting */
+    .meshdiagram .glyph.tx {
+      --sig: 1;
+    }
+    /* one-shot wave, map idiom: the script parks a pooled circle at the
+       transmitting node and fires it; full RF range in 0.95s */
+    .meshdiagram .pulse {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+    }
+    .meshdiagram .pulse.live {
+      animation: mesh-ping 0.95s linear;
+    }
+    /* public packets ring in grey wherever they are, even relayed by my
+       network; accent pulses belong to private traffic only */
+    .meshdiagram .pulse.pub {
+      stroke: var(--text-mute);
+    }
+    @keyframes mesh-ping {
+      0% { transform: scale(0.02); opacity: 0.65; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .meshdiagram .packet,
+    .map .packet {
+      fill: var(--accent);
+      opacity: 0;
+    }
+    .meshdiagram .packet.live,
+    .map .packet.live {
+      opacity: 1;
+    }
+
+    /* ---- satellite-downlink diagram ----------------------------------------
+       Chrome, mono tags and the reduced-motion freeze come from .diagram. The
+       standing vocabulary is deliberately the mesh diagram's, at 200x the scale:
+       terrain backmost as texture, a dashed ring for radio range, the same grey
+       receive flash. There is no accent anywhere in this diagram, on purpose: a
+       satellite broadcast is a public payload, and color follows the payload. */
+    /* darker than the other scene diagrams' terrain, and deliberately so: here
+       the contours are the thing the pass produced, not texture behind it */
+    .satdiagram .contours {
+      opacity: 0.7;
+    }
+    /* a faint ground tint under the contours, inside the same masked group, so
+       freshly scanned ground reads as ground rather than as blank page and the
+       leading edge of a sweep is visible even over featureless terrain */
+    .satdiagram .scan-wash {
+      fill: var(--surface-sunk);
+    }
+    /* the map's graticule stroke is --border, which is the ground wash's own
+       value and would disappear into it here, so this surface takes the next
+       step down the ramp and then holds it back with opacity: furniture has to
+       survive the wash without ever outweighing the tracks drawn over it */
+    .satdiagram .graticule line {
+      stroke: var(--border-strong);
+      opacity: 0.5;
+    }
+    .satdiagram .contours path {
+      stroke: var(--ash);
+    }
+    .satdiagram .contours path.index {
+      stroke: var(--field-grey);
+    }
+    /* a finished strip ages for the entire wait until its own orbit returns:
+       the three other passes plus the four gaps between them, 3 x 8.46s + 4 x 3s
+       = 37.4s. linear, so it is an even continuous decay rather than a fade that
+       happens at some point. tied to track length, speed and PASS_GAP_MS in the
+       script: change these together. entering-only, so a repaint snaps back to
+       full instead of easing up into it. */
+    #sat-scan-mask rect[data-swath] {
+      transition: none;
+    }
+    #sat-scan-mask rect[data-swath].stale {
+      opacity: 0;
+      transition: opacity 37.4s linear;
+    }
+    .satdiagram .range {
+      fill: none;
+      stroke: var(--stone);
+      stroke-width: 1.3;
+      stroke-dasharray: 2 6;
+    }
+    /* the node receives an open broadcast, so it darkens within the greys and
+       never borrows accent, exactly as a mesh node relaying a stranger's packet */
+    .satdiagram .glyph.rx.pub {
+      color: var(--slate-char);
+    }
+    .satdiagram .track {
+      stroke: var(--border-strong);
+      stroke-width: 1;
+      stroke-dasharray: 1 8; /* dotted, so it never reads as a mesh link */
+      opacity: 0.7;
+    }
+    .satdiagram .sat-glyph {
+      color: var(--text-dim);
+    }
+    .satdiagram .node-glyph {
+      color: var(--text);
+    }
+    /* --sig is never set on this surface, so the node's antenna arcs, the mark
+       this page uses for transmitting, cannot appear. That absence is the
+       receive-only claim. */
+    .satdiagram .glyph.off {
+      opacity: 0;
+    }
+    /* one-shot carrier, mesh idiom: parked at the satellite and fired out to the
+       footprint radius. 2s pairs with FRONT_MS in the script, change together. */
+    .satdiagram .carrier {
+      fill: none;
+      stroke: var(--text-mute);
+      stroke-width: 1.25;
+      vector-effect: non-scaling-stroke;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+    }
+    .satdiagram .carrier.live {
+      animation: sat-carrier 2s linear;
+    }
+    @keyframes sat-carrier {
+      0% { transform: scale(0.02); opacity: 0.7; }
+      90% { opacity: 0.12; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    /* the static frame's broadcast, caught partway to the node */
+    .satdiagram .carrier-static {
+      opacity: 0.55;
+    }
+    .satdiagram .carrier-static.off {
+      opacity: 0;
+    }
+
     .prose-page {
-      padding-top: var(--sp-7);
+      padding-top: 0; /* #doc carries the top space now */
+    }
+
+    /* ---- homestead layer cards (preamble) ----------------------------------
+       The four layers a homestead needs, of which this document covers one.
+       Rides the global .grid/.panel pair, so it inherits the two-column-to-one
+       collapse at 640px rather than defining a breakpoint of its own. */
+    .layers {
+      margin-top: var(--sp-5);
+    }
+    .layer h3 {
+      margin: 0 0 var(--sp-3);
+      font-size: var(--step-0);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    /* each row's glyph IS the bullet, so no marker and no list indent */
+    .layer ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text-dim);
+    }
+    .layer li {
+      display: flex;
+      align-items: center;
+      gap: 0.8ch;
+    }
+    .layer li + li {
+      margin-top: var(--sp-2);
+    }
+    /* Icon.astro pins its glyph at 1em, so scale it off the row's font size */
+    .layer li :global(svg) {
+      width: 1.15em;
+      height: 1.15em;
+      color: var(--accent-ink);
     }
     .prose-page p,
     .marks > p {
@@ -788,8 +2942,46 @@ const ttn = { label: 'The Things Network', url: 'https://www.thethingsnetwork.or
       max-width: 62ch;
       color: var(--text-dim);
     }
+    /* BLUF: every section opens with its conclusion, so the lead reads at full
+       ink and a shorter measure and the supporting prose stays dimmed */
+    .prose-page > .lead,
+    .marks > .lead {
+      color: var(--text);
+      font-size: var(--step-1);
+      max-width: 54ch;
+      border-left: 2px solid var(--accent);
+      padding-left: var(--sp-4);
+    }
+    /* the fixed sub-heads inside a section. same treatment as .layer h3, one
+       step of space above so a subsection reads as a break rather than a label */
+    /* direct children only: the layer cards above carry their own h3 rule and
+       must not inherit the section spacing */
+    .prose-page > h3,
+    .marks > h3 {
+      margin: var(--sp-6) 0 0;
+      font-size: var(--step-0);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .prose-page > h3 + p,
+    .marks > h3 + p {
+      margin-top: var(--sp-3);
+    }
+    /* chapter eyebrows. the nav's are rendered in this template (scoped); the
+       body's come through head()'s set:html, so that one needs :global */
+    .components .chapter {
+      margin: var(--sp-4) 0 0;
+      color: var(--text-mute);
+    }
+    .marks :global(.chapter) {
+      margin: 0 0 var(--sp-3);
+      color: var(--accent-ink);
+    }
+    /* The logo rows are hidden, not removed: the markup, the tools.js data and
+       the Mark/AltPair components all stay in place, and the row's own layout
+       is kept below. Switch display back to flex to bring every chip back. */
     .mark-row {
-      display: flex;
+      display: none;
       flex-wrap: wrap;
       align-items: center;
       gap: var(--sp-3);
