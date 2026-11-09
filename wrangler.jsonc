@@ -1,16 +1,22 @@
 {
-	// Static Astro site on Cloudflare Pages, like AP0110.com.
-	// Build command: `npm run build` (astro build) → output dir: ./dist
-	"name": "danielromo-org",
-	"pages_build_output_dir": "./dist",
+	// Cloudflare Worker with static assets (Workers Builds on branch `simple`).
+	// Build command: `npm run build` (astro build → ./dist), deploy: `npx wrangler deploy`.
+	// The name must match the Worker in the dashboard, or Workers Builds refuses to deploy.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "danielredacted-github-io",
+	"main": "worker.js",
 	"compatibility_date": "2025-11-02",
-	// functions/api/form.js stores contact messages here (schema.sql). Source of truth for the binding.
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "404-page",
+		"run_worker_first": ["/api/*"]
+	},
+	// worker.js → functions/api/form.js stores contact messages here (schema.sql).
 	"d1_databases": [
 		{
 			"binding": "DB",
 			"database_name": "danielromo-forms",
-			// placeholder: `npx wrangler d1 create danielromo-forms` prints the real id
-			"database_id": "00000000-0000-0000-0000-000000000000"
+			"database_id": "c224e39f-1582-48bd-ae0a-8c2ebdd03ead"
 		}
 	]
 }

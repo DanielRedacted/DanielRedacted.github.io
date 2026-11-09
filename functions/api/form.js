@@ -1,6 +1,6 @@
-// Pages Function at POST /api/form, same shape as AP0110.com's functions/api/form.js.
+// POST /api/form handler (worker.js routes here), same shape as AP0110.com's Pages Function functions/api/form.js.
 // The homepage contact form (form=contact, the Contact me section) posts here natively (no client JS).
-// Every accepted submission is one row in D1 → `submissions` (schema.sql). Read with
+// Every accepted submission is one row in D1 `danielromo-forms` → `submissions` (schema.sql). Read with
 // `npx wrangler d1 execute danielromo-forms --remote --command "SELECT created_at, email, payload FROM submissions ORDER BY id DESC"`.
 // ponytail: honeypot only; add Turnstile siteverify here when spam shows up in D1.
 

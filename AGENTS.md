@@ -8,7 +8,7 @@ real surname in copy and titles. (Repo and social handles still say DanielRedact
 are a separate, undecided task.)
 
 **Stack:** Astro 5 (static output, `build.format: 'directory'`) · Tailwind CSS v4 (`@tailwindcss/vite`, CSS-first, no config file) · `@astrojs/sitemap` · **no React, no framework islands** — page scripts are vanilla (globe canvas, cert/gallery dialogs, garage `<model-viewer>` swaps).
-**Deploy:** `npm run build` → `dist/` → GitHub Pages via `.github/workflows/deploy.yml` (push to `main`). `CNAME` pins danielromo.org (also `public/CNAME` so it lands in `dist/`).
+**Deploy:** Cloudflare Worker `danielredacted-github-io` (Workers Builds, branch `simple`): `npm run build` → `dist/` → `npx wrangler deploy` (`wrangler.jsonc`). The old GitHub Pages workflow (`.github/workflows/deploy.yml`, push to `main`) and `CNAME` are leftovers.
 **Node:** 20 (`.nvmrc`)
 
 **Branch `simple`:** the homepage is one business-card "brick", ink on paper (`global.css` → "Brick"; script `components/LoadSequence.astro`). It borrows AP0110.com's micrographics *idiom* (micro-labels, hairline `.ctl` controls, labels typing in on load) but keeps FIELD tokens and B612 Mono, so no AP0110 files, fonts or colors. Org icons render as ink through a CSS mask (`.org-icon`; the LII hand uses `lii-icon-ink.png`, an alpha cut of `lii-icon.png`). A miniature RSVP reader (`.rsvp`, script at the bottom of `index.astro`) plays one prayer on repeat, picked at random per load from `PRAYERS` (Franklin's 1768 Lord's Prayer, then Jesus' own Gospel prayers, KJV, red-letter words only); its words come from `.rsvp-static`, which no-JS and reduced-motion visitors see as plain text. A full-width hero quote with citation is picked at random per load from `QUOTES` by an inline script, so LoadSequence types in the right citation. Home is brick-only; the other pages are unchanged and linked from the card. `dotorg` holds the full homepage.
@@ -43,7 +43,8 @@ src/
     ├── library/index.astro   # ledger page; library/[slug].astro per-book field notes
     ├── invite.astro          # noindex stub forwarding old /invite links to /#contact
     └── 404.astro
-functions/api/form.js         # Pages Function: POST /api/form → D1 `submissions` (schema.sql, wrangler.jsonc)
+worker.js                     # Worker entry: only /api/* reaches it; POST /api/form → functions/api/form.js
+functions/api/form.js         # form handler → D1 `danielromo-forms` → `submissions` (schema.sql)
 public/                       # copied verbatim to dist/
 ├── CNAME  robots.txt  favicons/  site.webmanifest  images/  photos/gallery/  posters/
 ├── 3d/                       # glTF models for /garage (largest asset tree by far)
@@ -80,6 +81,6 @@ public/                       # copied verbatim to dist/
 
 ## Watch out
 
-- Static export only — no SSR. The one runtime piece is `functions/api/form.js`, a Cloudflare Pages Function: it only runs once the site deploys on Cloudflare Pages (GitHub Pages ignores it, so `/api/form` 404s there).
+- Static export only, no SSR. The one runtime piece is `worker.js` → `functions/api/form.js`; every other path is served straight from `dist/` (`run_worker_first: ["/api/*"]`). Read messages: `npx wrangler d1 execute danielromo-forms --remote --command "SELECT created_at, email, payload FROM submissions ORDER BY id DESC"`.
 - `public/3d/` is ~47 MB of glTF; only `/garage` loads it. Don't reference `<model-viewer>` from other pages.
 - **The human commits, not the agent.** Finish by handing Daniel a ready-to-run git command.
