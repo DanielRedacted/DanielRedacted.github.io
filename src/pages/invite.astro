@@ -1,149 +1,18 @@
 ---
-import Base from '../layouts/Base.astro';
-
-// A scheduling request in the style of public officials' "invite me" pages,
-// kept approachable: two short sections, only four required fields, and copy
-// that leads with community work rather than office policy. Submission is
-// simulated client-side; the response is always STATUS: UNAVAILABLE.
-const types = [
-  'Speaking or panel',
-  'Community or charity event',
-  'Advising a project',
-  'Media',
-  'Other',
-];
+// /invite became the homepage's Contact me section (/#contact). Old links land here and forward.
+// Not in the sitemap (astro.config.mjs).
 ---
 
-<Base
-  title="Invite me · Daniel Romo"
-  description="Invite Daniel to speak at an event, join a community project, or help get something off the ground."
->
-  <main class="col pb-16">
-    <section>
-      <div class="sec-head">
-        <h2>invite me</h2>
-      </div>
-
-      <div class="panel req">
-        <p class="req-intro">
-          I do my best to accommodate requests to speak, attend events, and support
-          community projects.
-        </p>
-
-        <form class="req-form">
-          <fieldset>
-            <legend>01 &middot; you</legend>
-            <div class="row">
-              <label class="field"><span class="label">Name <b>*</b></span>
-                <input name="name" autocomplete="name" required /></label>
-              <label class="field"><span class="label">Email <b>*</b></span>
-                <input name="email" type="email" autocomplete="email" required /></label>
-            </div>
-            <label class="field"><span class="label">Organization or project</span>
-              <input name="org" autocomplete="organization" /></label>
-          </fieldset>
-
-          <fieldset>
-            <legend>02 &middot; the ask</legend>
-            <div class="row">
-              <label class="field"><span class="label">What is this about? <b>*</b></span>
-                <select name="type" required>
-                  <option value="" selected disabled>Select</option>
-                  {types.map((t) => <option>{t}</option>)}
-                </select></label>
-              <label class="field"><span class="label">Date, if there is one</span>
-                <input name="date" type="date" /></label>
-            </div>
-            <label class="field"><span class="label">Details <b>*</b></span>
-              <textarea name="details" rows="5" required
-                placeholder="The event or project, who it serves, and what you are asking of me."></textarea></label>
-          </fieldset>
-
-          <div class="req-foot">
-            <button type="submit" class="btn btn-primary">Submit request</button>
-          </div>
-        </form>
-
-        <!-- The reply, revealed in place of the form after the simulated
-             transmission. tabindex so the script can move focus here. -->
-        <div class="req-result" tabindex="-1" hidden>
-          <p class="label">response</p>
-          <h3>Status: <span class="req-status">Unavailable</span></h3>
-          <p>
-            Thank you for thinking of me. My schedule is fully committed and I am not able to
-            take on new engagements at this time.
-          </p>
-          <p class="mono req-ref"></p>
-          <p class="req-back"><a href="/">&larr; home</a></p>
-        </div>
-      </div>
-    </section>
-  </main>
-</Base>
-
-<style>
-  .req { margin-top: var(--sp-5) }
-  .req-intro { margin: 0; max-width: 60ch; color: var(--text-dim) }
-
-  .req-form { display: grid; gap: var(--sp-5); margin-top: var(--sp-5) }
-  fieldset { margin: 0; display: grid; gap: var(--sp-4); border: var(--border-w) solid var(--border);
-    border-radius: var(--radius); padding: var(--sp-4) var(--sp-4) var(--sp-5) }
-  legend { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: var(--track-label);
-    text-transform: uppercase; color: var(--text); padding: 0 .8ch }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4) }
-  @media (max-width: 640px) { .row { grid-template-columns: 1fr } }
-
-  .field { display: grid; gap: var(--sp-1); align-content: start }
-  .field .label b { color: var(--accent-ink) }
-  input, select, textarea { font: inherit; color: var(--text); background: var(--surface);
-    border: var(--border-w) solid var(--border-strong); border-radius: var(--radius);
-    padding: .5rem .7rem; min-width: 0 }
-  textarea { resize: vertical }
-  input:focus-visible, select:focus-visible, textarea:focus-visible {
-    outline: none; box-shadow: var(--ring) }
-
-  .req-foot { display: flex; justify-content: flex-end }
-
-  /* while the fake backend round-trips, the button keeps its label and ticks dots */
-  .btn.busy { pointer-events: none; opacity: .85 }
-  .btn.busy::after { content: ''; display: inline-block; width: 3ch; text-align: left;
-    animation: dots 1.2s steps(4, jump-none) infinite }
-  @keyframes dots { 0% { content: '' } 33% { content: '.' } 66% { content: '..' } 100% { content: '...' } }
-  @media (prefers-reduced-motion: reduce) { .btn.busy::after { animation: none; content: '...' } }
-
-  .req-result { margin-top: var(--sp-5); outline: none }
-  .req-result h3 { margin-top: var(--sp-3); font-size: var(--step-1); text-transform: uppercase;
-    letter-spacing: .02em }
-  .req-status { color: var(--accent-ink) }
-  .req-result p { margin: var(--sp-3) 0 0; max-width: 60ch; color: var(--text-dim) }
-  .req-ref { font-size: var(--step--1); letter-spacing: .06em; text-transform: uppercase;
-    color: var(--text-mute) }
-</style>
-
-<script>
-  const form = document.querySelector<HTMLFormElement>('.req-form')!;
-  const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  const result = document.querySelector<HTMLElement>('.req-result')!;
-
-  // no past-dated events; a build-time min would go stale in the static export
-  form.querySelector<HTMLInputElement>('input[type="date"]')!.min =
-    new Date().toISOString().slice(0, 10);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (btn.disabled) return;
-    btn.disabled = true;
-    btn.classList.add('busy');
-
-    // ponytail: there is no backend; the delay is the round-trip, and the
-    // answer is always the same. The ref is minutes-since-epoch in base 36,
-    // so it looks like a log number and two quick submissions still differ.
-    const ref = Math.floor(Date.now() / 60000).toString(36).toUpperCase();
-    setTimeout(() => {
-      result.querySelector<HTMLElement>('.req-ref')!.textContent = `ref DR1-${ref}`;
-      form.hidden = true;
-      result.hidden = false;
-      result.focus();
-    }, 1600 + Math.random() * 900);
-  });
-</script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Contact · Daniel Romo</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="https://danielromo.org/#contact" />
+    <meta http-equiv="refresh" content="0; url=/#contact" />
+  </head>
+  <body>
+    <a href="/#contact">Contact me</a>
+  </body>
+</html>

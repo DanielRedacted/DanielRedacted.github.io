@@ -295,3 +295,102 @@ a.card:hover{border-color:var(--border-strong)}   /* cards with nothing to link 
 .foot a{color:inherit;text-decoration:underline;text-underline-offset:2px;
   text-decoration-color:var(--border-strong);transition:color .15s}
 .foot a:hover{color:var(--accent-ink)}
+
+/* ============================================================================
+   Brick (simple branch): the homepage as one business card, ink on paper.
+   Borrows AP0110.com's micrographics idiom (micro-labels, hairline controls,
+   real barcode and QR, labels typing in) but keeps FIELD tokens and B612 Mono.
+   Load/unload script: components/LoadSequence.astro.
+   ============================================================================ */
+body:has(.brick-main)::before{display:none}   /* no dot grid on the card: plain paper */
+/* a step darker than the site's #fafafa: #F2F2F2, past the usual #FAFAFA-#F5F5F5 off-white band, still ~18:1 under --text */
+body:has(.brick-main){--bg:#F2F2F2}
+/* ink bleed: a halo in the text's own color, like ink wicking into paper. Set on every element, not
+   inherited, so the em lengths scale with each element's own size: bigger type bleeds wider. Darker
+   ink bleeds more on its own (same mix, more pigment); the ink tiers and bold cut the halo up or down. */
+.brick-main,.brick-main *{text-shadow:0 0 var(--core,.045em) currentColor,0 0 .16em color-mix(in srgb,currentColor var(--bleed,34%),transparent)}
+.brick-main :is(h1,b,strong){--core:.07em;--bleed:48%}
+.brick-main .ink-mid{--bleed:26%}
+.brick-main .ink-low{--bleed:18%}
+.brick-main{min-height:100dvh;display:grid;justify-items:center;align-content:center;padding:40px 16px}
+:where(.brick-main) a{color:inherit;text-decoration:none}   /* :where keeps .ink-* able to win */
+.brick-main h1{font:700 14px/1.4 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--text)}
+.brick-main :is(h1,p){margin:0}
+/* the card: one 300px column, two (300 + 280, 24px gap) from 680px */
+.brick{width:100%;max-width:300px;display:grid;gap:24px}
+@media (min-width:680px){.brick{max-width:none;width:604px;grid-template-columns:300px 280px}}
+
+.micro{font-family:var(--font-mono);font-size:.75rem;font-weight:400;line-height:1.4;letter-spacing:.08em;text-transform:uppercase}
+.fine{font-family:var(--font-mono);font-size:.625rem;line-height:1.4;letter-spacing:.08em}
+.ink{color:var(--text)} .ink-mid{color:var(--text-dim)} .ink-low{color:var(--text-mute)}
+a.ink-mid:hover,a.ink-low:hover{color:var(--text)}
+
+/* hairline control, keycap invert on press */
+.ctl{height:36px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(29,29,27,.28);border-radius:2px;background:transparent;color:var(--text);
+  font:400 12px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;outline:none;
+  transition:border-color .15s,background-color .15s,color .15s}
+.ctl:hover,.ctl:focus-visible{border-color:var(--text);background-color:rgba(29,29,27,.04)}
+.ctl:active{background-color:var(--text);color:var(--bg)}
+/* fields (the contact form), ported from AP0110.com's .ctl-input / .ctl-area / .ctl-send */
+.ctl-input{justify-content:flex-start;text-align:left;text-transform:none;letter-spacing:.02em;font-size:13px}
+.ctl-input:active{background-color:rgba(29,29,27,.04);color:var(--text)}
+.ctl-input::placeholder{color:var(--text-mute);letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.ctl-area{display:block;width:100%;height:auto;padding:10px 12px;line-height:1.4;resize:none}
+form:valid>.ctl-send{background-color:var(--text);color:var(--bg)}
+/* The contact section hangs below the card, out of flow, so the centered card stays put when it
+   opens (no re-centering jump); the page grows by its height and LoadSequence glides it into view.
+   24px = the card's own gap; below it, the same space as above the card (--below, index.astro;
+   40px = .brick-main's padding without JS). */
+.brick{position:relative}
+#contact{position:absolute;top:100%;left:0;right:0;padding:24px 0 var(--below,40px)}
+/* The Pages Function 303s to /#sent; the note shows only there. */
+#sent:not(:target){display:none}
+/* Disclosures: collapsed with JS, open without it. [data-js-only] buttons do nothing without JS. */
+@media (scripting:enabled){.disclose:not(.open){display:none}}
+@media (scripting:none){[data-js-only]{visibility:hidden}}
+
+.social{display:block;width:1rem;height:1rem;color:var(--text);opacity:.5;transition:opacity .2s}
+.social:hover,.social[aria-expanded="true"]{opacity:1}
+.alma{height:32px;width:auto;filter:invert(1) grayscale(1);opacity:.7}   /* the wordmarks are white PNGs */
+.avatar-sm{width:56px;height:56px;border-radius:50%;object-fit:cover}
+/* org icons as ink silhouettes: the source file is only a mask */
+.org-icon{width:16px;height:16px;flex:none;background:var(--text);
+  -webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+
+/* Miniature RSVP reader: a hairline window just wide enough for the longest word, set at the
+   footer's .fine size; the pivot letter in red on a fixed column marked by two guide ticks.
+   Monospace, so 1ch is one letter; the script sets --a / --b (longest run before / after the pivot). */
+.rsvp{margin:0}
+.rsvp-box{--pad:6px;position:relative;height:22px;padding:0 var(--pad);display:grid;align-items:center;
+  grid-template-columns:calc(var(--a,4) * 1ch) 1ch calc(var(--b,7) * 1ch);
+  border:1px solid rgba(29,29,27,.28);border-radius:2px;
+  font:400 .625rem/1 var(--font-mono);color:var(--text);white-space:pre}
+.rsvp-a{text-align:right} .rsvp-p{color:var(--nasa-red)}
+/* Latin cross ✝, about the box's 22px height. B612 Mono lacks it, so name fonts that have it:
+   Menlo (macOS), Segoe UI Symbol (Windows), DejaVu / Noto Sans Symbols (Linux). */
+.rsvp-cross{font:400 16px/1 Menlo,"Segoe UI Symbol","DejaVu Sans Mono","DejaVu Sans","Noto Sans Symbols","Arial Unicode MS",var(--font-mono);color:var(--text)}
+/* Aramaic transliteration (ā, ḇ, ṯ, ʾ...): B612 Mono lacks these letters, so the whole word switches to a
+   monospace that has them all, keeping one font per word (ticks follow: they use the box's own ch). */
+.rsvp-box.syc{font-family:Menlo,Monaco,"DejaVu Sans Mono","Courier New",monospace}
+.rsvp-box::before,.rsvp-box::after{content:"";position:absolute;left:calc(var(--pad) + var(--a,4) * 1ch + .5ch);width:1px;height:4px;background:var(--text)}
+.rsvp-box::before{top:0} .rsvp-box::after{bottom:0}
+.rsvp-static{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* screen readers */
+@media (scripting:none),(prefers-reduced-motion:reduce){
+  .rsvp-box{display:none}
+  .rsvp-static{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:pre-line}   /* the Aramaic keeps one petition per line */
+}
+
+/* Load / unload. Text hides only when scripts run and motion is welcome; the HTML always
+   carries the full text. [data-type] labels type, .fade elements fade. */
+@keyframes fade-in{from{opacity:0}}
+@keyframes fade-out{to{opacity:0}}
+@keyframes show-anyway{to{visibility:visible}}
+@media (prefers-reduced-motion:no-preference){
+  @media (scripting:enabled){
+    .brick-main :is(.fade,[data-type]){visibility:hidden;animation:show-anyway 0s 3s forwards}
+  }
+  main.go .fade{visibility:visible;animation:fade-in .8s ease-out backwards}
+  main.go.out .fade{animation:fade-out .4s ease-in forwards}
+}
+.brick-main [data-type]:is(.typing,.typed){visibility:visible;animation:none}

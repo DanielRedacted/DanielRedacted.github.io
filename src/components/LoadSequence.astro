@@ -1,0 +1,105 @@
+---
+// Load and unload sequence for the homepage brick. Script only; styles in global.css ("Brick").
+// Trimmed port of my own AP0110.com LoadSequence (no views, no placeholder typing).
+// Markup contract: <main data-beat="ms">; [data-type] on text-only labels; .fade on everything else.
+---
+
+<script>
+  // Load: after the beat every [data-type] label types in at once while every .fade fades in.
+  // Unload: any same-tab link erases every label and fades everything out in 0.4 s, then navigates.
+  // The HTML carries the full text; the untyped remainder stays in the layout as hidden text, so
+  // nothing changes size while it types. Reduced motion skips all of it.
+  // ponytail: one interval for all labels; labels must be text-only (wrap text in <span data-type>).
+  const SPEED = 20; // ms per character on load (AP0110.com types at 40)
+  const OUT = 400; // ms, the unload: matches the fade-out animation in global.css
+  const OUT_TICK = 20; // ms per unload tick
+
+  const main = document.querySelector<HTMLElement>('main')!;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  type Job = { el: HTMLElement; full: string; n: number; set: (n: number) => void };
+  const job = (el: HTMLElement): Job => {
+    const full = el.textContent || '';
+    const shown = document.createTextNode('');
+    const rest = document.createElement('span');
+    rest.setAttribute('aria-hidden', 'true');
+    rest.style.visibility = 'hidden';
+    return {
+      el, full, n: full.length,
+      set: (n) => {
+        if (n === full.length) { el.textContent = full; el.classList.remove('typing'); el.classList.add('typed'); return; }
+        if (shown.parentNode !== el) { el.replaceChildren(shown, rest); el.classList.remove('typed'); el.classList.add('typing'); }
+        shown.data = full.slice(0, n);
+        rest.textContent = full.slice(n);
+      },
+    };
+  };
+  const jobs = [...document.querySelectorAll<HTMLElement>('[data-type]')].map(job);
+  // Quick runs (unload, an opened disclosure): every label covers its whole length in OUT.
+  const quick = (j: Job) => Math.max(1, Math.ceil(j.full.length / (OUT / OUT_TICK)));
+
+  // Moves every label `step` characters per tick toward its target length, then calls done.
+  let timer = 0;
+  const run = (target: (j: Job) => number, done = () => {}, every = SPEED, step = (_: Job) => 1) => {
+    clearInterval(timer);
+    timer = window.setInterval(() => {
+      let pending = false;
+      for (const j of jobs) {
+        const t = target(j);
+        if (j.n === t) continue;
+        j.n = j.n < t ? Math.min(t, j.n + step(j)) : Math.max(t, j.n - step(j));
+        j.set(j.n);
+        if (j.n !== t) pending = true;
+      }
+      if (!pending) { clearInterval(timer); done(); }
+    }, every);
+  };
+
+  let started = false, leaving = false;
+  if (reduced) {
+    main.classList.add('go');
+    started = true;
+  } else {
+    setTimeout(() => {
+      for (const j of jobs) { j.n = 0; j.set(0); }
+      main.classList.add('go'); // starts the .fade animations: same tick as the typing
+      started = true;
+      run((j) => j.full.length);
+    }, Number(main.dataset.beat) || 0);
+    // Back/forward cache would restore the emptied page: replay the load instead.
+    addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
+  }
+
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!a || leaving || reduced || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if ((a.target && a.target !== '_self') || a.hasAttribute('download')) return; // new tabs never unload
+    const url = new URL(a.href, location.href);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return; // mailto:, tel:
+    if (url.origin === location.origin && url.pathname === location.pathname) return; // in-page anchor
+    e.preventDefault();
+    leaving = true;
+    if (!started) return void location.assign(url.href); // nothing on screen yet
+    const t0 = performance.now();
+    main.classList.add('out');
+    run(() => 0, () => setTimeout(() => location.assign(url.href), Math.max(0, OUT - (performance.now() - t0))), OUT_TICK, quick);
+  });
+
+  // Disclosure (the contact section): a button with aria-controls toggles its section (.open,
+  // global.css); opening types the section's labels in from empty in 0.4 s, and its .fades fade
+  // in as they appear. Every button that controls the same section reflects its state.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[aria-controls]')) {
+    b.addEventListener('click', () => {
+      const t = document.getElementById(b.getAttribute('aria-controls') || '');
+      if (!t || leaving) return;
+      const open = t.classList.toggle('open');
+      for (const c of document.querySelectorAll(`[aria-controls="${t.id}"]`)) c.setAttribute('aria-expanded', String(open));
+      if (!open) return;
+      if (!reduced) {
+        for (const j of jobs) if (t.contains(j.el)) { j.n = 0; j.set(0); }
+        run((j) => j.full.length, undefined, OUT_TICK, quick);
+      }
+      t.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+    });
+  }
+</script>

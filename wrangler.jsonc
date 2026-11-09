@@ -1,0 +1,16 @@
+{
+	// Static Astro site on Cloudflare Pages, like AP0110.com.
+	// Build command: `npm run build` (astro build) → output dir: ./dist
+	"name": "danielromo-org",
+	"pages_build_output_dir": "./dist",
+	"compatibility_date": "2025-11-02",
+	// functions/api/form.js stores contact messages here (schema.sql). Source of truth for the binding.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "danielromo-forms",
+			// placeholder: `npx wrangler d1 create danielromo-forms` prints the real id
+			"database_id": "00000000-0000-0000-0000-000000000000"
+		}
+	]
+}

@@ -8,7 +8,7 @@ import sitemap from '@astrojs/sitemap';
 // is a plain script; nothing on this site needs hydration.
 export default defineConfig({
   site: 'https://danielromo.org',
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (p) => !p.endsWith('/invite/') })],
   build: { format: 'directory' },
   vite: {
     plugins: [tailwindcss()],

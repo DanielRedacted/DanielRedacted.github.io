@@ -40,15 +40,10 @@ const path = Astro.url.pathname;
           <a href="/" class="sigil" aria-label="Daniel Romo, home">
             <span class="wordmark">Daniel Romo</span>
           </a>
-          <nav class="topnav" aria-label="Site">
-            {
-              // 'library' temporarily hidden with the homepage shelf; pages still build
-              ['lii', 'compute', 'toolbox', 'garage'].map((p) => (
-                <a href={`/${p}/`} class="label"
-                  aria-current={path.startsWith(`/${p}`) ? 'page' : undefined}>{p}</a>
-              ))
-            }
-          </nav>
+          {/* topnav temporarily hidden with every page it listed (library, lii, compute, garage);
+               the pages still build. To restore, map the names back in:
+               <nav class="topnav" aria-label="Site">{['lii', 'compute', 'garage'].map((p) => (
+                 <a href={`/${p}/`} class="label" aria-current={path.startsWith(`/${p}`) ? 'page' : undefined}>{p}</a>))}</nav> */}
         </div>
       </header>
     )}
